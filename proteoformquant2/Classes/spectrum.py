@@ -13,6 +13,8 @@ class Spectrum():
         
         if(identMzid != None):
             self.setIdentDataMzid(identMzid)
+
+        self.sumIntensAnnotFrag = 0
             
         pass
     
@@ -22,11 +24,24 @@ class Spectrum():
     def getId(self):
         return self.id
 
+    def getPrecMz(self):
+        return self.precMz
+    
+    def getPrecIntens(self):
+        return self.precIntens
+
+    def getRt(self):
+        return self.rt
+
     def getFragIntens(self):
         return self.fragIntens
 
     def getFragMz(self):
         return self.fragMz
+    
+    def getSumIntensAnnotFrag(self):
+        return self.sumIntensAnnotFrag
+
 
     #Setters
 
@@ -41,19 +56,35 @@ class Spectrum():
         "add spetrum information from a pyteomics mgf object"
         self.fragIntens: array = specMgf["intensity array"]
         self.fragMz: array = specMgf["m/z array"]
-        self.precIntens: float = specMgf["params"]["pepmass"][0]
-        self.precMz: float = specMgf["params"]["pepmass"][1]
+        self.precIntens: float = specMgf["params"]["pepmass"][1]
+        self.precMz: float = specMgf["params"]["pepmass"][0]
         self.rt: float = specMgf["params"]["rtinseconds"]
-
-
         
     def setSpecDataMzxml(self, specMgf):
         pass
 
+    def setSumIntensAnnotFrag(self):
+        """For proteoforms in self.psms where isvalidated is true, set self.sumIntensAnnotFrag as the sum of annotated peaks"""
+        self.sumIntensAnnotFrag = 0
+        seenPeaks=[]
+        for psm in self.psms:
+            if psm.isValidated:
+                ann = psm.getAnnotation()
+                for type in ann.values():
+                    for i in range(len(type["intens"])):
+                        if type["index"] not in seenPeaks:
+                            seenPeaks.append(i)
+                            self.sumIntensAnnotFrag += type["intens"][i]
+        print("sum intensities annotated: " + str(self.sumIntensAnnotFrag))
+
+
+
+    #other methods:
+
     def annotateFragPsm(self):
         for psm in self.psms:
             psm.setAnnotatedFragments()
-        
+            
     def updateValidation(self):
         pass
 

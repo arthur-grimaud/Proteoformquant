@@ -24,16 +24,18 @@ def main():
     indentFn = args.indentFn
     spectraFn = args.spectraFn
     outputFn = args.outputFn
+    dbse = args.dbse
 
     print("Starting " +  progName )
     ### Read Data ###
-    run = Msrun(runId="1")
+    run = Msrun(runId="1", dbse = dbse)
     run.readMzid(indentFn)
     run.addMgfData(spectraFn)
     
     ### Prepare Data ###
     run.addProteoforms()
     run.matchFragments()
+    run.getPlotPrecVsMsMs()
     ### Quantification ###
 
 

@@ -17,9 +17,14 @@ class Psm():
         self.spectrum = spectrum
         self.proteoform = None
 
-        self.annotFrag = None
+        self.annotation = {}
+
         #PSM quantification
-        self.isValidated = False
+        if rank == 1:
+            self.isValidated = True
+        else:
+            self.isValidated = False
+
         self.ratio: float = 0.0 
 
         # pprint.pprint(vars(self))
@@ -62,20 +67,24 @@ class Psm():
     def getModificationsSu(self):
         """Returns a dictionnary of modifications in the spectrum utils format: {'position(0-based)': 'mass shift'}"""
         modDict = {}
-        print(self.proteoform)
         for mod in self.proteoform.getModificationDict():
             modDict[int(mod["location"])]=float(mod["monoisotopicMassDelta"]) #use list comprehension ??
 
-        print(modDict)
         return modDict
+
+    def getAnnotation(self):
+        return self.annotation
 
     #Setters
 
     def setProteoform(self, proteoform):
         self.proteoform = proteoform
 
-    def setAnnotatedFragments(self, fragTol=1, maxCharge=1):
-            
+    def setAnnotatedFragments(self, fragTol=0.015, maxCharge=1):
+
+
+           
+            #get information to create a spectrum utils MsmsSpectrum object
             id = self.spectrum.getId()
             fragIntens = self.spectrum.getFragIntens()
             fragMz= self.spectrum.getFragMz()
@@ -87,8 +96,16 @@ class Psm():
             mods_brno = self.getModificationsBrno()
 
 
+
+            print("-= Annotating psm: {0} of rank: {1}".format(mods_brno,self.rank))
+
             
-            spectrumSu = sus.MsmsSpectrum(
+            nAnnotFrag = 0
+            #annotate each fragment type individualy
+            for theoFragType in self.proteoform.getTheoFrag():
+
+                #create msmsspectrum object
+                spectrumSu = sus.MsmsSpectrum(
                 id,
                 calculatedMassToCharge, #might cause an issue when charge state != 0
                 chargeState,
@@ -97,32 +114,53 @@ class Psm():
                 peptide = peptideSequence,
                 modifications = modifications )
             
-            for theoFragType in self.proteoform.getTheoFrag():
+                #annotate fragments in msmsspectrum object
                 for frag in  self.proteoform.getTheoFrag()[theoFragType].items(): #TODO change this format? 
 
                     try:
-                        spectrumSu = spectrumSu.annotate_mz_fragment(fragment_mz = frag[1], fragment_charge = maxCharge,
+                        spectrumSu = spectrumSu.annotate_mz_fragment(fragment_mz = float(frag[1]), fragment_charge = maxCharge,
                                             fragment_tol_mass = fragTol, fragment_tol_mode = "Da", text = frag[0])
-                    except (ValueError):
+                    except (ValueError): #necessary as the method .annotate_mz_fragment throw an error if the mz is not found
                         pass
 
                 
-                try:
-                    mzList = []
-                    intenList = []
-                    posList = []
-                
+                if spectrumSu.annotation is not None: 
+
+                    mzTheoList, intensList, posList, indexList, mzErrorList = [], [], [], [], []
+
+                    indexInPeakList = 0
                     for (mz,intensity,annotation) in zip(spectrumSu.mz, spectrumSu.intensity, spectrumSu._annotation):
-                        
                         if annotation != None: #if the fragment has been matched/annotated
-                            mzList.append(mz)
-                            intenList.append(intensity)
                             annotationList = str(annotation.annotation).split(sep=",")
-                            posList.append(str(annotation[0])+ ":" + str(annotation[1]))
+                            mzTheoList.append(mz)
+                            intensList.append(intensity)
+                            posList.append(str(annotationList[0])+ ":" + str(annotationList[1]))
+                            indexList.append(indexInPeakList)
+                            mzErrorList.append(self.spectrum.getFragMz()[indexInPeakList] - mz )
+                            nAnnotFrag += 1
+
+                        indexInPeakList += 1
 
 
+                    #print(str(theoFragType))
+                    #store annotation in psm object
+                    
+                    self.annotation[str(theoFragType)] = {
+                        "mzTheo" : mzTheoList,
+                        "intens" : intensList,
+                        "pos" : posList,
+                        "index" : indexList,
+                        "mzErrorList" : mzErrorList
+                    }
 
-                except(TypeError):
-                    print("No {0} matched ions or incorrect annotation for spectrum: {1} , psm: {2}".format(theoFragType, id, self.proteoform.modificationBrno))
-                    pass
+            #print(self.annotFrag)
+            
+            # nAnnotMasc = 0
+            # for ionType in self.IonType:
+            #     nAnnotMasc += len(ionType["FragmentArray"][0]["values"])
 
+    
+
+
+            print("Total annotated frag = {0} / {1}".format(nAnnotFrag, len(fragMz)))
+            #pprint.pprint(vars(self))
