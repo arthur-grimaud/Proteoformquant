@@ -1,6 +1,7 @@
+from pickle import TRUE
 from pyteomics import mass
 from logging import warning
-
+import plotly.graph_objs as go
 from Classes.envelope import Envelope
 from Utils import constant
 
@@ -29,9 +30,19 @@ class Proteoform():
     def getTheoFrag(self):
         return self.theoFrag
 
+    def getRtFirstPsm(self):
+        return self.linkedPsm[0].spectrum.getRt()
 
     def getModificationDict(self):
         return self.modificationDict
+
+    def getModificationBrno(self):
+        return self.modificationBrno
+
+
+    def getValidatedLinkedPsm(self):
+        """Return a curated list of linked psm whose self.isvalidated = true"""
+        return [psm for psm in self.linkedPsm if psm.isValidated]
 
 
     #Setters
@@ -83,4 +94,52 @@ class Proteoform():
             self.theoFrag = frag_masses
 
         return(frag_masses)
+
+    def computeEnvelope(self):
+        """instanciate an envelope object by providing the list of psm associated to that proteoform"""
+        if len(self.getValidatedLinkedPsm()) > 5:
+            env = Envelope(self.getValidatedLinkedPsm())
+            self.envelopes.append(env)
+            #self.getEnvelopePlot()
+        else:
+            #print("Not enough datapoints to compute envelope")
+            pass
+
+
+
+    #visualization:
+
+
+    def getEnvelopePlot(self):
+
+        xData = [psm.spectrum.getRt() for psm in self.getValidatedLinkedPsm()]
+        yData = [psm.getPrecIntensRatio() for psm in self.getValidatedLinkedPsm()]
+
+        
+
+        fig = go.Figure()
+        fig.add_scatter( x=xData, y=yData, mode='markers', marker=dict(size=10, color="black"), name='Precursor Intensity' )
+
+        for env in self.envelopes: #if envelope has been computed add line to the plot
+
+            xDataEnv = list(range(int(min(xData)),int(max(xData)),1))
+
+            yDataEnvEstim, parametersEstim = list(env.getEnvelopeSerie(xDataEnv, method = "estimated"))
+            if yDataEnvEstim[0] != None: fig.add_scatter( x=xDataEnv, y=yDataEnvEstim, mode='lines', marker=dict(size=4, color="orange"), name='Estimated Parameters', line_shape='spline' )
+
+            yDataEnvFitted, parametersFitted = list(env.getEnvelopeSerie(xDataEnv, method = "fitted"))
+            #print(yDataEnvFitted)
+            if yDataEnvFitted[0] != None: fig.add_scatter( x=xDataEnv, y=yDataEnvFitted, mode='lines', marker=dict(size=4, color="red"), name='Fitted Parameters', line_shape='spline' )
+
+        titleText = "Proteoform: {0} <br> Parameters Estimated: {1} / KS: {3} <br> Parameters Fitted: {2} / KS: {4}".format(self.modificationBrno, parametersEstim , parametersFitted, env.KsEstimated, env.KsFitted)
+
+        fig.update_layout(title=go.layout.Title(text=titleText, font=dict(
+                family="Courier New, monospace",
+                size=15,
+            )))
+
+        fig.show()
+
+
+
 

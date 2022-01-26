@@ -75,7 +75,7 @@ class Spectrum():
                         if type["index"] not in seenPeaks:
                             seenPeaks.append(i)
                             self.sumIntensAnnotFrag += type["intens"][i]
-        print("sum intensities annotated: " + str(self.sumIntensAnnotFrag))
+        #print("sum intensities annotated: " + str(self.sumIntensAnnotFrag))
 
 
 

@@ -6,9 +6,10 @@
 import sys
 from pyteomics import mzid 
 from objbrowser import browse #dev
-
+import pickle
 #Custom Modules
 from Utils import input 
+
 #Classes
 from Classes.msrun import Msrun 
 
@@ -35,15 +36,23 @@ def main():
     ### Prepare Data ###
     run.addProteoforms()
     run.matchFragments()
-    run.getPlotPrecVsMsMs()
+    #run.getPlotPrecVsMsMs() #viz
+
     ### Quantification ###
+    run.updateProteoformsEnvelope()
 
 
     ### Output ###
 
+    ### Report ###
+
+    with open('pfq_out_obj.pkl', 'wb') as outp:
+        pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
 
 
-    return 
+
+
+    
 
 if __name__ == '__main__':
     #sys.argv = ["programName.py","--input","test.txt","--output","tmp/test.txt"]

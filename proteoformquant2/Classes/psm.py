@@ -22,10 +22,10 @@ class Psm():
         #PSM quantification
         if rank == 1:
             self.isValidated = True
+            self.ratio: float = 1.0 
         else:
             self.isValidated = False
-
-        self.ratio: float = 0.0 
+            self.ratio: float = 0.0 
 
         # pprint.pprint(vars(self))
         pass
@@ -59,7 +59,7 @@ class Psm():
                 mod_type = mod_type[0]
                 mod_list.append( str( self.PeptideSequence[ int(mod["location"])-1 ] ) + str(mod["location"]) + mod_type )
             else:
-                print("Delta mass to brno conversion failed, {0} not found".format(mod["monoisotopicMassDelta"]))
+                #print("Delta mass to brno conversion failed, {0} not found".format(mod["monoisotopicMassDelta"]))
                 mod_list.append( str( self.PeptideSequence[ int(mod["location"])-1 ] ) + str(mod["location"]) + "na" )
     
         return "".join(mod_list)
@@ -74,6 +74,11 @@ class Psm():
 
     def getAnnotation(self):
         return self.annotation
+
+
+    def getPrecIntensRatio(self):
+        """given self.ratio return the corresponding precursor intensity fraction for that psm"""
+        return self.spectrum.getPrecIntens()*self.ratio
 
     #Setters
 
@@ -97,7 +102,7 @@ class Psm():
 
 
 
-            print("-= Annotating psm: {0} of rank: {1}".format(mods_brno,self.rank))
+            #print("-= Annotating psm: {0} of rank: {1}".format(mods_brno,self.rank))
 
             
             nAnnotFrag = 0
@@ -162,5 +167,5 @@ class Psm():
     
 
 
-            print("Total annotated frag = {0} / {1}".format(nAnnotFrag, len(fragMz)))
+            #print("Total annotated frag = {0} / {1}".format(nAnnotFrag, len(fragMz)))
             #pprint.pprint(vars(self))
