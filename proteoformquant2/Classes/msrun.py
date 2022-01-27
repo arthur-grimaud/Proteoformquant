@@ -32,7 +32,7 @@ class Msrun():
         mzidObj = mzid.read(identFn) #Create a pyteomics' mzid iterator
 
         for identMzid in mzidObj: #Iterate over spectra and create Spectrum object for each 
-            #print(identMzid["spectrumID"])
+            print(identMzid["spectrumID"])
             self.spectra[identMzid["spectrumID"]] = Spectrum(spectrumID= identMzid["spectrumID"], identMzid = identMzid)
         pass
 

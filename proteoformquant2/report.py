@@ -10,6 +10,8 @@ from Classes.envelope import Envelope
 import numpy as np
 import dash_bootstrap_components as dbc
 import plotly.io as pio
+
+from Utils import misc
 # ---------------------------------------------------------------------------- #
 #                                  Data import                                 #
 # ---------------------------------------------------------------------------- #
@@ -122,7 +124,7 @@ def dropdownOptionsEnvelopes_2(input):
 
 def dropdownOptionsEnvelopes(input):
     """Create option list for dropdown item"""
-    options = [{"label": proteo[1].getModificationBrno() + "   " + str(len(proteo[1].getValidatedLinkedPsm()) ) ,"value": proteo[0]} for proteo in exp.proteoforms.items()]
+    options = [{"label": proteo[1].getModificationBrno() + "   " + str(len(proteo[1].getValidatedLinkedPsm()) ) ,"value": proteo[0]} for proteo in exp.proteoforms.items() if len(proteo[1].getValidatedLinkedPsm()) > 0 ]
     #print(options)
     return options
 
@@ -160,7 +162,7 @@ def plotEnvelope(proteo):
         yDataEnvFitted, parametersFitted = list(env.getEnvelopeSerie(xDataEnv, method = "fitted"))
         if yDataEnvFitted[0] != None: fig.add_scatter( x=xDataEnv, y=yDataEnvFitted, mode='lines', marker=dict(size=4, color="red"), name='Fitted Parameters', line_shape='spline' )
 
-    titleText = "Proteoform: {0} <br>Parameters Estimated: {1} / KS: {3} <br>Parameters Fitted: {2} / KS: {4}".format(exp.proteoforms[proteo].getModificationBrno(), parametersEstim , parametersFitted, env.KsEstimated, env.KsFitted)
+    titleText = "Proteoform: {0} <br>Parameters Estimated: {1} <br>KS: {3} <br>Parameters Fitted: {2} <br>KS: {4}".format(exp.proteoforms[proteo].getModificationBrno(), parametersEstim , parametersFitted, env.KsEstimated, env.KsFitted)
 
     fig.update_layout(title=go.layout.Title(text=titleText, font=dict(
             family="Courier New, monospace",
@@ -183,18 +185,21 @@ def plotAllEnvelopes(input):
     rt_range = [spectrum.getRt() for spectrum in exp.spectra.values()]
     fig = go.Figure()
 
-    color=iter(cm.plasma(np.linspace(0,1,len(exp.proteoforms.values()))))
+
+    colors=misc.linear_gradient("#4682B4","#FFB347",len([x for x in exp.proteoforms.values() if len(x.envelopes)>0]))
 
 
-    for proteoform in exp.proteoforms.values():
-        c = next(color)
+    i = 0
+    for proteoform in [x for x in exp.proteoforms.values() if len(x.envelopes)>0]:
+        c = colors["hex"][i]
+        i += 1
         if len(proteoform.envelopes) > 0:
             for env in proteoform.envelopes: #if envelope has been computed add line to the plot
 
                 xDataEnv = list(range(int(min(rt_range)),int(max(rt_range)),1))
+                zDataEnv = [proteoform.getMzFirstPsm() for x in xDataEnv]
+
                 yDataEnvFitted, parametersFitted = list(env.getEnvelopeSerie(xDataEnv, method = "fitted"))
-    
-    
                 if yDataEnvFitted[0] != None: fig.add_scatter( x=xDataEnv, y=yDataEnvFitted, mode='lines', marker=dict(size=4, color=c), name=proteoform.getModificationBrno(), line_shape='spline' )
                 else:
                     yDataEnvEstim, parametersEstim = list(env.getEnvelopeSerie(xDataEnv, method = "estimated"))
@@ -221,12 +226,16 @@ def plotAllEnvelopes3d(input):
 
 
 
-    for proteoform in exp.proteoforms.values():
+    colors=misc.linear_gradient("#4682B4","#FFB347",len([x for x in exp.proteoforms.values() if len(x.envelopes)>0]))
+
+
+    i = 0
+    for proteoform in [x for x in exp.proteoforms.values() if len(x.envelopes)>0]:
         if len(proteoform.envelopes) > 0:
             for env in proteoform.envelopes: #if envelope has been computed add line to the plot
 
                 xDataEnv = list(range(int(min(rt_range)),int(max(rt_range)),1))
-                zDataEnv = [proteoform.getRtFirstPsm() for x in xDataEnv]
+                zDataEnv = [proteoform.getMzFirstPsm() for x in xDataEnv]
 
                 yDataEnvFitted, parametersFitted = list(env.getEnvelopeSerie(xDataEnv, method = "fitted"))
                 if yDataEnvFitted[0] != None: fig.add_trace(go.Scatter3d( x=xDataEnv, y=yDataEnvFitted, z=zDataEnv, mode='lines', name=proteoform.getModificationBrno() ))
@@ -234,7 +243,7 @@ def plotAllEnvelopes3d(input):
                     yDataEnvEstim, parametersEstim = list(env.getEnvelopeSerie(xDataEnv, method = "estimated"))
                     if yDataEnvEstim[0] != None: fig.add_trace(go.Scatter3d( x=xDataEnv, y=yDataEnvEstim, z=zDataEnv, mode='lines', name=proteoform.getModificationBrno()))
     
-    fig.update_layout(template=template)
+    fig.update_layout(template=template,height=1000)
                
     return fig  
 
@@ -244,3 +253,9 @@ def plotAllEnvelopes3d(input):
 # ---------------------------------------------------------------------------- #
 
 app.run_server(debug=True)
+
+
+# ---------------------------------------------------------------------------- #
+#                                     utils                                    #
+# ---------------------------------------------------------------------------- #
+

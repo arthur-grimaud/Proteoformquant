@@ -30,8 +30,8 @@ class Proteoform():
     def getTheoFrag(self):
         return self.theoFrag
 
-    def getRtFirstPsm(self):
-        return self.linkedPsm[0].spectrum.getRt()
+    def getMzFirstPsm(self):
+        return self.linkedPsm[0].spectrum.getPrecMz()
 
     def getModificationDict(self):
         return self.modificationDict
