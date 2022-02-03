@@ -42,6 +42,9 @@ class Spectrum():
     def getSumIntensAnnotFrag(self):
         return self.sumIntensAnnotFrag
 
+    def getNumberValidatedPsm(self):
+        return len([psm for psm in self.psms if psm.isValidated == True])
+
 
     #Setters
 

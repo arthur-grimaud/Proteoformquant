@@ -25,6 +25,10 @@ class Proteoform():
         #ElutionTime~intensity envelope
         self.envelopes : list(Envelope) = []
 
+        #color
+        self.color = None
+
+        self.totalIntens = 0  
     #Getters
 
     def getTheoFrag(self):
@@ -39,13 +43,21 @@ class Proteoform():
     def getModificationBrno(self):
         return self.modificationBrno
 
-
     def getValidatedLinkedPsm(self):
         """Return a curated list of linked psm whose self.isvalidated = true"""
         return [psm for psm in self.linkedPsm if psm.isValidated]
 
+    def getProteoformTotalIntens(self):
+        return self.totalIntens
+
+    def getColor(self):
+        return self.color
 
     #Setters
+
+    def setColor(self, colorInt):
+        self.color = colorInt
+        return self
 
     def linkPsm(self, psm):
         self.linkedPsm.append(psm)
@@ -105,41 +117,39 @@ class Proteoform():
             #print("Not enough datapoints to compute envelope")
             pass
 
+        
 
 
-    #visualization:
+    def setProteoformTotalIntens(self, method= "AUC"):
+        """Return the sum of intensities of psm of that proteoform method = precursor  or annotated (correspond to the intensity value used)"""
 
+        self.totalIntens = 0
 
-    def getEnvelopePlot(self):
+        
+        if method == "AUC":
+            if len(self.envelopes) > 0:
+                print(self.envelopes[0].getAUC())
+                self.totalIntens+=self.envelopes[0].getAUC()
+            return None
 
-        xData = [psm.spectrum.getRt() for psm in self.getValidatedLinkedPsm()]
-        yData = [psm.getPrecIntensRatio() for psm in self.getValidatedLinkedPsm()]
+        for psm in self.linkedPsm:
+            if method == "precursor":
+                self.totalIntens+=psm.getPrecIntensRatio()
+            if method == "annotated":
+                self.totalIntens+=psm.getAnnotMsmsIntensRatio()
 
         
 
-        fig = go.Figure()
-        fig.add_scatter( x=xData, y=yData, mode='markers', marker=dict(size=10, color="black"), name='Precursor Intensity' )
 
-        for env in self.envelopes: #if envelope has been computed add line to the plot
+    def setProteoformPsmValidation(self):
+        """   """
 
-            xDataEnv = list(range(int(min(xData)),int(max(xData)),1))
-
-            yDataEnvEstim, parametersEstim = list(env.getEnvelopeSerie(xDataEnv, method = "estimated"))
-            if yDataEnvEstim[0] != None: fig.add_scatter( x=xDataEnv, y=yDataEnvEstim, mode='lines', marker=dict(size=4, color="orange"), name='Estimated Parameters', line_shape='spline' )
-
-            yDataEnvFitted, parametersFitted = list(env.getEnvelopeSerie(xDataEnv, method = "fitted"))
-            #print(yDataEnvFitted)
-            if yDataEnvFitted[0] != None: fig.add_scatter( x=xDataEnv, y=yDataEnvFitted, mode='lines', marker=dict(size=4, color="red"), name='Fitted Parameters', line_shape='spline' )
-
-        titleText = "Proteoform: {0} <br> Parameters Estimated: {1} / KS: {3} <br> Parameters Fitted: {2} / KS: {4}".format(self.modificationBrno, parametersEstim , parametersFitted, env.KsEstimated, env.KsFitted)
-
-        fig.update_layout(title=go.layout.Title(text=titleText, font=dict(
-                family="Courier New, monospace",
-                size=15,
-            )))
-
-        fig.show()
-
-
-
-
+        if len(self.envelopes) == 0: #if no envelopes are found for that proteoform
+            for psm in self.linkedPsm:
+                psm.isValidated = False
+                psm.ratio = 0.0 
+        else:
+            for psm in self.envelopes[0].psmsOutliers:
+                print("removing aberant psm")
+                psm.isValidated = False
+                psm.ratio = 0.0 

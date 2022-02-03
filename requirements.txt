@@ -1,0 +1,24 @@
+###### Requirements without Version Specifiers ######
+
+
+argparse
+dash
+matplotlib
+numpy
+objbrowser
+pandas
+plotly
+pyteomics
+scipy
+spectrum-utils
+tkinter
+chart_studio
+lxml
+
+###### Requirements with Version Specifiers ######
+numpy==1.21
+
+###### Refer to other requirements files ######
+#-r other-requirements.txt
+
+

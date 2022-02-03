@@ -10,6 +10,7 @@ import pandas as pd
 #Custom classes
 from Classes.spectrum import Spectrum
 from Classes.proteoform import Proteoform
+from Classes.proteoform0 import Proteoform0
 
 import pprint
 class Msrun():
@@ -23,6 +24,7 @@ class Msrun():
 
         self.spectra: dict(Spectrum) = {} 
         self.proteoforms: dict(Proteoform) = {}
+        self.proteoform0 = Proteoform0()
  
 
     def readMzid(self, identFn):
@@ -58,9 +60,11 @@ class Msrun():
         pass
     
     def addProteoforms(self):
-        """From spectrum objects in self.psectra add proteoforms object to self.proteoforms"""
+        """From spectrum objects in self.spectra add proteoforms object to self.proteoforms"""
         print("start adding proteoforms\n")
+        i=0
         for specID in self.spectra:
+            i+=1
             for psm in self.spectra[specID].psms:
 
                 brno = psm.getModificationsBrno()
@@ -68,10 +72,13 @@ class Msrun():
                 brnoSeq = brno+"-"+seq #TODO use proforma
 
                 if brnoSeq not in self.proteoforms.keys(): #if a proteoform is new create a instance of Proteoform for this proteoform
-                    self.proteoforms[brnoSeq] = Proteoform(peptideSequence=seq, modificationBrno=brno, modificationDict=psm.Modification)  
+                    self.proteoforms[brnoSeq] = Proteoform(peptideSequence=seq, modificationBrno=brno, modificationDict=psm.Modification).setColor(i)  
 
                 self.proteoforms[brnoSeq].linkPsm(psm) #add link to Psms in Proteoform
                 psm.setProteoform(self.proteoforms[brnoSeq]) #add link to Proteoform in Psm
+
+        #Add proteoform object for unassigned proteoform
+        
 
             # pprint.pprint(vars(self.proteoforms[brno+"-"+psm.PeptideSequence]))
             #print(self.proteoforms[brno+"-"+psm.getPeptideSequence()].linkedPsm)
@@ -98,6 +105,28 @@ class Msrun():
 
 
         pass
+
+    def updateProteoformsTotalIntens(self):
+        """If mgf and identification data are provided in a spectrum object, get the annotated fragments for each PSM"""
+        print("start updating proteoforms envelopes\n")
+        for proteoID in self.proteoforms:
+            self.proteoforms[proteoID].setProteoformTotalIntens()
+
+
+        pass
+
+
+    def updateProteoformsValidation(self):
+        """Update psm.isValdiated and add spectrum without any validated psm to proteoform[unasigned]"""
+        for proteoID in self.proteoforms:
+            self.proteoforms[proteoID].setProteoformPsmValidation()
+
+        pass
+
+    def updateUnassignedSpectra(self):
+        for spectrumID in self.spectra:
+            if self.spectra[spectrumID].getNumberValidatedPsm() == 0:
+                self.proteoform0.linkSpectrum(self.spectra[spectrumID])
 
 
 

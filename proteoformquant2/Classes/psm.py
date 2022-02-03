@@ -69,16 +69,18 @@ class Psm():
         modDict = {}
         for mod in self.proteoform.getModificationDict():
             modDict[int(mod["location"])]=float(mod["monoisotopicMassDelta"]) #use list comprehension ??
-
         return modDict
 
     def getAnnotation(self):
         return self.annotation
 
-
     def getPrecIntensRatio(self):
         """given self.ratio return the corresponding precursor intensity fraction for that psm"""
         return self.spectrum.getPrecIntens()*self.ratio
+
+    def getAnnotMsmsIntensRatio(self):
+        """given self.ratio return the corresponding annotated fragment intensity sum fraction for that psm"""
+        return self.spectrum.getSumIntensAnnotFrag()*self.ratio
 
     #Setters
 

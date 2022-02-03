@@ -12,9 +12,22 @@ from Utils import input
 
 #Classes
 from Classes.msrun import Msrun 
-
+import resource
 
 def main():
+
+    
+    import sys
+
+    print(resource.getrlimit(resource.RLIMIT_STACK))
+    print(sys.getrecursionlimit())
+
+    max_rec = 0x100000
+
+    # May segfault without this line. 0x100 is a guess at the size of each stack frame.
+    resource.setrlimit(resource.RLIMIT_STACK, [0x100 * max_rec, resource.RLIM_INFINITY])
+    sys.setrecursionlimit(max_rec)
+
     progName = "ProteoformformQuant2"
 
     ### Input ###
@@ -41,12 +54,14 @@ def main():
     ### Quantification ###
     run.updateProteoformsEnvelope()
 
-
+    run.updateProteoformsValidation()
+    run.updateProteoformsTotalIntens()
+    run.updateUnassignedSpectra()
     ### Output ###
 
     ### Report ###
-
-    with open('pfq_out_obj.pkl', 'wb') as outp:
+    sys.setrecursionlimit(10000)
+    with open('pfq_out_obj_WT_1_1.pkl', 'wb') as outp:
         pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
 
 
