@@ -41,6 +41,7 @@ def main():
     dbse = args.dbse
 
     print("Starting " +  progName )
+
     ### Read Data ###
     run = Msrun(runId="1", dbse = dbse)
     run.readMzid(indentFn)
@@ -49,19 +50,18 @@ def main():
     ### Prepare Data ###
     run.addProteoforms()
     run.matchFragments()
-    #run.getPlotPrecVsMsMs() #viz
 
     ### Quantification ###
     run.updateProteoformsEnvelope()
-
     run.updateProteoformsValidation()
     run.updateProteoformsTotalIntens()
     run.updateUnassignedSpectra()
+
     ### Output ###
 
     ### Report ###
     sys.setrecursionlimit(10000)
-    with open('pfq_out_obj_WT_1_1.pkl', 'wb') as outp:
+    with open('pfq_out_obj_test.pkl', 'wb') as outp:
         pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
 
 

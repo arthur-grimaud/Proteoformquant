@@ -34,14 +34,20 @@ class Envelope():
         self.estimatedParam, self.fittedParam, self.corEstimated, self.corFitted = self.fitSkewNormal(self.xData, self.yData)
 
 
-        if self.corFitted <0.6:
+        if self.corFitted < 0.6:
             nRemoved = []
             splitScores = []
+
             for n in range(0,len(self.xData)-5):
                 if len(self.xData[:-n]) > 5:
+
+                    #print("subset spectrum of proteoform")
                     
                     xDataT = self.xData[:-n]
                     yDataT = self.yData[:-n]
+
+                    #print(xDataT)
+                    #print(yDataT)
 
                     estimatedParam, fittedParam, corEstimated, corFitted = self.fitSkewNormal(xDataT, yDataT)
                     
@@ -49,17 +55,26 @@ class Envelope():
                     splitScores.append(corFitted)
 
             #print(nRemoved)
-            #print(splitScores)
+            print(splitScores)
             if len(splitScores) >3:
                 kn = KneeLocator(nRemoved, splitScores,S=3, curve='concave', direction='increasing',interp_method= "polynomial", polynomial_degree=2)
                 cutoffVal = kn.knee
                 if cutoffVal != None:
-                    self.xData = self.xData[:-cutoffVal]
-                    self.yData = self.yData[:-cutoffVal]
 
-                    self.estimatedParam, self.fittedParam, self.corEstimated, self.corFitted = self.fitSkewNormal(self.xData, self.yData)
 
-                self.psmsOutliers = psms[:cutoffVal]
+                    try:
+                        self.xData = self.xData[:-cutoffVal]
+                        self.yData = self.yData[:-cutoffVal]
+
+                        self.estimatedParam, self.fittedParam, self.corEstimated, self.corFitted = self.fitSkewNormal(self.xData, self.yData)
+                    
+                    
+                        self.psmsOutliers = psms[-cutoffVal:]
+                    except(TypeError):
+                        print("could not optimize fit by removing data points")
+                        self.psmsOutliers = []
+
+                #print([psm.spectrum.getRt() for psm in self.psmsOutliers])
                 
             else:
                  self.envelopes = [] #delete envelope
@@ -174,12 +189,14 @@ class Envelope():
     # ------------------------------- Curve Fitting ------------------------------ #
 
 
-    def __getParameterBounds(self,xData, yData):
+    def __getParameterBounds(self,xData,yData):
+        #TODO define clear param bound
+
         # parameters bounds
         parameterBounds = []
-        parameterBounds.append( [0, max(xData)] ) # search bounds for m
-        parameterBounds.append( [0.1, np.var(xData)*2+0.2 ] ) # search bounds for s
-        parameterBounds.append( [0, max(yData)*3 ] ) # search bounds for a
+        parameterBounds.append( [min(xData)-500, max(xData)] ) # search bounds for m
+        parameterBounds.append( [0.1, 10000 ] ) # search bounds for s
+        parameterBounds.append( [0, max(yData)*2 ] ) # search bounds for a
         #parameterBounds.append( [0, 0] ) # search bounds for b
         parameterBounds.append( [-0.2, 0.9] ) # search bounds for k
         #print(parameterBounds)

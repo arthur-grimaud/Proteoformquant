@@ -111,7 +111,11 @@ class Proteoform():
         """instanciate an envelope object by providing the list of psm associated to that proteoform"""
         if len(self.getValidatedLinkedPsm()) > 5:
             env = Envelope(self.getValidatedLinkedPsm())
-            self.envelopes.append(env)
+            if env.corFitted > 0.7:
+                self.envelopes.append(env)
+            else:
+                self.envelope = []
+                print("Could not fit curve to chromatogram")
             #self.getEnvelopePlot()
         else:
             #print("Not enough datapoints to compute envelope")
@@ -120,7 +124,7 @@ class Proteoform():
         
 
 
-    def setProteoformTotalIntens(self, method= "AUC"):
+    def setProteoformTotalIntens(self, method= "precursor"):
         """Return the sum of intensities of psm of that proteoform method = precursor  or annotated (correspond to the intensity value used)"""
 
         self.totalIntens = 0

@@ -6,7 +6,7 @@ import plotly.express as px
 import plotly.graph_objs as go
 import numpy as np
 import pandas as pd
-
+from statistics import mean
 #Custom classes
 from Classes.spectrum import Spectrum
 from Classes.proteoform import Proteoform
@@ -25,8 +25,37 @@ class Msrun():
         self.spectra: dict(Spectrum) = {} 
         self.proteoforms: dict(Proteoform) = {}
         self.proteoform0 = Proteoform0()
- 
 
+
+    # ---------------------------------- getters --------------------------------- #
+
+    def getRtRange(self):
+        "Get min and max Rt in self.spectra"
+        mn = min([spectrum.getRt() for spectrum in self.spectra.values()])
+        mx = max([spectrum.getRt() for spectrum in self.spectra.values()])
+        return (mn, mx)
+
+    def getMzRange(self):
+        "Get min and max precursor mz in self.spectra"
+        mn = min([spectrum.getPrecMz() for spectrum in self.spectra.values()])
+        mx = max([spectrum.getPrecMz() for spectrum in self.spectra.values()])
+        return (mn, mx)
+
+    def getDatasetMetrics(self):
+        """returns a set of metric as a dictionnary for the ms run"""
+
+        return {
+            "TotalSpectra": len(self.spectra),
+            "AssignedSpectra(method1)": len([spectrum for spectrum in self.spectra.values() if spectrum.getNumberValidatedPsm() > 0]),
+            "AssignedSpectra(method2)": 0,
+            "UnassignedSpectra": len([spectrum for spectrum in self.proteoform0.linkedSpectra]),
+            "ChimericSpectra": len([spectrum for spectrum in self.spectra.values() if spectrum.getNumberValidatedPsm() > 1]),
+            "AvgEnvelopeScore": mean([proteoform.envelopes[0].corFitted for proteoform in self.proteoforms.values() if len(proteoform.envelopes) > 0 ]),
+            "MinEnvelopeScore": min([proteoform.envelopes[0].corFitted for proteoform in self.proteoforms.values() if len(proteoform.envelopes) > 0 ])
+        }
+
+    # ----------------------------------- main ----------------------------------- #
+ 
     def readMzid(self, identFn):
         """Read a spectra identification file in .mzIdenMl whose path is specfieid in self.inputFn"""
         print("start reading mzid\n")
@@ -120,7 +149,7 @@ class Msrun():
         """Update psm.isValdiated and add spectrum without any validated psm to proteoform[unasigned]"""
         for proteoID in self.proteoforms:
             self.proteoforms[proteoID].setProteoformPsmValidation()
-
+            
         pass
 
     def updateUnassignedSpectra(self):

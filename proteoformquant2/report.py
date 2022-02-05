@@ -21,8 +21,10 @@ from kneed import KneeLocator
 #                                  Data import                                 #
 # ---------------------------------------------------------------------------- #
 
-with open('pfq_out_obj_1_2.pkl', 'rb') as inp:
+with open('pfq_out_obj_WT_1_1.pkl', 'rb') as inp:
     exp = pickle.load(inp) 
+
+print(exp.getDatasetMetrics())
 
 # ---------------------------------------------------------------------------- #
 #                                    Layout                                    #
@@ -37,7 +39,7 @@ app.layout = html.Div([
 html.Div(children=[
     # dcc.Input(id="input_min_mz", type= "number", placeholder="Minimum Precursor Mz"),
     # dcc.Input(id="input_max_mz", type= "number", placeholder="Maximum Precursor Mz"),
-    dcc.RangeSlider( id='range_mz', min=5300, max=5800, step=2, value=[5300, 5800], tooltip={"placement": "bottom", "always_visible": True}),
+    dcc.RangeSlider( id='range_mz', min=exp.getMzRange()[0], max=exp.getMzRange()[1], step=2, value=exp.getMzRange(), tooltip={"placement": "bottom", "always_visible": True}),
     html.Label('Chromatogram of precursor and annotated fragments intensities'),
     dcc.Graph(id = 'line_plot_global_intens'),
     dcc.Graph(id = 'line_plot_itens_comp'),
@@ -90,7 +92,7 @@ html.Br(),
 
 html.Button('reload', id='reload_all_enveloppes_3d'),
 html.Div(children=[
-    dcc.RangeSlider( id='range_mz_2', min=5300, max=5800, step=2, value=[5300, 5800], tooltip={"placement": "bottom", "always_visible": True}),
+    dcc.RangeSlider( id='range_mz_2', min=exp.getMzRange()[0], max=exp.getMzRange()[1], step=2, value=exp.getMzRange(), tooltip={"placement": "bottom", "always_visible": True}),
     html.Label('All determined elution profil envelope with m/z dimension'),
     dcc.Graph(id = 'plot_all_enveloppes_3d'),
     ]
@@ -263,7 +265,7 @@ def plotEnvelope(proteo):
             # fig.add_vline(x=mean+std*20)
 
 
-    titleText = "Proteoform: {0} <br>Parameters Estimated: {1} <br>KS: {3} <br>Parameters Fitted: {2} <br>KS: {4} ".format(exp.proteoforms[proteo].getModificationBrno(), parametersEstim , parametersFitted, env.KsEstimated, env.KsFitted)
+    titleText = "Proteoform: {0} <br>Parameters Estimated: {1} <br>Score: {3} <br>Parameters Fitted: {2} <br>KS: {4} ".format(exp.proteoforms[proteo].getModificationBrno(), parametersEstim , parametersFitted, env.corEstimated, env.corFitted)
 
         
 
@@ -399,16 +401,30 @@ def display_click_data(clickData):
     Input('range_mz_2', "value")
 )
 def plotAllEnvelopes3d(minMaxMz):
-
+    fig = go.Figure()
 
     minMz = minMaxMz[0]
     maxMz = minMaxMz[1]
 
-    specFilt = { spectrumName:spectrum for (spectrumName,spectrum) in exp.spectra.items() if spectrum.getPrecMz() > minMz and spectrum.getPrecMz() < maxMz}
+
+    #Display unassigned spectra:
+    specFilt = [ spectrum for spectrum in exp.proteoform0.linkedSpectra if spectrum.getPrecMz() > minMz and spectrum.getPrecMz() < maxMz ]
+
+    specFiltMz = [spectrum.getPrecMz() for spectrum in specFilt]
+    specFiltRt = [spectrum.getRt() for spectrum in specFilt]
+    specFiltIntens = [spectrum.getPrecIntens() for spectrum in specFilt]
+    specFiltKey = [spectrum.getId() for spectrum in specFilt]
+
+    fig.add_trace(go.Scatter3d( x=specFiltRt, y=specFiltIntens, z=specFiltMz, mode='markers',  marker=dict(size=2, color="grey",opacity=0.6), name="proteoform0",customdata=specFiltKey))
+              
+
+
+
     proteoFilt = { proteoName:proteo for (proteoName,proteo) in exp.proteoforms.items() if proteo.getMzFirstPsm() > minMz and proteo.getMzFirstPsm() < maxMz}
 
-    rt_range = [spectrum.getRt() for spectrum in specFilt.values()]
-    fig = go.Figure()
+    rt_range = exp.getRtRange()
+    
+
 
 
 
@@ -435,7 +451,10 @@ def plotAllEnvelopes3d(minMaxMz):
         mz  = [psm.spectrum.getPrecMz() for psm in proteoform.getValidatedLinkedPsm()]
         spectrumKey  = [psm.spectrum.getId() for psm in proteoform.getValidatedLinkedPsm()]
 
-        fig.add_trace(go.Scatter3d( x=rt, y=precIntens, z=mz, mode='markers', marker=dict(size=2, color=proteoform.getColor()),customdata=spectrumKey))
+        fig.add_trace(go.Scatter3d( x=rt, y=precIntens, z=mz, mode='markers', marker=dict(size=2, color=proteoform.getColor()),name=proteoform.getModificationBrno() ,customdata=spectrumKey))
+
+    
+
 
     fig.update_layout(template=template,height=1000)
                
@@ -474,7 +493,14 @@ def plotAllEnvelopes3d(input):
 
     proteoformsBrno = [proteo.getModificationBrno() for proteo in exp.proteoforms.values() if proteo.getProteoformTotalIntens() > 0]
     proteoformsIntens = [proteo.getProteoformTotalIntens() for proteo in exp.proteoforms.values() if proteo.getProteoformTotalIntens() > 0]
+
+    proteoformsBrno.append("proteoform0")
+    exp.proteoform0.setProteoformTotalIntens()
+    proteoformsIntens.append(exp.proteoform0.getProteoformTotalIntens())
+
     proteoformsRatio = [proteoIntens/sum(proteoformsIntens) for proteoIntens in proteoformsIntens]
+    
+    
     
 
     fig = px.bar(x=proteoformsBrno, y=proteoformsRatio)

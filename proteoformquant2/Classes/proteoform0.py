@@ -31,7 +31,7 @@ class Proteoform0():
 
         for spectrum in self.linkedSpectra:
             if method == "precursor":
-                self.totalIntens+=spectrum.getPrecIntensRatio()
+                self.totalIntens+=spectrum.getPrecIntens()
 
     def setProteoformPsmValidation(self):
         """   """
