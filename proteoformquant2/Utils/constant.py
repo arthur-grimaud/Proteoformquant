@@ -7,7 +7,7 @@ delta_mod = {
     }
 
 from pyteomics import mass
-intern_ion_formulas = {
+ion_formulas = {
         'a':        {'a': mass.Composition(formula='H-2O-1' + 'C-1O-1')},
         'b':        {'b': mass.Composition(formula='H-2O-1')},
         'x':        {'x': mass.Composition(formula='H-2O-1' + 'CO2')},

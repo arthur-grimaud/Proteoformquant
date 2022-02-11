@@ -7,6 +7,9 @@ import plotly.graph_objs as go
 import numpy as np
 import pandas as pd
 from statistics import mean
+from statistics import median
+from progress.bar import Bar
+
 #Custom classes
 from Classes.spectrum import Spectrum
 from Classes.proteoform import Proteoform
@@ -25,6 +28,9 @@ class Msrun():
         self.spectra: dict(Spectrum) = {} 
         self.proteoforms: dict(Proteoform) = {}
         self.proteoform0 = Proteoform0()
+
+        self.precMzTolerance = 1
+        self.intensityThreshold = 100000
 
 
     # ---------------------------------- getters --------------------------------- #
@@ -50,38 +56,47 @@ class Msrun():
             "AssignedSpectra(method2)": 0,
             "UnassignedSpectra": len([spectrum for spectrum in self.proteoform0.linkedSpectra]),
             "ChimericSpectra": len([spectrum for spectrum in self.spectra.values() if spectrum.getNumberValidatedPsm() > 1]),
-            "AvgEnvelopeScore": mean([proteoform.envelopes[0].corFitted for proteoform in self.proteoforms.values() if len(proteoform.envelopes) > 0 ]),
-            "MinEnvelopeScore": min([proteoform.envelopes[0].corFitted for proteoform in self.proteoforms.values() if len(proteoform.envelopes) > 0 ])
+            "AvgEnvelopeScore": mean([proteoform.getEnvelope().scoreFitted for proteoform in self.proteoforms.values() if proteoform.getEnvelope() != None ]),
+            "MinEnvelopeScore": min([proteoform.getEnvelope().scoreFitted for proteoform in self.proteoforms.values() if proteoform.getEnvelope() != None ]),
+
+            "MedianEnvelopeS":   median([proteoform.getEnvelope().fittedParam[1] for proteoform in self.proteoforms.values() if proteoform.getEnvelope() != None ]),
+            "MedianEnvelopeA":   median([proteoform.getEnvelope().fittedParam[2] for proteoform in self.proteoforms.values() if proteoform.getEnvelope() != None ]),
+            "MedianEnvelopeK":   median([proteoform.getEnvelope().fittedParam[3] for proteoform in self.proteoforms.values() if proteoform.getEnvelope() != None ])
         }
 
     # ----------------------------------- main ----------------------------------- #
  
     def readMzid(self, identFn):
         """Read a spectra identification file in .mzIdenMl whose path is specfieid in self.inputFn"""
-        print("start reading mzid\n")
         self.identFn = identFn #Store File that has been read
         mzidObj = mzid.read(identFn) #Create a pyteomics' mzid iterator
 
-        for identMzid in mzidObj: #Iterate over spectra and create Spectrum object for each 
-            print(identMzid["spectrumID"])
-            self.spectra[identMzid["spectrumID"]] = Spectrum(spectrumID= identMzid["spectrumID"], identMzid = identMzid)
+        with Bar('loading identifications', max =0) as bar:
+
+            for identMzid in mzidObj: #Iterate over spectra and create Spectrum object for each 
+                self.spectra[identMzid["spectrumID"]] = Spectrum(spectrumID= identMzid["spectrumID"], identMzid = identMzid)
+                bar.next()
         pass
 
     def addMgfData(self, spectraFn):
         """Add info from mgf file to spectrum objects in self.spectra"""
-        print("start reading mgf\n")
+
         self.spectraFn = spectraFn #Store File that has been read
         mgfObj = mgf.read(spectraFn)
 
-        for specID in self.spectra:
-            
-            if self.dbse == "mascot":
-                index = str(int(specID.split("=")[1]) + 1)
-            if self.dbse == "comet":
-                index = specID.split("=")[1]
 
-            specMgf = mgfObj.get_spectrum(index) #need to be splited 
-            self.spectra[specID].setSpecDataMgf(specMgf)
+        with Bar('loading spectra', max =0) as bar:
+            for specID in self.spectra:
+                
+                if self.dbse == "mascot":
+                    index = str(int(specID.split("=")[1]) + 1)
+                if self.dbse == "comet":
+                    index = specID.split("=")[1]
+
+                specMgf = mgfObj.get_spectrum(index) #need to be splited 
+                self.spectra[specID].setSpecDataMgf(specMgf)
+                bar.next()
+
         pass
 
     def addMzmlData(self):
@@ -90,63 +105,71 @@ class Msrun():
     
     def addProteoforms(self):
         """From spectrum objects in self.spectra add proteoforms object to self.proteoforms"""
-        print("start adding proteoforms\n")
         i=0
-        for specID in self.spectra:
-            i+=1
-            for psm in self.spectra[specID].psms:
+        with Bar('Adding PSMs to Proteoform objects', max =0) as bar:
 
-                brno = psm.getModificationsBrno()
-                seq = psm.getPeptideSequence()
-                brnoSeq = brno+"-"+seq #TODO use proforma
+            for specID in self.spectra:
+                i+=1
+                for psm in self.spectra[specID].psms:
 
-                if brnoSeq not in self.proteoforms.keys(): #if a proteoform is new create a instance of Proteoform for this proteoform
-                    self.proteoforms[brnoSeq] = Proteoform(peptideSequence=seq, modificationBrno=brno, modificationDict=psm.Modification).setColor(i)  
+                    proforma = psm.getModificationProforma()
+                    brno = psm.getModificationBrno()
+                    seq = psm.getPeptideSequence()
+                    brnoSeq = brno+"-"+seq #TODO use proforma
 
-                self.proteoforms[brnoSeq].linkPsm(psm) #add link to Psms in Proteoform
-                psm.setProteoform(self.proteoforms[brnoSeq]) #add link to Proteoform in Psm
 
-        #Add proteoform object for unassigned proteoform
-        
+                    if proforma not in self.proteoforms.keys(): #if a proteoform is new create a instance of Proteoform for this proteoform
+                        self.proteoforms[proforma] = Proteoform(peptideSequence=seq, modificationBrno=brno, modificationProforma=proforma, modificationDict=psm.Modification).setColor(i)  
 
-            # pprint.pprint(vars(self.proteoforms[brno+"-"+psm.PeptideSequence]))
-            #print(self.proteoforms[brno+"-"+psm.getPeptideSequence()].linkedPsm)
+                    self.proteoforms[proforma].linkPsm(psm) #add link to Psms in Proteoform
+                    psm.setProteoform(self.proteoforms[proforma]) #add link to Proteoform in Psm
+                    bar.next()
+
 
 
     def matchFragments(self, msmsTol= 0.02, internal = False):
         """If mgf and identification data are provided in a spectrum object, get the annotated fragments for each PSM"""
-        print("start matching fragments\n")
-        for proteoID in self.proteoforms:
-            self.proteoforms[proteoID].setTheoreticalFragments(["c","zdot","c-1","z+1","z+2"])
-            #print(self.proteoforms[proteoID].theoFrag)
-        for spectrumID in self.spectra:
-            self.spectra[spectrumID].annotateFragPsm()
-            self.spectra[spectrumID].setSumIntensAnnotFrag()
+
+        with Bar('Generating theoretical fragments', max =0) as bar:
+            for proteoID in self.proteoforms:
+                self.proteoforms[proteoID].setTheoreticalFragments(["c","zdot","c-1","z+1","z+2"])
+                bar.next()
+
+        with Bar('Matching fragments', max =0) as bar:
+            for spectrumID in self.spectra:
+                self.spectra[spectrumID].annotateFragPsm()
+                self.spectra[spectrumID].setSumIntensAnnotFrag()
+                bar.next()
 
         pass
 
     
     def updateProteoformsEnvelope(self):
         """If mgf and identification data are provided in a spectrum object, get the annotated fragments for each PSM"""
-        print("start updating proteoforms envelopes\n")
-        for proteoID in self.proteoforms:
-            self.proteoforms[proteoID].computeEnvelope()
+        
+        
+        
+        with Bar('Updating proteoforms envelopes', max =0) as bar:
 
+            #TODO add a function thjat set the bounds based on the entire set of envelopes  
+            for proteoID in self.proteoforms:
+                self.proteoforms[proteoID].computeEnvelope()
+                bar.next()
 
         pass
 
     def updateProteoformsTotalIntens(self):
         """If mgf and identification data are provided in a spectrum object, get the annotated fragments for each PSM"""
-        print("start updating proteoforms envelopes\n")
-        for proteoID in self.proteoforms:
-            self.proteoforms[proteoID].setProteoformTotalIntens()
-
+        with Bar('Updating Proteoforms Total Intens', max =0) as bar:
+            for proteoID in self.proteoforms:
+                self.proteoforms[proteoID].setProteoformTotalIntens()
+                bar.next()
 
         pass
 
 
     def updateProteoformsValidation(self):
-        """Update psm.isValdiated and add spectrum without any validated psm to proteoform[unasigned]"""
+        """Update psm.isValidated and add spectrum without any validated psm to proteoform[unasigned]"""
         for proteoID in self.proteoforms:
             self.proteoforms[proteoID].setProteoformPsmValidation()
             
@@ -158,6 +181,32 @@ class Msrun():
                 self.proteoform0.linkSpectrum(self.spectra[spectrumID])
 
 
+    def updateChimericSpectra(self, maxRank):
+
+        """ For every psm of rank = rank try to find a matching envelope, and assign to that proteoform it if it is the case"""
+        for spectrum in self.spectra.values():
+            spectrumMz = spectrum.getPrecMz()
+            spectrumRt = spectrum.getRt()
+            
+            for rank in range(1,maxRank):
+                if len(spectrum.psms) >= rank:
+                    psm = spectrum.psms[rank-1]
+                    psmProforma = psm.getModificationProforma()
+                    
+                    altProteo = self.proteoforms[psmProforma] #TODO might need a try except for proteo only insecond rank
+
+                    if altProteo.getEnvelope() != None:
+                        if altProteo.getEnvelope().getY(spectrumRt) > self.intensityThreshold:
+                            
+                            print("spectrum at RT {0} psm: {1} matches proteoform {2}".format(spectrumRt, psmProforma, altProteo.getModificationBrno()))
+                            psm.isValidated = True 
+                            altProteo.linkPsm(psm)
+                            spectrum.updateRatio()
+                            
+                       
+
+
+                #isobaricProteoforms = [proteo for proteo in self.proteoforms.values if proteo.getTheoPrecMz() > spectrumMz - self.precMzTolerance and spectrumMz + self.precMzTolerance > proteo.getTheoPrecMz() and proteo.getModificationProforma() == psmProforma]
 
     #Visualization
     #Methods here should return 

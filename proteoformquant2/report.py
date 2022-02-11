@@ -17,11 +17,13 @@ import math
 from dash.exceptions import PreventUpdate
 from scipy import stats
 from kneed import KneeLocator
+
+
 # ---------------------------------------------------------------------------- #
 #                                  Data import                                 #
 # ---------------------------------------------------------------------------- #
 
-with open('pfq_out_obj_WT_1_1.pkl', 'rb') as inp:
+with open('pfq_out_obj_test_1.pkl', 'rb') as inp:
     exp = pickle.load(inp) 
 
 print(exp.getDatasetMetrics())
@@ -201,7 +203,7 @@ def dropdownOptionsEnvelopes_2(input):
 
 def dropdownOptionsEnvelopes(input):
     """Create option list for dropdown item"""
-    options = [{"label": proteo[1].getModificationBrno() + "   " + str(len(proteo[1].getValidatedLinkedPsm()) ) ,"value": proteo[0]} for proteo in exp.proteoforms.items() if len(proteo[1].getValidatedLinkedPsm()) > 0 ]
+    options = [{"label": proteo[1].getModificationBrno() + "  " + str(len(proteo[1].getValidatedLinkedPsm()) ) ,"value": proteo[0]} for proteo in exp.proteoforms.items() if len(proteo[1].getLinkedPsm()) > 4 ]
     #print(options)
     return options
 
@@ -219,115 +221,103 @@ def plotEnvelope1(proteo):
 
 @app.callback(
     Output('envelope_plot_2', 'figure'),
-    Input('dropdown_envelope_2', 'value')
+    [Input('dropdown_envelope_2', 'value'),
+    Input('dropdown_envelope_1', 'value'),]
 )
-def plotEnvelope2(proteo):
-    if proteo is None:
+def plotEnvelope2(proteo1, proteo2):
+    if proteo1 is None or proteo2 is None:
         raise PreventUpdate
     else:
-        return plotEnvelope(proteo)
+        return plotEnvelopeTwo(proteo1, proteo2)
+
 
 def plotEnvelope(proteo):
 
-    xData = [psm.spectrum.getRt() for psm in exp.proteoforms[proteo].getValidatedLinkedPsm()]
-    yData = [psm.getPrecIntensRatio() for psm in exp.proteoforms[proteo].getValidatedLinkedPsm()]
-
     fig = go.Figure()
-    fig.add_scatter( x=xData, y=yData, mode='markers', marker=dict(size=10, color="black"), name='Precursor Intensity' )
 
-    for env in exp.proteoforms[proteo].envelopes: #if envelope has been computed add line to the plot
+    xData = [psm.spectrum.getRt() for psm in exp.proteoforms[proteo].getValidatedLinkedPsm()]
+    yDataSpectrum = [psm.spectrum.getPrecIntens() for psm in exp.proteoforms[proteo].getValidatedLinkedPsm()]
+    yDataPsm = [psm.getPrecIntensRatio() for psm in exp.proteoforms[proteo].getValidatedLinkedPsm()]
+    
 
+    fig.add_scatter( x=xData, y=yDataSpectrum, mode='markers', marker=dict(size=10, color="grey"), name='Spectrum Intensity' )
+    fig.add_scatter( x=xData, y=yDataPsm, mode='markers', marker=dict(size=7, color="red"), name='PSM Intensity' )
+
+    #add lines between PSM and spectrum intens points
+    for i in range(0,len(xData),1):
+        fig.add_scatter( x=[xData[i],xData[i]] , y=[yDataSpectrum[i],yDataPsm[i]], mode='lines', marker=dict(size=2, color="grey") )
+
+    env = exp.proteoforms[proteo].getEnvelope()
+    if env != None: #if envelope has been computed add line to the plot
+        
         xDataEnv = list(range(int(min(xData)),int(max(xData)),1))
 
         yDataEnvEstim, parametersEstim = list(env.getEnvelopeSerie(xDataEnv, method = "estimated"))
-        if yDataEnvEstim[0] != None: fig.add_scatter( x=xDataEnv, y=yDataEnvEstim, mode='lines', marker=dict(size=4, color="orange"), name='Estimated Parameters', line_shape='spline' )
+        if yDataEnvEstim[0] != None: 
+            fig.add_scatter( x=xDataEnv, y=yDataEnvEstim, mode='lines', marker=dict(size=4, color="orange"), name='Estimated Parameters', line_shape='spline' )
 
         yDataEnvFitted, parametersFitted = list(env.getEnvelopeSerie(xDataEnv, method = "fitted"))
         if yDataEnvFitted[0] != None: 
             fig.add_scatter( x=xDataEnv, y=yDataEnvFitted, mode='lines', marker=dict(size=4, color="red"), name='Fitted Parameters', line_shape='spline' )
 
+            titleText = "Proteoform: {0} <br>Parameters Estimated: {1} <br>Score: {3} <br>Parameters Fitted: {2} <br>Score: {4} ".format(exp.proteoforms[proteo].getModificationBrno(), parametersEstim , parametersFitted, env.scoreEstimated, env.scoreFitted)
 
-            
-
-            # m, s, a, k =  parametersFitted[0], parametersFitted[1], parametersFitted[2], parametersFitted[3]
-
-            # mean = m + (math.sqrt(2/math.pi)) * ((s*a)/math.sqrt(1+(a**2)) ) 
-            # std = s * math.sqrt( (1-( (2*a**2)/((1+a**2)*math.pi) )) )
-            # std=s
-            # print(mean)
-            # print(std)
-            
-            # fig.add_vline(x=mean) 
-            # fig.add_vline(x=mean+std) 
-            # fig.add_vline(x=mean+std*2)
-            # fig.add_vline(x=mean+std*3)
-            # fig.add_vline(x=mean+std*10)
-            # fig.add_vline(x=mean+std*20)
-
-
-    titleText = "Proteoform: {0} <br>Parameters Estimated: {1} <br>Score: {3} <br>Parameters Fitted: {2} <br>KS: {4} ".format(exp.proteoforms[proteo].getModificationBrno(), parametersEstim , parametersFitted, env.corEstimated, env.corFitted)
-
-        
-
-    fig.update_layout(title=go.layout.Title(text=titleText, font=dict(
-            family="Courier New, monospace",
-            size=10,
-        )))
+        fig.update_layout(title=go.layout.Title(text=titleText, font=dict(
+                family="Courier New, monospace",
+                size=10,
+            )))
     fig.update_layout(template=template)
     return fig  
 
-# -------------------------------- score curve ------------------------------- #
 
-# @app.callback(
-#     Output('envelope_plot_score_1', 'figure'),
-#     Input('dropdown_envelope_1', 'value')
-# )
-# def plotScore(proteo):
+def plotEnvelopeTwo(proteo1, proteo2):
 
-#     if proteo is None:
-#         raise PreventUpdate
-#     else:
-#         fig = go.Figure()
+    fig = go.Figure()
 
+    xData1 = [psm.spectrum.getRt() for psm in exp.proteoforms[proteo1].getValidatedLinkedPsm()]
+    yDataSpectrum1 = [psm.spectrum.getPrecIntens() for psm in exp.proteoforms[proteo1].getValidatedLinkedPsm()]
+    yDataPsm1 = [psm.getPrecIntensRatio() for psm in exp.proteoforms[proteo1].getValidatedLinkedPsm()]
 
-#         xData = np.array([psm.spectrum.getRt() for psm in exp.proteoforms[proteo].getValidatedLinkedPsm()])
-#         yData = np.array([psm.getPrecIntensRatio() for psm in exp.proteoforms[proteo].getValidatedLinkedPsm()])
-#         xDataEnv = list(range(int(min(xData)),int(max(xData)),1))
+    xData2 = [psm.spectrum.getRt() for psm in exp.proteoforms[proteo2].getValidatedLinkedPsm()]
+    yDataSpectrum2 = [psm.spectrum.getPrecIntens() for psm in exp.proteoforms[proteo2].getValidatedLinkedPsm()]
+    yDataPsm2 = [psm.getPrecIntensRatio() for psm in exp.proteoforms[proteo2].getValidatedLinkedPsm()]
+    
 
+    fig.add_scatter( x=xData1, y=yDataSpectrum1, mode='markers', marker=dict(size=10, color="grey"), name='Spectrum Intensity' )
+    fig.add_scatter( x=xData1, y=yDataPsm1, mode='markers', marker=dict(size=7, color="red"), name='PSM Intensity' )
 
-#         #fig.add_scatter( x=xData, y=yData, mode='markers', marker=dict(size=10, color="black"), name='Precursor Intensity' )
+    fig.add_scatter( x=xData2, y=yDataSpectrum2, mode='markers', marker=dict(size=10, color="grey"), name='Spectrum Intensity' )
+    fig.add_scatter( x=xData2, y=yDataPsm2, mode='markers', marker=dict(size=7, color="blue"), name='PSM Intensity' )
 
-#         nRemoved = []
-#         splitScores = []
-#         for n in range(0,len(xData)-5):
-#             if len(xData[:-n]) > 5:
-#                 print(n)
-                
-#                 xDataT = xData[:-n]
-#                 yDataT = yData[:-n]
+    #add lines between PSM and spectrum intens points
+    for i in range(0,len(xData1),1):
+        fig.add_scatter( x=[xData1[i],xData1[i]] , y=[yDataSpectrum1[i],yDataPsm1[i]], mode='lines', marker=dict(size=2, color="grey") )
 
-#                 print(xDataT)
+    for i in range(0,len(xData2),1):
+        fig.add_scatter( x=[xData2[i],xData2[i]] , y=[yDataSpectrum2[i],yDataPsm2[i]], mode='lines', marker=dict(size=2, color="grey") )
 
-#                 env = Envelope(exp.proteoforms[proteo].getValidatedLinkedPsm())
-                        
-#                 env.estimatedParam, env.fittedParam, env.KsEstimated, env.KsFitted = env.fitSkewNormal(xDataT, yDataT)
+    env1 = exp.proteoforms[proteo1].getEnvelope()
+    if env1 != None: #if envelope has been computed add line to the plot
+        xDataEnv1 = list(range(int(min(xData1)),int(max(xData1)),1))
+        yDataEnvFitted1, parametersFitted1 = list(env1.getEnvelopeSerie(xDataEnv1, method = "fitted"))
+        if yDataEnvFitted1[0] != None: 
+            fig.add_scatter( x=xDataEnv1, y=yDataEnvFitted1, mode='lines', marker=dict(size=4, color="red"), name='Fitted Parameters', line_shape='spline' )
 
+    env2 = exp.proteoforms[proteo2].getEnvelope()
+    if env2 != None: #if envelope has been computed add line to the plot
+        xDataEnv2 = list(range(int(min(xData2)),int(max(xData2)),1))
+        yDataEnvFitted2, parametersFitted2 = list(env2.getEnvelopeSerie(xDataEnv2, method = "fitted"))
+        if yDataEnvFitted2[0] != None: 
+            fig.add_scatter( x=xDataEnv2, y=yDataEnvFitted2, mode='lines', marker=dict(size=4, color="blue"), name='Fitted Parameters', line_shape='spline' )
+        
+            
+        fig.update_layout(title=go.layout.Title( font=dict(
+                family="Courier New, monospace",
+                size=10,
+            )))
+    fig.update_layout(template=template)
+    return fig  
 
-#                 if env.KsFitted >0.7:
-#                     nRemoved.append(n)
-#                     splitScores.append(env.KsFitted)
-
-#                     print(env.fittedParam)
-#                     yDataEnvFitted, parametersFitted = list(env.getEnvelopeSerie(xDataEnv, method = "fitted"))
-#                     #if yDataEnvFitted[0] != None: 
-#                         #fig.add_scatter( x=xDataEnv, y=yDataEnvFitted, mode='lines', marker=dict(size=4), name=len(xDataT), line_shape='spline')
-
-
-#         kn = KneeLocator(nRemoved, splitScores, curve='concave', direction='increasing')
-#         print(kn.knee)
-#         fig.add_scatter( x=nRemoved, y=splitScores, mode='lines', name='R square' )
-
-#         return fig
 
 
 # ---------------------------------------------------------------------------- #
@@ -345,25 +335,25 @@ def plotAllEnvelopes(input):
     fig = go.Figure()
 
 
-    colors=misc.linear_gradient("#4682B4","#FFB347",len([x for x in exp.proteoforms.values() if len(x.envelopes)>0]))
+    colors=misc.linear_gradient("#4682B4","#FFB347",len([x for x in exp.proteoforms.values() if x.getEnvelope() != None]))
 
 
     i = 0
-    for proteoform in [x for x in exp.proteoforms.values() if len(x.envelopes)>0]:
+    for proteoform in [x for x in exp.proteoforms.values() if x.getEnvelope() != None]:
         c = colors["hex"][i]
         i += 1
-        if len(proteoform.envelopes) > 0:
-            for env in proteoform.envelopes: #if envelope has been computed add line to the plot
+        if proteoform.getEnvelope() != None:
+            env = proteoform.getEnvelope() #if envelope has been computed add line to the plot
 
-                xDataEnv = list(range(int(min(rt_range)),int(max(rt_range)),1))
-                zDataEnv = [proteoform.getMzFirstPsm() for x in xDataEnv]
+            xDataEnv = list(range(int(min(rt_range)),int(max(rt_range)),1))
+            zDataEnv = [proteoform.getMzFirstPsm() for x in xDataEnv]
 
-                yDataEnvFitted, parametersFitted = list(env.getEnvelopeSerie(xDataEnv, method = "fitted"))
-                if yDataEnvFitted[0] != None: fig.add_scatter( x=xDataEnv, y=yDataEnvFitted, mode='lines', marker=dict(size=4, color=c), name=proteoform.getModificationBrno(), line_shape='spline' )
-                else:
-                    yDataEnvEstim, parametersEstim = list(env.getEnvelopeSerie(xDataEnv, method = "estimated"))
-                    if yDataEnvEstim[0] != None: fig.add_scatter( x=xDataEnv, y=yDataEnvEstim, mode='lines', marker=dict(size=4, color=c), name=proteoform.getModificationBrno(), line_shape='spline' )
-    
+            yDataEnvFitted, parametersFitted = list(env.getEnvelopeSerie(xDataEnv, method = "fitted"))
+            if yDataEnvFitted[0] != None: fig.add_scatter( x=xDataEnv, y=yDataEnvFitted, mode='lines', marker=dict(size=4, color=c), name=proteoform.getModificationBrno(), line_shape='spline' )
+            else:
+                yDataEnvEstim, parametersEstim = list(env.getEnvelopeSerie(xDataEnv, method = "estimated"))
+                if yDataEnvEstim[0] != None: fig.add_scatter( x=xDataEnv, y=yDataEnvEstim, mode='lines', marker=dict(size=4, color=c), name=proteoform.getModificationBrno(), line_shape='spline' )
+
     
     precIntens = [spectrum.getPrecIntens() for spectrum in exp.spectra.values()]
     rt = [spectrum.getRt() for spectrum in exp.spectra.values()]
@@ -428,22 +418,23 @@ def plotAllEnvelopes3d(minMaxMz):
 
 
 
-    colors=misc.linear_gradient("#4682B4","#FFB347",len([x for x in proteoFilt.values() if len(x.envelopes)>0]))
+    colors=misc.linear_gradient("#4682B4","#FFB347",len([x for x in proteoFilt.values() if x.getEnvelope() != None]))
 
 
     i = 0
-    for proteoform in [x for x in proteoFilt.values() if len(x.envelopes)>0]:
-        if len(proteoform.envelopes) > 0:
-            for env in proteoform.envelopes: #if envelope has been computed add line to the plot
+    for proteoform in [x for x in proteoFilt.values() if x.getEnvelope() != None]:
 
-                xDataEnv = list(range(int(min(rt_range)),int(max(rt_range)),1))
-                zDataEnv = [proteoform.getMzFirstPsm() for x in xDataEnv]
+        env = proteoform.getEnvelope() #if envelope has been computed add line to the plot
 
-                yDataEnvFitted, parametersFitted = list(env.getEnvelopeSerie(xDataEnv, method = "fitted"))
-                if yDataEnvFitted[0] != None: fig.add_trace(go.Scatter3d( x=xDataEnv, y=yDataEnvFitted, z=zDataEnv, mode='lines',  marker=dict(color=proteoform.getColor()), name=proteoform.getModificationBrno()))
-                else:
-                    yDataEnvEstim, parametersEstim = list(env.getEnvelopeSerie(xDataEnv, method = "estimated"))
-                    if yDataEnvEstim[0] != None: fig.add_trace(go.Scatter3d( x=xDataEnv, y=yDataEnvEstim, z=zDataEnv, mode='lines',  marker=dict(color=proteoform.getColor()), name=proteoform.getModificationBrno()))
+        xDataEnv = list(range(int(min(rt_range)),int(max(rt_range)),1))
+        zDataEnv = [proteoform.getMzFirstPsm() for x in xDataEnv]
+
+        yDataEnvFitted, parametersFitted = list(env.getEnvelopeSerie(xDataEnv, method = "fitted"))
+        if yDataEnvFitted[0] != None: 
+            fig.add_trace(go.Scatter3d( x=xDataEnv, y=yDataEnvFitted, z=zDataEnv, mode='lines',  marker=dict(color=proteoform.getColor()), name=proteoform.getModificationBrno()))
+        else:
+            yDataEnvEstim, parametersEstim = list(env.getEnvelopeSerie(xDataEnv, method = "estimated"))
+            if yDataEnvEstim[0] != None: fig.add_trace(go.Scatter3d( x=xDataEnv, y=yDataEnvEstim, z=zDataEnv, mode='lines',  marker=dict(color=proteoform.getColor()), name=proteoform.getModificationBrno()))
     
     for proteoform in [x for x in proteoFilt.values()]:
         precIntens = [psm.spectrum.getPrecIntens() for psm in proteoform.getValidatedLinkedPsm()]

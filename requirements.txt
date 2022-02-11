@@ -14,6 +14,9 @@ spectrum-utils
 tkinter
 chart_studio
 lxml
+unimod-mapper 
+progress
+
 
 ###### Requirements with Version Specifiers ######
 numpy==1.21

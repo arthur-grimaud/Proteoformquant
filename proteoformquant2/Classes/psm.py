@@ -1,5 +1,7 @@
 
 from Utils import constant
+import unimod_mapper 
+um = unimod_mapper.UnimodMapper()
 from Utils.misc import truncate
 import pprint
 import spectrum_utils.spectrum as sus
@@ -43,7 +45,7 @@ class Psm():
     def getCalculatedMassToCharge(self):
         return self.calculatedMassToCharge
 
-    def getModificationsBrno(self):
+    def getModificationBrno(self):
         """Returns modifications of a peptide in brno nomenclature: K27meK34ac"""
         deltaMods = constant.delta_mod
 
@@ -70,6 +72,28 @@ class Psm():
         for mod in self.proteoform.getModificationDict():
             modDict[int(mod["location"])]=float(mod["monoisotopicMassDelta"]) #use list comprehension ??
         return modDict
+
+    def getModificationProforma(self):
+        """Returns the proteoform modification in the proforma format"""
+
+        if self.Modification == []:
+            return self.PeptideSequence
+        else:
+            sequence_list = list(self.PeptideSequence.strip(" "))
+         
+            for mod in reversed(self.Modification):
+                modMass = mod["monoisotopicMassDelta"]
+
+                modName = um.id_to_name(um.mass_to_ids(modMass,decimals=2)[0])[0]
+
+                sequence_list.insert(int(mod["location"]),"[{0}]".format(modName))
+
+            
+        
+            return "".join(sequence_list)
+
+        
+        mods = um.mass_to_ids(79.96,decimals=1)
 
     def getAnnotation(self):
         return self.annotation
@@ -100,15 +124,14 @@ class Psm():
             chargeState = self.getChargeState()
             peptideSequence = self.getPeptideSequence()
             modifications =self.getModificationsSu()
-            mods_brno = self.getModificationsBrno()
+            mods_brno = self.getModificationBrno()
 
-
-
-            #print("-= Annotating psm: {0} of rank: {1}".format(mods_brno,self.rank))
 
             
             nAnnotFrag = 0
+
             #annotate each fragment type individualy
+
             for theoFragType in self.proteoform.getTheoFrag():
 
                 #create msmsspectrum object
@@ -157,7 +180,8 @@ class Psm():
                         "intens" : intensList,
                         "pos" : posList,
                         "index" : indexList,
-                        "mzErrorList" : mzErrorList
+                        "mzErrorList" : mzErrorList,
+                        "fragCode" : [",".join((pos.split(":")[0], pos.split(":")[1], theoFragType)) for pos in posList]
                     }
 
             #print(self.annotFrag)

@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 ### Import ###
-
 #Modules
 import sys
 from pyteomics import mzid 
@@ -9,7 +8,6 @@ from objbrowser import browse #dev
 import pickle
 #Custom Modules
 from Utils import input 
-
 #Classes
 from Classes.msrun import Msrun 
 import resource
@@ -57,11 +55,26 @@ def main():
     run.updateProteoformsTotalIntens()
     run.updateUnassignedSpectra()
 
+    print(run.getDatasetMetrics())
+
+    ### Report ###
+    sys.setrecursionlimit(10000)
+    with open('pfq_out_obj_test_1.pkl', 'wb') as outp:
+        pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
+
+    run.updateChimericSpectra(maxRank = 5)
+
+    run.updateProteoformsEnvelope()
+    run.updateProteoformsValidation()
+    run.updateProteoformsTotalIntens()
+    
+
+    print(run.getDatasetMetrics())
     ### Output ###
 
     ### Report ###
     sys.setrecursionlimit(10000)
-    with open('pfq_out_obj_test.pkl', 'wb') as outp:
+    with open('pfq_out_obj_test_2.pkl', 'wb') as outp:
         pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
 
 

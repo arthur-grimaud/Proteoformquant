@@ -92,6 +92,49 @@ class Spectrum():
         pass
 
     def updateRatio(self):
+        #TODO works only for 2 validated psms
+
+        validatedPsms = [psm for psm in self.psms if psm.isValidated]
+        uniquePairwise = [] # list of list of unique ions names formatted as such [[List Unique validatedPsms[0 and 1]], [List Unique validatedPsms[1 and 2]], .... ]
+        ratioPairwise = []
+
+        if len(validatedPsms) == 1:
+            validatedPsms[0].ratio = 1.0
+        else:
+            for p in range(0, len(validatedPsms)-1):
+                uniqueFragments = []
+                for fragType in validatedPsms[p].proteoform.theoFrag.keys():
+                    for fragment in validatedPsms[p].proteoform.theoFrag[fragType]:
+                        if validatedPsms[p].proteoform.theoFrag[fragType][fragment] != validatedPsms[p+1].proteoform.theoFrag[fragType][fragment]:
+                            uniqueFragments.append(fragment)
+                uniquePairwise.append(uniqueFragments) 
+
+            for p in range(0, len(validatedPsms)-1):
+
+                A = self._getSumIntensitiesAnnotated(validatedPsms[p],uniquePairwise[p])
+                B = self._getSumIntensitiesAnnotated(validatedPsms[p+1],uniquePairwise[p])
+
+                validatedPsms[p].ratio = A/(A+B)
+                validatedPsms[p+1].ratio = B/(A+B)  
+
+                print("RATIO")
+                print(validatedPsms[p])
+                print(validatedPsms[p+1])
+
+
+
+    def _getSumIntensitiesAnnotated(self, psm, fragments):
+
+        intensities = []
+        for fragType in psm.annotation.values():
+            for i, fragCode in enumerate(fragType["fragCode"]):
+                if fragCode in fragments:
+                    intensities.append(fragType["intens"][i])
+        
+        return(sum(intensities))
+            
+
         pass
+
 
     
