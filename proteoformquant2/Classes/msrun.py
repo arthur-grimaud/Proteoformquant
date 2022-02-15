@@ -29,8 +29,8 @@ class Msrun():
         self.proteoforms: dict(Proteoform) = {}
         self.proteoform0 = Proteoform0()
 
-        self.precMzTolerance = 1
-        self.intensityThreshold = 100000
+        self.precMzTolerance = 1.5
+        self.intensityThreshold = 200000
 
 
     # ---------------------------------- getters --------------------------------- #
@@ -132,7 +132,7 @@ class Msrun():
 
         with Bar('Generating theoretical fragments', max =0) as bar:
             for proteoID in self.proteoforms:
-                self.proteoforms[proteoID].setTheoreticalFragments(["c","zdot","c-1","z+1","z+2"])
+                self.proteoforms[proteoID].setTheoreticalFragments(["c","zdot","z+1"])
                 bar.next()
 
         with Bar('Matching fragments', max =0) as bar:
@@ -195,7 +195,7 @@ class Msrun():
                     
                     altProteo = self.proteoforms[psmProforma] #TODO might need a try except for proteo only insecond rank
 
-                    if altProteo.getEnvelope() != None:
+                    if altProteo.getEnvelope() != None: 
                         if altProteo.getEnvelope().getY(spectrumRt) > self.intensityThreshold:
                             
                             print("spectrum at RT {0} psm: {1} matches proteoform {2}".format(spectrumRt, psmProforma, altProteo.getModificationBrno()))

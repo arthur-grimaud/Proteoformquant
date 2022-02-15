@@ -42,6 +42,9 @@ class Spectrum():
     def getSumIntensAnnotFrag(self):
         return self.sumIntensAnnotFrag
 
+    def getValidatedPsm(self):
+        return [psm for psm in self.psms if psm.isValidated == True]
+
     def getNumberValidatedPsm(self):
         return len([psm for psm in self.psms if psm.isValidated == True])
 
@@ -117,9 +120,6 @@ class Spectrum():
                 validatedPsms[p].ratio = A/(A+B)
                 validatedPsms[p+1].ratio = B/(A+B)  
 
-                print("RATIO")
-                print(validatedPsms[p])
-                print(validatedPsms[p+1])
 
 
 
@@ -130,6 +130,8 @@ class Spectrum():
             for i, fragCode in enumerate(fragType["fragCode"]):
                 if fragCode in fragments:
                     intensities.append(fragType["intens"][i])
+
+        print(len(intensities))
         
         return(sum(intensities))
             
