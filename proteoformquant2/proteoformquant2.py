@@ -59,17 +59,17 @@ def main():
 
     ### Report ###
     sys.setrecursionlimit(10000)
-    with open('pfq_out_obj_test_1b.pkl', 'wb') as outp:
+    with open('pfq_out_obj_test_s.pkl', 'wb') as outp:
         pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
 
-    run.updateChimericSpectra(maxRank = 5)
+    # run.updateChimericSpectra(maxRank = 5)
 
-    run.updateProteoformsEnvelope()
-    #run.updateProteoformsValidation()
-    run.updateProteoformsTotalIntens()
+    # run.updateProteoformsEnvelope()
+    # #run.updateProteoformsValidation()
+    # run.updateProteoformsTotalIntens()
 
 
-    print(run.getDatasetMetrics())
+    # print(run.getDatasetMetrics())
 
     
 

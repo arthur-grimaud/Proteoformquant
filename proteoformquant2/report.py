@@ -24,7 +24,7 @@ import pandas as pd
 #                                  Data import                                 #
 # ---------------------------------------------------------------------------- #
 
-with open('pfq_out_obj_test_2b.pkl', 'rb') as inp:
+with open('pfq_out_obj_test_s.pkl', 'rb') as inp:
     exp = pickle.load(inp) 
 
 print(exp.getDatasetMetrics())

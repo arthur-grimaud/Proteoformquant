@@ -38,7 +38,7 @@ class Envelope():
 
 
         if self.scoreFitted < self.scoreThreshold:
-            self.excludeOutliersRightMethod()
+            self.excludeOutliersMeanMethod()
             
         #else: #both steps could be performed ? 
 
@@ -50,8 +50,7 @@ class Envelope():
 
     def getEnvelopeSerie(self, xData, method = "best"):
         """for a list of x values return the estimated y values given the fitted function
-        use estimated parameters if fitted parameters are not determined"""
-        #print(self.__dict__)
+        use estimated parameters if fitted parameters are not determined or is method = best"""
 
 
         if self.fittedParam[0] != None and method in ["fitted","best"]:
@@ -62,7 +61,7 @@ class Envelope():
             return [None], [None]
 
     def getY(self, x, method = "best"):
-        """for x return the estimated y values given the fitted function
+        """for x return the estimated y value given the fitted function
         uses estimated parameters if fitted parameters are not determined"""
         if self.fittedParam[0] != None and method in ["fitted","best"]:
             return self.__skewNormal(x, *self.fittedParam)
@@ -100,24 +99,33 @@ class Envelope():
 
     # ---------------------------------- Fitting --------------------------------- #
 
-    def fitSkewNormal(self, xData, yData):
+    def fitSkewNormal(self, xData, yData, startPrevFit = False):
+        """ startPrevFit  """
 
-        KsEstimated = None
-        KsFitted = None
-        scoreEstimated = 0
-        scoreFitted = 0
 
-        #Get Estimated Parameters
-        geneticParameters = self.__generate_Initial_Parameters(xData, yData)
-        scoreEstimated = self.__KSTest(geneticParameters, xData, yData)
+        if startPrevFit == True and self.fittedParam != [None]:
+
+            estimatedParam = self.fittedParam
+
+        else:
+
+            scoreEstimated = 0
+            scoreFitted = 0
+            #Get Estimated Parameters
+            geneticParameters = self.__generate_Initial_Parameters(xData, yData)
+            scoreEstimated = self.__PearsonTest(geneticParameters, xData, yData)
+            #estimated param from genetic algo
+            estimatedParam = geneticParameters
+        
 
         #Optimize model
-        bounds = self.__getParameterBounds(xData, yData)
-        bounds = tuple([ tuple([bounds[x][b] for x in range(len(bounds))])  for b in range(len(bounds[0]))]) #convert to curve fit bounds format
+        bounds = self.__getParameterBounds(xData, yData) #Get param bounds
+        bounds = tuple([ tuple([bounds[x][b] for x in range(len(bounds))])  for b in range(len(bounds[0]))]) #convert to "curve_fit" bounds format
+
         try:
-            fittedParameters = curve_fit(self.__skewNormal, xData, yData, geneticParameters,bounds=bounds)
+            fittedParameters = curve_fit(self.__skewNormal, xData, yData, estimatedParam, bounds=bounds)
             fittedParameters = fittedParameters[0]
-            scoreFitted = self.__KSTest(fittedParameters, xData, yData)
+            scoreFitted = self.__PearsonTest(fittedParameters, xData, yData, )
         except(RuntimeError,TypeError):
             fittedParameters = [None]
 
@@ -174,41 +182,37 @@ class Envelope():
     def excludeOutliersMeanMethod(self):
         "Try imrove the fit of the curve by iteratively removing datapoints the furthest from the RT mean"
 
-
-
         scores=[self.scoreFitted] #list of scores for each subset
         indexes=[0]
         psmsSubsets = [self.psms]
-
-        if len(self.xData) >= 7: #limit prob 7
-            for n in range(1,len(self.xData)-0):
-                print(n)
-                psmsSubset =psmsSubsets[n-1]
+        print(".........................")
+        print(self.psms[0].proteoform.getModificationBrno())
+        print(self.psms)
+        if len(self.xData) >= 8: #limit prob 7
+            for n in range(1,len(self.xData)-5):
+                psmsSubset = psmsSubsets[n-1]
                 #get index of furthest point form mean
                 xDataT = [psm.spectrum.getRt() for psm in psmsSubset]
                 xMean = mean(xDataT)
                 outPsmIndex = xDataT.index(max(xDataT, key=lambda x:abs(x-xMean)))
-
                 #exclude psm
                 psmsSubset.pop(outPsmIndex)
-
                 #subset 
                 xDataT = np.array([psm.spectrum.getRt() for psm in psmsSubset])
                 yDataT = np.array([psm.getPrecIntensRatio() for psm in psmsSubset])
-                #refit the curve using subset
+                #refit the curve to subset
                 estimatedParam, fittedParam, scoreEstimated, scoreFitted = self.fitSkewNormal(xDataT, yDataT)
-                #store score of subset
+                #store score and subset
                 scores.append(scoreFitted)
                 indexes.append(n)
                 psmsSubsets.append(psmsSubset)
 
-        
-                print(scores)
+            print(scores)
+            print(indexes)
+            print(psmsSubsets)
 
             kn = KneeLocator(indexes, scores, S=2, curve='concave', direction='increasing',interp_method= "polynomial", polynomial_degree=2)
             index = kn.knee
-
-            print(index)
 
             if index != None and index != 0:
                 
@@ -228,7 +232,7 @@ class Envelope():
         
 
     def excludeOutlierNonSignificant():
-        "Eclude datapoint on the tails of the envellope that would represent less than 1%  of the area under the curve"
+        "Exclude datapoint on the tails of the envellope that would represent less than 1%  of the area under the curve"
 
     # ----------------------------- Model's function ----------------------------- #
 
@@ -291,7 +295,7 @@ class Envelope():
     #def __KSTest(self, parameters, xData, yData):
        # return stats.kstest(xData, lambda x: self.__skewNormalCdf(x, *parameters, min(xData), max(xData)))
 
-    def __KSTest(self, parameters, xData, yData): # !! NOT KS !! to be renamed 
+    def __PearsonTest(self, parameters, xData, yData): # !! NOT KS !! to be renamed 
         x = np.array(yData).reshape((-1, 1))
         y = np.array([self.__skewNormal(x, *parameters) for x in xData])
         model = LinearRegression().fit(x, y)

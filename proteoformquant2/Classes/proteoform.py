@@ -19,7 +19,7 @@ class Proteoform():
         self.modificationProforma: str = modificationProforma
 
         #Param
-        self.scoreThreshold = 0
+        self.scoreThreshold = 0.7
 
         #Theoretical Fragments
         self.theoFrag = None
