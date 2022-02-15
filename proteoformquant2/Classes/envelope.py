@@ -213,6 +213,7 @@ class Envelope():
 
             kn = KneeLocator(indexes, scores, S=2, curve='concave', direction='increasing',interp_method= "polynomial", polynomial_degree=2)
             index = kn.knee
+            print(index)
 
             if index != None and index != 0:
                 
@@ -232,7 +233,7 @@ class Envelope():
         
 
     def excludeOutlierNonSignificant():
-        "Exclude datapoint on the tails of the envellope that would represent less than 1%  of the area under the curve"
+        "Exclude datapoint on the tails of the envellope that would represent less than X%  of the area under the curve"
 
     # ----------------------------- Model's function ----------------------------- #
 
