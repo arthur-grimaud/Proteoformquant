@@ -24,6 +24,10 @@ def checkArgs(args):
     if not os.path.isfile(args.spectraFn):
         warning("Input file: " + args.spectraFn + ", doesn't exist")
         return
+    if args.dbse not in ("mascot", "comet"):
+        warning("DBSE name: " + args.dbse + ", is not valid")
+        return
+    
 
     # outputBase = os.path.dirname(outputFn)
     # if outputBase != '' and not os.path.exists(outputBase):

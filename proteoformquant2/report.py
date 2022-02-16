@@ -24,7 +24,7 @@ import pandas as pd
 #                                  Data import                                 #
 # ---------------------------------------------------------------------------- #
 
-with open('pfq_out_obj_test_s.pkl', 'rb') as inp:
+with open('pfq_out_obj_test_2b.pkl', 'rb') as inp:
     exp = pickle.load(inp) 
 
 print(exp.getDatasetMetrics())
@@ -94,6 +94,14 @@ app.layout = html.Div([
     html.Div(children=[
         html.Label('Proteoform ratios'),
         dcc.Graph(id = 'plot_quantification'),
+        ]
+    ),
+
+    html.Br(),
+
+    html.Div(children=[
+        html.Label('Additional Plot'),
+        dcc.Graph(id = 'misc_plot'),
         ]
     ),
 
@@ -225,11 +233,15 @@ def plotAnnotMsmsVsPrecIntens(minMaxMz):
     minMz = minMaxMz[0]
     maxMz = minMaxMz[1]
     precIntens = [spectrum.getPrecIntens() for spectrum in exp.spectra.values() if spectrum.getPrecMz() > minMz and spectrum.getPrecMz() < maxMz]
-    annotIntens  = [spectrum.getSumIntensAnnotFrag() for spectrum in exp.spectra.values() if spectrum.getPrecMz() > minMz and spectrum.getPrecMz() < maxMz]
+    #annotIntens  = [spectrum.getSumIntensAnnotFrag() for spectrum in exp.spectra.values() if spectrum.getPrecMz() > minMz and spectrum.getPrecMz() < maxMz]
+    sumFragIntens  = [spectrum.getSumIntensFrag() for spectrum in exp.spectra.values() if spectrum.getPrecMz() > minMz and spectrum.getPrecMz() < maxMz]
     spectrumKey  = [spectrum for spectrum in exp.spectra.keys() if exp.spectra[spectrum].getPrecMz() > minMz and exp.spectra[spectrum].getPrecMz() < maxMz]
     fig = go.Figure()
-    fig.add_scatter( x=np.log(annotIntens), y=np.log(precIntens), mode='markers', marker=dict(size=4, color="red"), name='Annotated Fragment Summed',customdata=spectrumKey )
+    #fig.add_scatter( x=np.log(annotIntens), y=np.log(precIntens), mode='markers', marker=dict(size=4, color="red"), name='Annotated Fragment Summed',customdata=spectrumKey )
+    fig.add_scatter( x=np.log(sumFragIntens), y=np.log(precIntens), mode='markers', marker=dict(size=4, color="red"), name='Fragment Sum',customdata=spectrumKey )
     fig.update_layout(template=template)
+    fig.update_xaxes(title_text='log(Fragments Summed Intensity)')
+    fig.update_yaxes(title_text='log(Precursor Intensity)')
     return fig
 
 
@@ -524,6 +536,28 @@ def plotRelativeAbundanceProteo(input):
     fig = px.bar(x=proteoformsBrno, y=proteoformsRatio)
     fig.update_layout(template=template,height=800)
     return fig
+
+
+# ---------------------------------------------------------------------------- #
+#                                   Mics plot                                  #
+# ---------------------------------------------------------------------------- #
+
+
+@app.callback(
+    Output('misc_plot', 'figure'),
+    Input('mainDiv', "id")
+    # Input('input_max_mz', "value")
+)
+def envelopeParams(minMaxMz):
+
+    envS = [proteoform.envelope.fittedParam[1] for proteoform in exp.proteoforms.values() if proteoform.envelope != None]
+    envM = [proteoform.envelope.fittedParam[0] for proteoform in exp.proteoforms.values() if proteoform.envelope != None]
+
+    fig = go.Figure()
+    fig.add_scatter( x=envM, y=envS, mode='markers', marker=dict(size=4, color="red"), name='')
+    
+    fig.update_layout(template=template)
+    return fig  
 
 
 # ---------------------------------------------------------------------------- #

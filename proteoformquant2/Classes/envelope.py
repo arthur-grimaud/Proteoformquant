@@ -10,17 +10,13 @@ from kneed import KneeLocator
 from scipy.integrate import trapz, simps
 from statistics import mean
 
+from sympy import subsets
+
 class Envelope():
 
-    def __init__(self, psms, scoreThreshold):
+    def __init__(self):
         
 
-        self.psms = psms
-
-        self.scoreThreshold = scoreThreshold #threshold below which trimming is triggered
-
-        self.xData = np.array([psm.spectrum.getRt() for psm in psms])
-        self.yData = np.array([psm.getPrecIntensRatio() for psm in psms])
         
         self.estimatedParam = [None]
         self.fittedParam = [None]
@@ -28,19 +24,7 @@ class Envelope():
         self.scoreEstimated = None
         self.scoreFitted = None
 
-        self.splitScores = []
-        self.split = None
-
         self.psmsOutliers = []
-
-
-        self.estimatedParam, self.fittedParam, self.scoreEstimated, self.scoreFitted = self.fitSkewNormal(self.xData, self.yData)
-
-
-        if self.scoreFitted < self.scoreThreshold:
-            self.excludeOutliersMeanMethod()
-            
-        #else: #both steps could be performed ? 
 
 
         pass
@@ -90,25 +74,39 @@ class Envelope():
 
     def getAUC(self):
 
-
         try:
-            return integrate.quad(lambda x: self.__skewNormal(x, *self.fittedParam),0,10000)[0]
+            return integrate.quad(lambda x: self.__skewNormal(x, *self.fittedParam), 0, 10000)[0]
         except(TypeError):
             return 0
         
 
     # ---------------------------------- Fitting --------------------------------- #
 
-    def fitSkewNormal(self, xData, yData, startPrevFit = False):
-        """ startPrevFit  """
+
+    def computeEnvelope(self, psms, scoreThreshold):
 
 
-        if startPrevFit == True and self.fittedParam != [None]:
+        self.psms = psms
+        self.scoreThreshold = scoreThreshold 
 
+        self.xData = np.array([psm.spectrum.getRt() for psm in psms])
+        self.yData = np.array([psm.getPrecIntensRatio() for psm in psms])
+        
+        #first fit
+        self.estimatedParam, self.fittedParam, self.scoreEstimated, self.scoreFitted = self.fitSkewNormal(self.xData, self.yData)
+        #outlier removal if fit below score 
+        if self.scoreFitted < self.scoreThreshold:
+            self.excludeOutliersMeanMethod()
+
+
+
+    def fitSkewNormal(self, xData, yData):
+        """ startPrevFit """
+
+        if len(self.fittedParam) > 1 :
             estimatedParam = self.fittedParam
 
         else:
-
             scoreEstimated = 0
             scoreFitted = 0
             #Get Estimated Parameters
@@ -155,7 +153,6 @@ class Envelope():
                     scores.append(scoreFitted)
                     indexes.append(n)
                     psmsSubsets.append(psmsSubset)
-
         
             print(scores)
 
@@ -181,56 +178,54 @@ class Envelope():
 
     def excludeOutliersMeanMethod(self):
         "Try imrove the fit of the curve by iteratively removing datapoints the furthest from the RT mean"
+        subsetsL = [self.psms]
+        subsetsX = [[psm.spectrum.getRt() for psm in self.psms]]
+        subsetsI = [0]
+        for i in range(0,len(subsetsL[0])-5): #create list of psms subset 
+            m = mean(subsetsX[i])
+            outIndex = subsetsX[i].index(max(subsetsX[i], key=lambda x:abs(x-m)))
+            sl = [v for y,v in enumerate(subsetsL[i]) if y != outIndex]
+            sx = [v for y,v in enumerate(subsetsX[i]) if y != outIndex]
+            subsetsL.append(sl)
+            subsetsX.append(sx)
+            subsetsI.append(i+1)
 
-        scores=[self.scoreFitted] #list of scores for each subset
-        indexes=[0]
-        psmsSubsets = [self.psms]
-        print(".........................")
-        print(self.psms[0].proteoform.getModificationBrno())
-        print(self.psms)
-        if len(self.xData) >= 8: #limit prob 7
-            for n in range(1,len(self.xData)-5):
-                psmsSubset = psmsSubsets[n-1]
-                #get index of furthest point form mean
-                xDataT = [psm.spectrum.getRt() for psm in psmsSubset]
-                xMean = mean(xDataT)
-                outPsmIndex = xDataT.index(max(xDataT, key=lambda x:abs(x-xMean)))
-                #exclude psm
-                psmsSubset.pop(outPsmIndex)
-                #subset 
-                xDataT = np.array([psm.spectrum.getRt() for psm in psmsSubset])
-                yDataT = np.array([psm.getPrecIntensRatio() for psm in psmsSubset])
-                #refit the curve to subset
-                estimatedParam, fittedParam, scoreEstimated, scoreFitted = self.fitSkewNormal(xDataT, yDataT)
-                #store score and subset
-                scores.append(scoreFitted)
-                indexes.append(n)
-                psmsSubsets.append(psmsSubset)
+        subsetsS = []
+        for psmsSubset in subsetsL:
+            xDataT = np.array([psm.spectrum.getRt() for psm in psmsSubset])
+            yDataT = np.array([psm.getPrecIntensRatio() for psm in psmsSubset])
+            #refit the curve to subset
+            estimatedParam, fittedParam, scoreEstimated, scoreFitted = self.fitSkewNormal(xDataT, yDataT)
+            #store score and subset
+            subsetsS.append(scoreFitted)
+            print(scoreFitted)
 
-            print(scores)
-            print(indexes)
-            print(psmsSubsets)
-
-            kn = KneeLocator(indexes, scores, S=2, curve='concave', direction='increasing',interp_method= "polynomial", polynomial_degree=2)
-            index = kn.knee
-            print(index)
-
-            if index != None and index != 0:
-                
-                print(psmsSubsets[index])
-                try:
-                    self.xData = np.array([psm.spectrum.getRt() for psm in psmsSubsets[index]])
-                    self.yData = np.array([psm.getPrecIntensRatio() for psm in psmsSubsets[index]])
-                    self.estimatedParam, self.fittedParam, self.scoreEstimated, self.scoreFitted = self.fitSkewNormal(self.xData, self.yData)
-                    self.psmsOutliers = [psm for psm in self.psms if psm not in psmsSubsets[index]] #TODO check whether outlier needs to be removed for proteoform.linkedPSMSs
-                except(TypeError):
-                    print("could not optimize fit by removing data points")
-                    self.psmsOutliers = []
-            else:   
-                print("could not optimize fit by removing data points")
-                pass 
 
         
+        kn = KneeLocator(subsetsI, subsetsS, S=2, curve='concave', direction='increasing',interp_method= "polynomial", polynomial_degree=2)
+        index = kn.knee
+        print("selected index")
+        print(index) 
+
+        if index != None and index != 0:
+    
+            print(subsetsL[index])
+            try:
+                self.xData = np.array([psm.spectrum.getRt() for psm in subsetsL[index]])
+                self.yData = np.array([psm.getPrecIntensRatio() for psm in subsetsL[index]])
+                self.estimatedParam, self.fittedParam, self.scoreEstimated, self.scoreFitted = self.fitSkewNormal(self.xData, self.yData)
+                self.psmsOutliers = [psm for psm in self.psms if psm not in subsetsL[index]] #TODO check whether outlier needs to be removed for proteoform.linkedPSMSs
+            except(TypeError):
+                print("could not optimize fit by removing data points")
+                self.psmsOutliers = []
+        else:   
+            print("could not optimize fit by removing data points")
+            pass 
+
+
+
+    pass
+
 
     def excludeOutlierNonSignificant():
         "Exclude datapoint on the tails of the envellope that would represent less than X%  of the area under the curve"
@@ -251,7 +246,7 @@ class Envelope():
     # ------------------------------ Error Functions ----------------------------- #
         
     def __sumOfSquaredError(self, theta, *data):
-        warnings.filterwarnings("ignore") # do not print warnings by genetic algorithm
+        warnings.filterwarnings("ignore") #do not print warnings by genetic algorithm
         xData, yData = data
         yDataPred = self.__skewNormal(xData, *theta)
         return np.sum((yData - yDataPred) ** 2.0)
@@ -275,7 +270,7 @@ class Envelope():
     def __getParameterBounds(self,xData,yData):
         #TODO define clear param bound
 
-        # parameters bounds
+        #parameters bounds
         parameterBounds = []
         parameterBounds.append([ min(xData)-((max(xData)-min(xData))/2) , max(xData)+((max(xData)-min(xData))/2) ]) # search bounds for m
         parameterBounds.append([0.1, 50 ]) # search bounds for s

@@ -38,6 +38,9 @@ class Spectrum():
 
     def getFragMz(self):
         return self.fragMz
+
+    def getSumIntensFrag(self):
+        return sum(self.fragIntens)
     
     def getSumIntensAnnotFrag(self):
         return self.sumIntensAnnotFrag
@@ -131,7 +134,7 @@ class Spectrum():
                 if fragCode in fragments:
                     intensities.append(fragType["intens"][i])
 
-        print(len(intensities))
+        #print(len(intensities))
         
         return(sum(intensities))
             

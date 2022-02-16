@@ -17,29 +17,24 @@ import math
 from dash.exceptions import PreventUpdate
 from scipy import stats
 from kneed import KneeLocator
+from statistics import mean
 
 
-l = [10,20,10,10]
-print(len(l))
-for i in range(0,len(l)-1):
-    print(i)
 
-with open('pfq_out_obj_test.pkl', 'rb') as inp:
-    exp = pickle.load(inp) 
+minSubLen = 5
+l = ["a","b","c","d","e","f","g","h","i","j"]
+x = [-5,2,3,4,7,10,11,12,59,58]
 
-
-for spectra in exp.spectra.values():
-     print(spectra.psms[0].proteoform.theoFrag)
-     print(spectra.psms[0].annotation)
+subsetsL = [l]
+subsetsX = [x]
 
 
-# uniqueFragments = []
+print(subsetsL)
+print(subsetsX)
 
-# psmA =  exp.spectra[].psms[].theoFrag
-# psmB =  exp.spectra[].psms[].theoFrag
+l = [None]
 
-# for fragType in psmA.proteoform.theoFrag.keys():
-#     for fragment in psmA.proteoform.theoFrag[fragType]:
-#         if psmA.proteoform.theoFrag[fragType][fragment] =! psmB.proteoform.theoFrag[fragType][fragment]
-#             uniqueFragments.append(fragment)
+print(l.any(None))
+
+
 

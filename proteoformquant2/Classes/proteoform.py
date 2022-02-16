@@ -10,16 +10,12 @@ class Proteoform():
 
     def __init__(self,peptideSequence, modificationBrno, modificationProforma, modificationDict = {}):
 
-
-
         #Proteoform Description
         self.peptideSequence: str = peptideSequence
         self.modificationDict: dict = modificationDict
         self.modificationBrno: str = modificationBrno
         self.modificationProforma: str = modificationProforma
 
-        #Param
-        self.scoreThreshold = 0.7
 
         #Theoretical Fragments
         self.theoFrag = None
@@ -132,14 +128,16 @@ class Proteoform():
         
         return(frag_masses)
 
-    def computeEnvelope(self):
+    def computeEnvelope(self,scoreFitThreshold):
         """instanciate an envelope object by providing the list of psm associated to that proteoform"""
         if len(self.getValidatedLinkedPsm()) > 5:
-            env = Envelope(self.getValidatedLinkedPsm(), scoreThreshold = self.scoreThreshold)
-            if env.scoreFitted > self.scoreThreshold:
+            env = Envelope()
+            env.computeEnvelope(self.getValidatedLinkedPsm(), scoreFitThreshold)
+            print(env)
+            if env.scoreFitted > scoreFitThreshold:
                 self.envelope = env
             else:
-                self.envelope = None
+                self.envelope = env # !!! 
                 print("Could not fit curve to chromatogram")
         else:
             #print("Not enough datapoints to compute envelope")
