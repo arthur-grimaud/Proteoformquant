@@ -2,7 +2,7 @@ from pickle import TRUE
 from pyteomics import mass
 from logging import warning
 import plotly.graph_objs as go
-from Classes.envelope import Envelope
+from Classes.elution_profile import ElutionProfile
 from Utils import constant
 
 class Proteoform0():

@@ -38,8 +38,8 @@ class Msrun():
 
     def getRtRange(self):
         "Get min and max Rt in self.spectra"
-        mn = min([spectrum.getRt() for spectrum in self.spectra.values()])
-        mx = max([spectrum.getRt() for spectrum in self.spectra.values()])
+        mn = min([spectrum.get_rt() for spectrum in self.spectra.values()])
+        mx = max([spectrum.get_rt() for spectrum in self.spectra.values()])
         return (mn, mx)
 
     def getMzRange(self):
@@ -58,16 +58,16 @@ class Msrun():
             "UnassignedSpectra": len([spectrum for spectrum in self.proteoform0.linkedSpectra]),
             "ChimericSpectra": len([spectrum for spectrum in self.spectra.values() if spectrum.getNumberValidatedPsm() > 1]),
             "TotalProteoforms": len(self.proteoforms)-1,
-            "AvgEnvelopeScore": mean([proteoform.getEnvelope().scoreFitted for proteoform in self.proteoforms.values() if proteoform.getEnvelope() != None ]),
-            "MinEnvelopeScore": min([proteoform.getEnvelope().scoreFitted for proteoform in self.proteoforms.values() if proteoform.getEnvelope() != None ]),
-            "MedianEnvelopeS":   median([proteoform.getEnvelope().fittedParam[1] for proteoform in self.proteoforms.values() if proteoform.getEnvelope() != None ]),
-            "MedianEnvelopeA":   median([proteoform.getEnvelope().fittedParam[2] for proteoform in self.proteoforms.values() if proteoform.getEnvelope() != None ]),
-            "MedianEnvelopeK":   median([proteoform.getEnvelope().fittedParam[3] for proteoform in self.proteoforms.values() if proteoform.getEnvelope() != None ])
+            "AvgEnvelopeScore": mean([proteoform.getEnvelope().score_fitted for proteoform in self.proteoforms.values() if proteoform.getEnvelope() != None ]),
+            "MinEnvelopeScore": min([proteoform.getEnvelope().score_fitted for proteoform in self.proteoforms.values() if proteoform.getEnvelope() != None ]),
+            "MedianEnvelopeS":   median([proteoform.getEnvelope().param_fitted[1] for proteoform in self.proteoforms.values() if proteoform.getEnvelope() != None ]),
+            "MedianEnvelopeA":   median([proteoform.getEnvelope().param_fitted[2] for proteoform in self.proteoforms.values() if proteoform.getEnvelope() != None ]),
+            "MedianEnvelopeK":   median([proteoform.getEnvelope().param_fitted[3] for proteoform in self.proteoforms.values() if proteoform.getEnvelope() != None ])
         }
 
     # ----------------------------------- main ----------------------------------- #
  
-    def readMzid(self, identFn):
+    def read_mzid(self, identFn):
         """Read a spectra identification file in .mzIdenMl whose path is specfieid in self.inputFn"""
         self.identFn = identFn #Store File that has been read
         mzidObj = mzid.read(identFn) #Create a pyteomics' mzid iterator
@@ -79,7 +79,7 @@ class Msrun():
                 bar.next()
         pass
 
-    def addMgfData(self, spectraFn):
+    def add_mgf_data(self, spectraFn):
         """Add info from mgf file to spectrum objects in self.spectra"""
 
         self.spectraFn = spectraFn #Store File that has been read
@@ -103,7 +103,7 @@ class Msrun():
         """Add info from mzml file to spectrum objects in self.spectra add Proteform objects to self.Proteoforms"""
         pass
     
-    def addProteoforms(self):
+    def add_proteoforms(self):
         """From spectrum objects in self.spectra instanciate proteoforms object to self.proteoforms"""
         i=0
         with Bar('Adding PSMs to Proteoform objects', max=1) as bar:
@@ -126,7 +126,7 @@ class Msrun():
 
 
 
-    def matchFragments(self, msmsTol= 0.02, internal = False):
+    def match_fragments(self, msmsTol= 0.02, internal = False):
         """If mgf and identification data are provided in a spectrum object, get the annotated fragments for each PSM"""
 
         with Bar('Generating theoretical fragments', max=1) as bar:
@@ -149,7 +149,7 @@ class Msrun():
 
             #TODO add a function thjat set the bounds based on the entire set of envelopes  
             for proteoID in self.proteoforms:
-                self.proteoforms[proteoID].computeEnvelope(self.scoreFitThreshold)
+                self.proteoforms[proteoID].model_elution_profile(self.scoreFitThreshold)
                 bar.next()
         pass
 
@@ -181,7 +181,7 @@ class Msrun():
         """ For every psm of rank = rank try to find a matching envelope, and assign to that proteoform it if it is the case"""
         for spectrum in self.spectra.values():
             spectrumMz = spectrum.getPrecMz()
-            spectrumRt = spectrum.getRt()
+            spectrumRt = spectrum.get_rt()
             
             for rank in range(1,maxRank):
                 if len(spectrum.psms) >= rank:
@@ -191,7 +191,7 @@ class Msrun():
                     altProteo = self.proteoforms[psmProforma] #TODO might need a try except for proteo only in second rank
 
                     if altProteo.getEnvelope() != None: 
-                        if altProteo.getEnvelope().getY(spectrumRt) > self.intensityThreshold:
+                        if altProteo.getEnvelope().get_y(spectrumRt) > self.intensityThreshold:
                             
                             #print("spectrum at RT {0} psm: {1} matches proteoform {2}".format(spectrumRt, psmProforma, altProteo.getModificationBrno()))
                             psm.isValidated = True 

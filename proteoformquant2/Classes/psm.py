@@ -98,7 +98,7 @@ class Psm():
     def getAnnotation(self):
         return self.annotation
 
-    def getPrecIntensRatio(self):
+    def get_prec_intens_ratio(self):
         """given self.ratio return the corresponding precursor intensity fraction for that psm"""
         return self.spectrum.getPrecIntens()*self.ratio
 

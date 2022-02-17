@@ -2,7 +2,7 @@ from pickle import TRUE
 from pyteomics import mass
 from logging import warning
 import plotly.graph_objs as go
-from Classes.envelope import Envelope
+from Classes.elution_profile import ElutionProfile
 from Utils import constant
 from statistics import mean
 
@@ -128,13 +128,13 @@ class Proteoform():
         
         return(frag_masses)
 
-    def computeEnvelope(self,scoreFitThreshold):
+    def model_elution_profile(self,scoreFitThreshold):
         """instanciate an envelope object by providing the list of psm associated to that proteoform"""
         if len(self.getValidatedLinkedPsm()) > 5:
-            env = Envelope()
-            env.computeEnvelope(self.getValidatedLinkedPsm(), scoreFitThreshold)
+            env = ElutionProfile()
+            env.model_elution_profile(self.getValidatedLinkedPsm(), scoreFitThreshold)
             print(env)
-            if env.scoreFitted > scoreFitThreshold:
+            if env.score_fitted > scoreFitThreshold:
                 self.envelope = env
             else:
                 self.envelope = env # !!! 
@@ -153,13 +153,13 @@ class Proteoform():
         
         if method == "AUC":
             if self.getEnvelope() != None:
-                print(self.getEnvelope().getAUC())
-                self.totalIntens+=self.getEnvelope().getAUC()
+                print(self.getEnvelope().get_auc())
+                self.totalIntens+=self.getEnvelope().get_auc()
             return None
 
         for psm in self.linkedPsm:
             if method == "precursor":
-                self.totalIntens+=psm.getPrecIntensRatio()
+                self.totalIntens+=psm.get_prec_intens_ratio()
             if method == "annotated":
                 self.totalIntens+=psm.getAnnotMsmsIntensRatio()
 
@@ -174,7 +174,7 @@ class Proteoform():
                 psm.isValidated = False
                 psm.ratio = 0.0 
         else:
-            for psm in self.getEnvelope().psmsOutliers:
+            for psm in self.getEnvelope().psms_outliers:
                 print("removing aberant psm")
                 psm.isValidated = False
                 psm.ratio = 0.0 

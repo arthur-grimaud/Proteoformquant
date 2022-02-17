@@ -30,7 +30,7 @@ class Spectrum():
     def getPrecIntens(self):
         return self.precIntens
 
-    def getRt(self):
+    def get_rt(self):
         return self.rt
 
     def getFragIntens(self):

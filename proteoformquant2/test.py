@@ -6,7 +6,7 @@ import plotly.graph_objects as go
 from dash.dependencies import Input, Output
 import pickle
 from matplotlib.pyplot import cm
-from Classes.envelope import Envelope
+from Classes.elution_profile import ElutionProfile
 import numpy as np
 import dash_bootstrap_components as dbc
 import plotly.io as pio
@@ -25,12 +25,12 @@ minSubLen = 5
 l = ["a","b","c","d","e","f","g","h","i","j"]
 x = [-5,2,3,4,7,10,11,12,59,58]
 
-subsetsL = [l]
-subsetsX = [x]
+subsets_psms = [l]
+subsets_rt = [x]
 
 
-print(subsetsL)
-print(subsetsX)
+print(subsets_psms)
+print(subsets_rt)
 
 l = [None]
 

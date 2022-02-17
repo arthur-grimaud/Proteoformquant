@@ -42,12 +42,12 @@ def main():
 
     ### Read Data ###
     run = Msrun(runId="1", dbse = dbse)
-    run.readMzid(indentFn)
-    run.addMgfData(spectraFn)
+    run.read_mzid(indentFn)
+    run.add_mgf_data(spectraFn)
     
     ### Prepare Data ###
-    run.addProteoforms()
-    run.matchFragments()
+    run.add_proteoforms()
+    run.match_fragments()
 
     ### Quantification ###
     run.updateProteoformsEnvelope()
@@ -62,14 +62,14 @@ def main():
     with open('pfq_out_obj_test_1b.pkl', 'wb') as outp:
         pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
 
-    run.updateChimericSpectra(maxRank = 5)
+    # run.updateChimericSpectra(maxRank = 5)
 
-    run.updateProteoformsEnvelope()
-    run.updatePsmValidation()
-    run.updateProteoformsTotalIntens()
+    # run.updateProteoformsEnvelope()
+    # run.updatePsmValidation()
+    # run.updateProteoformsTotalIntens()
 
 
-    print(run.getDatasetMetrics())
+    # print(run.getDatasetMetrics())
 
     
 
