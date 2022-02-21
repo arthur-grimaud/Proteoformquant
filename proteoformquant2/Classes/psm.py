@@ -73,7 +73,7 @@ class Psm():
             modDict[int(mod["location"])]=float(mod["monoisotopicMassDelta"]) #use list comprehension ??
         return modDict
 
-    def getModificationProforma(self):
+    def get_modification_proforma(self):
         """Returns the proteoform modification in the proforma format"""
 
         if self.Modification == []:

@@ -16,7 +16,7 @@ class Proteoform0():
 
     #Getters
 
-    def getProteoformTotalIntens(self):
+    def get_proteoform_total_intens(self):
         return self.totalIntens
 
     #Setters
@@ -24,7 +24,7 @@ class Proteoform0():
     def linkSpectrum(self, sprectrum):
         self.linkedSpectra.append(sprectrum)
 
-    def setProteoformTotalIntens(self, method= "precursor"):
+    def update_proteoform_total_intens(self, method= "precursor"):
         """Return the sum of intensities of psm of that proteoform method = precursor  or annotated (correspond to the intensity value used)"""
 
         self.totalIntens = 0
@@ -33,6 +33,6 @@ class Proteoform0():
             if method == "precursor":
                 self.totalIntens+=spectrum.getPrecIntens()
 
-    def setProteoformPsmValidation(self):
+    def update_proteoform_psm_validation(self):
         """   """
         pass

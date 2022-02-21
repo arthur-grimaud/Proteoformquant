@@ -58,6 +58,8 @@ class Spectrum():
     def setIdentDataMzid(self, identMzid):
         """fill PSM list from identification result dict from pyteomics"""
         for identItem in identMzid["SpectrumIdentificationItem"]: #Iterate over identification item and create an instance of the object psm for each
+            #print("*************PSM************")
+            #print(identItem)
             self.psms.append(Psm(rank = len(self.psms)+1, spectrum=self, identificationItem = identItem))
 
 

@@ -11,6 +11,8 @@ from scipy.integrate import trapz, simps
 from statistics import mean
 #from scipy.optimize import least_squares
 from sympy import subsets
+import sympy as sy
+
 
 class ElutionProfile():
 
@@ -25,7 +27,7 @@ class ElutionProfile():
         self.score_fitted = None
 
         #List of PSMs
-        self.psms = [] #all psms given to compute the elution profile
+        self.psms_included = [] #all psms used to compute the elution profile
         self.psms_outliers = [] #psms considered as outliers in the modelling of the elution profile
 
         #Score threshold
@@ -60,6 +62,18 @@ class ElutionProfile():
         else:
             return None
 
+    def is_parameters_fitted(self):
+        #return true if curve_fit results is available in the instance
+        if self.param_fitted[0] == None:
+            return False
+        else:
+            return True
+
+    def get_parameters_fitted(self):
+        #returns parameters of curve_fit
+
+        return self.param_fitted
+
     def get_elution_profile_mean(self, method):
         if method == "fitted":
             m, s, a, k =  self.param_estimated[0], self.param_estimated[1], self.param_estimated[2], self.param_estimated[3]
@@ -78,10 +92,10 @@ class ElutionProfile():
         else:
             print("Specify method (fitted or estimated) ")
 
-    def get_auc(self):
+    def get_auc(self, x_a, x_b):
 
         try:
-            return integrate.quad(lambda x: self.__skewnormal(x, *self.param_fitted), 0, 10000)[0]
+            return integrate.quad(lambda x: self.__skewnormal(x, *self.param_fitted), x_a, x_b)[0]
         except(TypeError):
             return 0
         
@@ -91,7 +105,7 @@ class ElutionProfile():
 
     def model_elution_profile(self, psms, score_threshold):
 
-        self.psms = psms
+        self.psms_included  = psms
         self.score_threshold = score_threshold 
 
         self.data_x = np.array([psm.spectrum.get_rt() for psm in psms])
@@ -101,7 +115,13 @@ class ElutionProfile():
         self.param_estimated, self.param_fitted, self.score_estimated, self.score_fitted = self.fit_skew_normal(self.data_x, self.data_y)
         # Fit model with outliers removal if below score threshold
         if self.score_fitted < self.score_threshold:
-            self.param_estimated, self.param_fitted, self.score_estimated, self.score_fitted, self.psms_outliers = self.exclude_outliers_mean_method()
+            self.param_estimated, self.param_fitted, self.score_estimated, self.score_fitted, self.psms_outliers, self.psms_included = self.exclude_outliers_mean_method()
+
+        #Add to outliers:
+        #self.psms_outliers, self.psms_included = self.exclude_outlier_non_significant(0.5)
+
+
+
 
     def fit_skew_normal(self, data_x, data_y, param_init = [None], param_bounds = [None]):
         """ startPrevFit """
@@ -111,7 +131,7 @@ class ElutionProfile():
         data_y = np.array(data_y)
 
 
-        #Determine initial parameters
+        #Determine parameters bounds
         if param_bounds[0] == None: #If no parameters bounds are suplied, estimate them
             param_bounds = self.__get_parameter_bounds_skewnormal(data_x, data_y)
 
@@ -124,99 +144,106 @@ class ElutionProfile():
         #goodness of the fit with estimated parameters
         score_estimated = self.__pearson_test(self.__skewnormal, param_estimated, data_x, data_y)
 
-        #Optimize curve fit
-        param_bounds_curve_fit = tuple([ tuple([param_bounds[x][b] for x in range(len(param_bounds))]) for b in range(len(param_bounds[0]))]) #convert bounds for "curve_fit"
-        param_fitted = curve_fit(self.__skewnormal, data_x, data_y, param_estimated, bounds=param_bounds_curve_fit)[0]
-        #goodness of the fit with fitted parameters
-        score_fitted = self.__pearson_test(self.__skewnormal, param_fitted, data_x, data_y)
+        
+        try:
+            #Optimize curve fit
+            param_bounds_curve_fit = tuple([ tuple([param_bounds[x][b] for x in range(len(param_bounds))]) for b in range(len(param_bounds[0]))]) #convert bounds for "curve_fit"
+            param_fitted = curve_fit(self.__skewnormal, data_x, data_y, param_estimated, bounds=param_bounds_curve_fit)[0]
+            #goodness of the fit with fitted parameters
+            score_fitted = self.__pearson_test(self.__skewnormal, param_fitted, data_x, data_y)
+        except(RuntimeError):
+            param_fitted = [None]
+            score_fitted = 0
+            print("Curve_fit failed")
+
+
+
+        
 
         return param_estimated, param_fitted, score_estimated, score_fitted
 
 
 
-
-    # def fit_skew_normal_old(self, data_x, data_y):
-    #     """ startPrevFit """
-
-    #     if len(self.param_fitted) > 1 :
-    #         param_estimated = self.param_fitted
-
-    #     else:
-    #         score_estimated = 0
-    #         score_fitted = 0
-    #         #Get Estimated Parameters
-    #         geneticParameters = self.__estimate_initial_parameters(data_x, data_y)
-    #         score_estimated = self.__pearson_test(geneticParameters, data_x, data_y)
-    #         #estimated param from genetic algo
-    #         param_estimated = geneticParameters
-        
-
-    #     #Optimize model
-    #     bounds = self.__get_parameter_bounds_skewnormal(data_x, data_y) #Get param bounds
-    #     bounds = tuple([ tuple([bounds[x][b] for x in range(len(bounds))])  for b in range(len(bounds[0]))]) #convert to "curve_fit" bounds format
-
-    #     try:
-    #         param_fitted = curve_fit(self.__skewnormal, data_x, data_y, param_estimated, bounds=bounds)
-    #         param_fitted = param_fitted[0]
-    #         score_fitted = self.__pearson_test(param_fitted, data_x, data_y, )
-    #     except(RuntimeError,TypeError):
-    #         param_fitted = [None]
-
-    #     return geneticParameters, param_fitted, score_estimated, score_fitted
-
     # ---------------------------------- Outlier detection --------------------------------- #
 
-    def exclude_outliers_right_method(self):
-        """Try to improve the fit of a curve by removing data from the highest RT to lowest"""
+    def exclude_outlier_non_significant(self, auc_percent_threshold):
+        "Exclude datapoint on the tails of the elution profile model that would represent less than X%  of the area under the curve"
 
-        print("Start subset")
-        print("psms")
+        psms_included = self.psms_included
+        psms_outliers = self.psms_outliers
 
-        scores=[self.score_fitted] #list of scores for each subset
-        indexes=[0]
-        psmsSubsets = [self.psms]
-
-        if len(self.data_x) >= 7: #limit prob 7
-            for n in range(1,len(self.data_x)-5):
-                    #subset of spectra
-                    psmsSubset = self.psms[:-n]
-                    xDataT = np.array([psm.spectrum.get_rt() for psm in psmsSubset])
-                    yDataT = np.array([psm.get_prec_intens_ratio() for psm in psmsSubset])
-                    #refit the curve using subset
-                    param_estimated, param_fitted, score_estimated, score_fitted = self.fit_skew_normal(xDataT, yDataT)
-                    #store score of subset
-                    scores.append(score_fitted)
-                    indexes.append(n)
-                    psmsSubsets.append(psmsSubset)
         
-            print(scores)
+        for psm in self.psms_included:
 
-            kn = KneeLocator(indexes, scores, S=2, curve='concave', direction='increasing',interp_method= "polynomial", polynomial_degree=2)
-            index = kn.knee
-
-            print(index)
-
-            if index != None and index != 0:
+            auc_l_r = (self.get_auc(-np.inf, psm.spectrum.get_rt()), self.get_auc(psm.spectrum.get_rt(), np.inf))
+            auc_tot = sum(auc_l_r)
+            if auc_tot > 0:
+                auc_min = min(auc_l_r)
                 
-                print(psmsSubsets[index])
-                try:
-                    self.data_x = np.array([psm.spectrum.get_rt() for psm in psmsSubsets[index]])
-                    self.data_y = np.array([psm.get_prec_intens_ratio() for psm in psmsSubsets[index]])
-                    self.param_estimated, self.param_fitted, self.score_estimated, self.score_fitted = self.fit_skew_normal(self.data_x, self.data_y)
-                    self.psms_outliers = [psm for psm in self.psms if psm not in psmsSubsets[index]] #TODO check whether outlier needs to be removed for proteoform.linkedPSMSs
-                except(TypeError):
-                    print("could not optimize fit by removing data points")
-                    self.psms_outliers = []
-            else:   
-                print("could not optimize fit by removing data points")
-                pass 
 
-    def exclude_outliers_mean_method(self, ):
+                auc_percent = (auc_min/auc_tot)*100
+
+                if auc_percent < auc_percent_threshold/2: #diveded by 2 because two tailed 
+                    psms_outliers.append(psm)
+            
+        psms_included = [psm for psm in self.psms_included if psm not in psms_outliers]
+
+        return psms_outliers, psms_included
+
+
+
+
+    # def exclude_outliers_right_method(self):
+    #     """Try to improve the fit of a curve by removing data from the highest RT to lowest"""
+
+    #     scores=[self.score_fitted] #list of scores for each subset
+    #     indexes=[0]
+    #     psmsSubsets = [self.psms]
+
+    #     if len(self.data_x) >= 7: #limit prob 7
+    #         for n in range(1,len(self.data_x)-5):
+    #                 #subset of spectra
+    #                 psmsSubset = self.psms[:-n]
+    #                 xDataT = np.array([psm.spectrum.get_rt() for psm in psmsSubset])
+    #                 yDataT = np.array([psm.get_prec_intens_ratio() for psm in psmsSubset])
+    #                 #refit the curve using subset
+    #                 param_estimated, param_fitted, score_estimated, score_fitted = self.fit_skew_normal(xDataT, yDataT)
+    #                 #store score of subset
+    #                 scores.append(score_fitted)
+    #                 indexes.append(n)
+    #                 psmsSubsets.append(psmsSubset)
+        
+    #         print(scores)
+
+    #         kn = KneeLocator(indexes, scores, S=2, curve='concave', direction='increasing',interp_method= "polynomial", polynomial_degree=2)
+    #         index = kn.knee
+
+    #         print(index)
+
+    #         if index != None and index != 0:
+                
+    #             print(psmsSubsets[index])
+    #             try:
+    #                 self.data_x = np.array([psm.spectrum.get_rt() for psm in psmsSubsets[index]])
+    #                 self.data_y = np.array([psm.get_prec_intens_ratio() for psm in psmsSubsets[index]])
+    #                 self.param_estimated, self.param_fitted, self.score_estimated, self.score_fitted = self.fit_skew_normal(self.data_x, self.data_y)
+    #                 self.psms_outliers = [psm for psm in self.psms if psm not in psmsSubsets[index]] #TODO check whether outlier needs to be removed for proteoform.linkedPSMSs
+    #             except(TypeError):
+    #                 print("could not optimize fit by removing data points")
+    #                 self.psms_outliers = []
+    #         else:   
+    #             print("could not optimize fit by removing data points")
+    #             pass 
+
+    def exclude_outliers_mean_method(self ):
         "Try imrove the fit of the curve by iteratively removing datapoints the furthest from the RT mean"
 
-        subsets_psms = [self.psms]
-        subsets_rt = [[psm.spectrum.get_rt() for psm in self.psms]]
+        subsets_psms = [self.psms_included]
+        subsets_rt = [[psm.spectrum.get_rt() for psm in self.psms_included]]
         subsets_index = [0]
+
+
+        
 
         #Create a list of psms subsets
         for i in range(0,len(subsets_psms[0])-5): 
@@ -242,25 +269,27 @@ class ElutionProfile():
 
         #Return best fit results
         if index != None and index != 0:
-            print(subsets_psms[index])
             try:
                 data_x = np.array([psm.spectrum.get_rt() for psm in subsets_psms[index]])
                 data_y = np.array([psm.get_prec_intens_ratio() for psm in subsets_psms[index]])
                 param_estimated, param_fitted, score_estimated, score_fitted = self.fit_skew_normal(self.data_x, self.data_y)
-                psms_outliers = [psm for psm in self.psms if psm not in subsets_psms[index]] #TODO check whether outlier needs to be removed for proteoform.linkedPSMSs
+                psms_outliers = [psm for psm in self.psms_included if psm not in subsets_psms[index]] #TODO check whether outlier needs to be removed for proteoform.linkedPSMSs
+                psms_included = [psm for psm in self.psms_included if psm in subsets_psms[index]]
             except(TypeError):
                 print("could not optimize fit by removing data points")
-                self.psms_outliers = []
-        else:   
+                psms_outliers = []
+        else: 
+            psms_outliers = []
+            psms_included = self.psms_included
             print("could not optimize fit by removing data points")
             pass 
 
-        return param_estimated, self.param_fitted, self.score_estimated, self.score_fitted, psms_outliers
+        return param_estimated, param_fitted, score_estimated, score_fitted, psms_outliers, psms_included
 
 
 
-    def excludeOutlierNonSignificant():
-        "Exclude datapoint on the tails of the envellope that would represent less than X%  of the area under the curve"
+    
+
 
     # ----------------------------- Model's function ----------------------------- #
 
@@ -277,16 +306,16 @@ class ElutionProfile():
 
     # ------------------------------ Error Functions ----------------------------- #
         
-    def __sumOfSquaredError(self, model, theta, *data):
+    def __sum_of_squared_error(self, theta, *data):
         warnings.filterwarnings("ignore") #do not print warnings by genetic algorithm
         data_x, data_y = data
-        yDataPred = self.model(data_x, *theta)
+        yDataPred = model(data_x, *theta)
         return np.sum((data_y - yDataPred) ** 2.0)
 
     def __coefficient_of_determination(self, theta, *data): #WIP
         warnings.filterwarnings("ignore")
         model, data_x, data_y = data
-        yDataPred = self.model(data_x, *theta)
+        yDataPred = model(data_x, *theta)
         return None
 
     def __MSPD(self, theta, *data):

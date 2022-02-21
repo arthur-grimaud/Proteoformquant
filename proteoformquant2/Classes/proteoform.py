@@ -8,13 +8,17 @@ from statistics import mean
 
 class Proteoform():
 
-    def __init__(self,peptideSequence, modificationBrno, modificationProforma, modificationDict = {}):
+    def __init__(self,peptideSequence, modificationBrno, modificationProforma, modificationDict = {}, protein_ids=[]):
 
         #Proteoform Description
         self.peptideSequence: str = peptideSequence
         self.modificationDict: dict = modificationDict
         self.modificationBrno: str = modificationBrno
         self.modificationProforma: str = modificationProforma
+
+        #Protein(s) reference
+        self.protein_ids = protein_ids
+
 
 
         #Theoretical Fragments
@@ -54,38 +58,38 @@ class Proteoform():
     def getModificationBrno(self):
         return self.modificationBrno
 
-    def getModificationProforma(self):
+    def get_modification_proforma(self):
         return self.modificationProforma    
 
-    def getLinkedPsm(self):
+    def get_linked_psm(self):
         """Return a list of linked PSMs"""
         return [psm for psm in self.linkedPsm]
 
-    def getValidatedLinkedPsm(self):
+    def get_validated_linked_psm(self):
         """Return a curated list of linked psm whose self.isvalidated = true"""
         return [psm for psm in self.linkedPsm if psm.isValidated]
 
-    def getProteoformTotalIntens(self):
+    def get_proteoform_total_intens(self):
         return self.totalIntens
 
-    def getColor(self):
+    def get_color(self):
         return self.color
 
-    def getEnvelope(self):
+    def get_elution_profile(self):
         return self.envelope
         
 
     #Setters
 
-    def setColor(self, colorInt):
+    def set_color(self, colorInt):
         self.color = colorInt
         return self
 
-    def linkPsm(self, psm):
+    def link_psm(self, psm):
         self.linkedPsm.append(psm)
 
 
-    def setTheoreticalFragments(self, ionTypes):
+    def compute_theoretical_fragments(self, ionTypes):
         """ Returns and set a list of m/z of fragment ions  and informations on the type/position of each fragments for a given peptidoform/proteoform"""
 
         ion_formulas = constant.ion_formulas 
@@ -128,13 +132,13 @@ class Proteoform():
         
         return(frag_masses)
 
-    def model_elution_profile(self,scoreFitThreshold):
+    def model_elution_profile(self,elution_profile_score_threshold):
         """instanciate an envelope object by providing the list of psm associated to that proteoform"""
-        if len(self.getValidatedLinkedPsm()) > 5:
+        if len(self.get_validated_linked_psm()) > 5:
             env = ElutionProfile()
-            env.model_elution_profile(self.getValidatedLinkedPsm(), scoreFitThreshold)
-            print(env)
-            if env.score_fitted > scoreFitThreshold:
+            env.model_elution_profile(self.get_validated_linked_psm(), elution_profile_score_threshold)
+
+            if env.score_fitted > elution_profile_score_threshold:
                 self.envelope = env
             else:
                 self.envelope = env # !!! 
@@ -145,16 +149,16 @@ class Proteoform():
 
 
 
-    def setProteoformTotalIntens(self, method= "precursor"):
+    def update_proteoform_total_intens(self, method= "precursor"):
         """Return the sum of intensities of psm of that proteoform method = precursor  or annotated (correspond to the intensity value used)"""
 
         self.totalIntens = 0
 
         
         if method == "AUC":
-            if self.getEnvelope() != None:
-                print(self.getEnvelope().get_auc())
-                self.totalIntens+=self.getEnvelope().get_auc()
+            if self.get_elution_profile() != None:
+                print(self.get_elution_profile().get_auc())
+                self.totalIntens+=self.get_elution_profile().get_auc()
             return None
 
         for psm in self.linkedPsm:
@@ -166,15 +170,15 @@ class Proteoform():
         
 
 
-    def setProteoformPsmValidation(self):
+    def update_proteoform_psm_validation(self):
         """   """
 
-        if self.getEnvelope() == None: #if no envelopes are found for that proteoform
+        if self.get_elution_profile() == None: #if no envelopes are found for that proteoform
             for psm in self.linkedPsm:
                 psm.isValidated = False
                 psm.ratio = 0.0 
         else:
-            for psm in self.getEnvelope().psms_outliers:
-                print("removing aberant psm")
+            for psm in self.get_elution_profile().psms_outliers:
+                #print("removing aberant psm")
                 psm.isValidated = False
                 psm.ratio = 0.0 

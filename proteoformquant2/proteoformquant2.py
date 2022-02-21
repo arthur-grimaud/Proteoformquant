@@ -50,26 +50,26 @@ def main():
     run.match_fragments()
 
     ### Quantification ###
-    run.updateProteoformsEnvelope()
-    run.updatePsmValidation()
-    run.updateProteoformsTotalIntens()
-    run.updateUnassignedSpectra()
+    run.update_proteoforms_elution_profile()
+    run.update_psm_validation()
+    run.update_proteoform_intens()
+    run.update_unassigned_spectra()
 
-    print(run.getDatasetMetrics())
+    print(run.get_dataset_metrics())
 
     ### Report ###
     sys.setrecursionlimit(10000)
     with open('pfq_out_obj_test_1b.pkl', 'wb') as outp:
         pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
 
-    # run.updateChimericSpectra(maxRank = 5)
+    run.update_chimeric_spectra(max_rank = 5)
 
-    # run.updateProteoformsEnvelope()
-    # run.updatePsmValidation()
-    # run.updateProteoformsTotalIntens()
+    run.update_proteoforms_elution_profile()
+    run.update_psm_validation()
+    run.update_proteoform_intens()
 
 
-    # print(run.getDatasetMetrics())
+    print(run.get_dataset_metrics())
 
     
 
