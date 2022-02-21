@@ -193,48 +193,6 @@ class ElutionProfile():
 
 
 
-    # def exclude_outliers_right_method(self):
-    #     """Try to improve the fit of a curve by removing data from the highest RT to lowest"""
-
-    #     scores=[self.score_fitted] #list of scores for each subset
-    #     indexes=[0]
-    #     psmsSubsets = [self.psms]
-
-    #     if len(self.data_x) >= 7: #limit prob 7
-    #         for n in range(1,len(self.data_x)-5):
-    #                 #subset of spectra
-    #                 psmsSubset = self.psms[:-n]
-    #                 data_yT = np.array([psm.spectrum.get_rt() for psm in psmsSubset])
-    #                 yDataT = np.array([psm.get_prec_intens_ratio() for psm in psmsSubset])
-    #                 #refit the curve using subset
-    #                 param_estimated, param_fitted, score_estimated, score_fitted = self.fit_skew_normal(data_yT, yDataT)
-    #                 #store score of subset
-    #                 scores.append(score_fitted)
-    #                 indexes.append(n)
-    #                 psmsSubsets.append(psmsSubset)
-        
-    #         print(scores)
-
-    #         kn = KneeLocator(indexes, scores, S=2, curve='concave', direction='increasing',interp_method= "polynomial", polynomial_degree=2)
-    #         index = kn.knee
-
-    #         print(index)
-
-    #         if index != None and index != 0:
-                
-    #             print(psmsSubsets[index])
-    #             try:
-    #                 self.data_x = np.array([psm.spectrum.get_rt() for psm in psmsSubsets[index]])
-    #                 self.data_y = np.array([psm.get_prec_intens_ratio() for psm in psmsSubsets[index]])
-    #                 self.param_estimated, self.param_fitted, self.score_estimated, self.score_fitted = self.fit_skew_normal(self.data_x, self.data_y)
-    #                 self.psms_outliers = [psm for psm in self.psms if psm not in psmsSubsets[index]] #TODO check whether outlier needs to be removed for proteoform.linkedPSMSs
-    #             except(TypeError):
-    #                 print("could not optimize fit by removing data points")
-    #                 self.psms_outliers = []
-    #         else:   
-    #             print("could not optimize fit by removing data points")
-    #             pass 
-
     def exclude_outliers_mean_method(self ):
         "Try imrove the fit of the curve by iteratively removing datapoints the furthest from the RT mean"
 
@@ -334,7 +292,7 @@ class ElutionProfile():
         #parameters bounds
         parameterBounds = []
         parameterBounds.append([min(data_x)-((max(data_x)-min(data_x))) , max(data_x)+((max(data_x)-min(data_x)))]) # search bounds for m
-        parameterBounds.append([0.1, 100]) # search bounds for s
+        parameterBounds.append([0.1, 60]) # search bounds for s
         parameterBounds.append([0, max(data_y)*10]) # search bounds for a
         parameterBounds.append([-0.2, 0.8]) # search bounds for k
 
