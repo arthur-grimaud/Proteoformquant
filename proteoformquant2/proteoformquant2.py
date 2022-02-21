@@ -62,8 +62,8 @@ def main():
     with open('pfq_out_obj_test_1b.pkl', 'wb') as outp:
         pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
 
-    run.update_chimeric_spectra(max_rank = 5)
 
+    run.update_chimeric_spectra(max_rank = 5)
     run.update_proteoforms_elution_profile()
     run.update_psm_validation()
     run.update_proteoform_intens()

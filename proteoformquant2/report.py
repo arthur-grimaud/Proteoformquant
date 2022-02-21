@@ -28,7 +28,7 @@ import plotly.graph_objects as go
 #                                  Data import                                 #
 # ---------------------------------------------------------------------------- #
 
-with open('pfq_out_obj_test_1b.pkl', 'rb') as inp:
+with open('pfq_out_obj_test_2b.pkl', 'rb') as inp:
     exp = pickle.load(inp) 
 
 print(exp.get_dataset_metrics())
@@ -79,21 +79,6 @@ app.layout = html.Div([
 
     html.Br(),
 
-    html.Div(children=[
-        html.Label('Elution profile envelope (Select proteoform 1)'),
-        dcc.Dropdown( id="dropdown_envelope_1"),
-        dcc.Graph(id = 'envelope_plot_1')],
-        style={'width': '49%', 'display': 'inline-block'}
-        ),
-
-    html.Div(children=[
-        html.Label('Elution profile envelope (Select proteoform 2)'),
-        dcc.Dropdown( id="dropdown_envelope_2"),
-        dcc.Graph(id = 'envelope_plot_2')],
-        style={'width': '49%', 'display': 'inline-block'}
-        ),
-
-    html.Br(),
 
 
     html.Div(children=[
@@ -149,12 +134,11 @@ app.layout = html.Div([
               [Input("line_plot_global_intens", "clickData"),
                Input("line_plot_itens_comp", "clickData"),
                Input("plot_all_enveloppes", "clickData"),
-               Input("envelope_plot_1", "clickData"),
-               Input("envelope_plot_2", "clickData"),
+               Input("plot_elution_profiles", "clickData"),
                Input("close", "n_clicks")],
               [State("modal", "is_open"),
                State("modal", "children")])
-def spectrum_popup(v1, v2, v3, v4,v5, clicked,is_open,children):
+def spectrum_popup(v1, v2, v3, v4, clicked,is_open,children):
     ctx = dash.callback_context
 
     if ctx.triggered[0]['prop_id'] == 'close.n_clicks':
@@ -164,7 +148,9 @@ def spectrum_popup(v1, v2, v3, v4,v5, clicked,is_open,children):
 
     elif len(ctx.triggered) == 0:
         raise dash.exceptions.PreventUpdate
-
+    elif ctx.triggered[0]["value"] == None:
+        raise dash.exceptions.PreventUpdate
+    
     elif "points" in ctx.triggered[0]["value"] :
         # you clicked in the graph, returning the modal children and opening it
         try:
