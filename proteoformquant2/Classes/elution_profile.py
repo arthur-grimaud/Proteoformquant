@@ -204,10 +204,10 @@ class ElutionProfile():
     #         for n in range(1,len(self.data_x)-5):
     #                 #subset of spectra
     #                 psmsSubset = self.psms[:-n]
-    #                 xDataT = np.array([psm.spectrum.get_rt() for psm in psmsSubset])
+    #                 data_yT = np.array([psm.spectrum.get_rt() for psm in psmsSubset])
     #                 yDataT = np.array([psm.get_prec_intens_ratio() for psm in psmsSubset])
     #                 #refit the curve using subset
-    #                 param_estimated, param_fitted, score_estimated, score_fitted = self.fit_skew_normal(xDataT, yDataT)
+    #                 param_estimated, param_fitted, score_estimated, score_fitted = self.fit_skew_normal(data_yT, yDataT)
     #                 #store score of subset
     #                 scores.append(score_fitted)
     #                 indexes.append(n)
@@ -256,10 +256,10 @@ class ElutionProfile():
         #Compute fit score for each subsets
         subsets_scores = []
         for psmsSubset in subsets_psms:
-            xDataT = np.array([psm.spectrum.get_rt() for psm in psmsSubset])
+            data_yT = np.array([psm.spectrum.get_rt() for psm in psmsSubset])
             yDataT = np.array([psm.get_prec_intens_ratio() for psm in psmsSubset])
             #refit the curve to subset
-            param_estimated, param_fitted, score_estimated, score_fitted = self.fit_skew_normal(xDataT, yDataT)
+            param_estimated, param_fitted, score_estimated, score_fitted = self.fit_skew_normal(data_yT, yDataT)
             #store score and subset
             subsets_scores.append(score_fitted)
 

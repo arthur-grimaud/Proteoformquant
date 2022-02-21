@@ -14,6 +14,7 @@ import dash_bootstrap_components as dbc
 import plotly.io as pio
 import json
 from Utils import misc
+from Utils import constant
 import plotly.express as px
 import math
 
@@ -65,6 +66,16 @@ app.layout = html.Div([
         dcc.Graph(id = 'plot_all_enveloppes'),
         ]
     ),
+
+    html.Br(),
+
+    html.Div(children=[
+        html.Label('Proteoforms'),
+        dcc.Dropdown(id="dropdown_proteoforms", multi=True),
+        dcc.Graph(id = 'plot_elution_profiles')]
+        ),
+
+    
 
     html.Br(),
 
@@ -248,163 +259,17 @@ def plotAnnotMsmsVsPrecIntens(minMaxMz):
     return fig
 
 
-# --------------------------------- envelope --------------------------------- #
-
-
-@app.callback(
-    Output('dropdown_envelope_1', 'options'),
-    Input('mainDiv', "id")
-)
-def dropdownOptionsEnvelopes_1(input):
-    return dropdownOptionsEnvelopes(input)
-
-@app.callback(
-    Output('dropdown_envelope_2', 'options'),
-    Input('mainDiv', "id")
-)
-def dropdownOptionsEnvelopes_2(input):
-    return dropdownOptionsEnvelopes(input)
-
-def dropdownOptionsEnvelopes(input):
-    """Create option list for dropdown item"""
-    options = [{"label": proteo[1].getModificationBrno() + "  " + str(len(proteo[1].get_validated_linked_psm()) ) ,
-                "value": proteo[0], 
-                "sort":len(proteo[1].get_validated_linked_psm()) } for proteo in exp.proteoforms.items() if len(proteo[1].get_linked_psm()) > 4]
-    options = sorted(options, key=lambda x: x["sort"], reverse=True)
-
-    options = [{k: v for k, v in d.items() if k != 'sort'} for d in options]
-
-
-    
-    #print(options)
-    return options
-
 # ---------------------------------------------------------------------------- #
-
-@app.callback(
-    Output('envelope_plot_1', 'figure'),
-    Input('dropdown_envelope_1', 'value')
-)
-def plotEnvelope1(proteo):
-    if proteo is None:
-        raise PreventUpdate
-    else:
-        return plotEnvelope(proteo)
-
-@app.callback(
-    Output('envelope_plot_2', 'figure'),
-    [Input('dropdown_envelope_1', 'value'),
-    Input('dropdown_envelope_2', 'value'),]
-)
-def plotEnvelope2(proteo1, proteo2):
-    if proteo1 is None or proteo2 is None:
-        raise PreventUpdate
-    else:
-        return plotEnvelopeTwo(proteo1, proteo2)
-
-
-def plotEnvelope(proteo):
-
-    fig = go.Figure()
-
-    data_x = [psm.spectrum.get_rt() for psm in exp.proteoforms[proteo].get_validated_linked_psm()]
-    data_y_spectrum = [psm.spectrum.getPrecIntens() for psm in exp.proteoforms[proteo].get_validated_linked_psm()]
-    data_y_psm = [psm.get_prec_intens_ratio() for psm in exp.proteoforms[proteo].get_validated_linked_psm()]
-    spectrum_key  = [psm.spectrum.id for psm in exp.proteoforms[proteo].get_validated_linked_psm()]
-
-    fig.add_scatter( x=data_x, y=data_y_spectrum, mode='markers', marker=dict(size=10, color="grey"), name='Spectrum Intensity', customdata=spectrum_key )
-    fig.add_scatter( x=data_x, y=data_y_psm, mode='markers', marker=dict(size=7, color="red"), name='PSM Intensity',customdata=spectrum_key )
-
-    #add lines between PSM and spectrum intens points
-    for i in range(0,len(data_x),1):
-        fig.add_scatter( x=[data_x[i],data_x[i]] , y=[data_y_spectrum[i],data_y_psm[i]], mode='lines', marker=dict(size=2, color="grey") )
-
-    env = exp.proteoforms[proteo].get_elution_profile()
-    if env != None: #if envelope has been computed add line to the plot
-        
-        xDataEnv = list(range(int(min(data_x)),int(max(data_x)),1))
-
-        yDataEnvEstim, parametersEstim = list(env.get_y_serie(xDataEnv, method = "estimated"))
-        if yDataEnvEstim[0] != None: 
-            fig.add_scatter( x=xDataEnv, y=yDataEnvEstim, mode='lines', marker=dict(size=4, color="orange"), name='Estimated Parameters', line_shape='spline' )
-
-        yDataEnvFitted, parametersFitted = list(env.get_y_serie(xDataEnv, method = "fitted"))
-        if yDataEnvFitted[0] != None: 
-            fig.add_scatter( x=xDataEnv, y=yDataEnvFitted, mode='lines', marker=dict(size=4, color="red"), name='Fitted Parameters', line_shape='spline' )
-
-            titleText = "Proteoform: {0} <br>Parameters Estimated: {1} <br>Score: {3} <br>Parameters Fitted: {2} <br>Score: {4} ".format(exp.proteoforms[proteo].getModificationBrno(), parametersEstim , parametersFitted, env.score_estimated, env.score_fitted)
-
-        fig.update_layout(title=go.layout.Title(text=titleText, font=dict(
-                family="Courier New, monospace",
-                size=10,
-            )))
-    fig.update_layout(template=template)
-    return fig  
-
-
-def plotEnvelopeTwo(proteo1, proteo2):
-
-    fig = go.Figure()
-
-    xData1 = [psm.spectrum.get_rt() for psm in exp.proteoforms[proteo1].get_validated_linked_psm()]
-    data_y_spectrum1 = [psm.spectrum.getPrecIntens() for psm in exp.proteoforms[proteo1].get_validated_linked_psm()]
-    data_y_psm1 = [psm.get_prec_intens_ratio() for psm in exp.proteoforms[proteo1].get_validated_linked_psm()]
-    spectrum_key1  = [psm.spectrum.id for psm in exp.proteoforms[proteo1].get_validated_linked_psm()]
-
-    xData2 = [psm.spectrum.get_rt() for psm in exp.proteoforms[proteo2].get_validated_linked_psm()]
-    data_y_spectrum2 = [psm.spectrum.getPrecIntens() for psm in exp.proteoforms[proteo2].get_validated_linked_psm()]
-    data_y_psm2 = [psm.get_prec_intens_ratio() for psm in exp.proteoforms[proteo2].get_validated_linked_psm()]
-    spectrum_key2  = [psm.spectrum.id for psm in exp.proteoforms[proteo2].get_validated_linked_psm()]
-
-    fig.add_scatter( x=xData1, y=data_y_spectrum1, mode='markers', marker=dict(size=10, color="grey"), name='Spectrum Intensity', customdata= spectrum_key1)
-
-    fig.add_scatter( x=xData2, y=data_y_spectrum2, mode='markers', marker=dict(size=10, color="grey"), name='Spectrum Intensity',customdata=spectrum_key2 )
-
-    fig.add_scatter( x=xData1, y=data_y_psm1, mode='markers', marker=dict(size=7, color="red"), name='PSM Intensity',customdata=spectrum_key1 )
-    
-    fig.add_scatter( x=xData2, y=data_y_psm2, mode='markers', marker=dict(size=7, color="blue"), name='PSM Intensity',customdata=spectrum_key2 )
-
-    #add lines between PSM and spectrum intens points
-    for i in range(0,len(xData1),1):
-        fig.add_scatter( x=[xData1[i],xData1[i]] , y=[data_y_spectrum1[i],data_y_psm1[i]], mode='lines', marker=dict(size=2, color="grey") )
-
-    for i in range(0,len(xData2),1):
-        fig.add_scatter( x=[xData2[i],xData2[i]] , y=[data_y_spectrum2[i],data_y_psm2[i]], mode='lines', marker=dict(size=2, color="grey") )
-
-    env1 = exp.proteoforms[proteo1].get_elution_profile()
-    if env1 != None: #if envelope has been computed add line to the plot
-        xDataEnv1 = list(range(int(min(xData1)),int(max(xData1)),1))
-        yDataEnvFitted1, parametersFitted1 = list(env1.get_y_serie(xDataEnv1, method = "fitted"))
-        if yDataEnvFitted1[0] != None: 
-            fig.add_scatter( x=xDataEnv1, y=yDataEnvFitted1, mode='lines', marker=dict(size=4, color="red"), name='Fitted Parameters', line_shape='spline' )
-
-    env2 = exp.proteoforms[proteo2].get_elution_profile()
-    if env2 != None: #if envelope has been computed add line to the plot
-        xDataEnv2 = list(range(int(min(xData2)),int(max(xData2)),1))
-        yDataEnvFitted2, parametersFitted2 = list(env2.get_y_serie(xDataEnv2, method = "fitted"))
-        if yDataEnvFitted2[0] != None: 
-            fig.add_scatter( x=xDataEnv2, y=yDataEnvFitted2, mode='lines', marker=dict(size=4, color="blue"), name='Fitted Parameters', line_shape='spline' )
-        
-            
-        fig.update_layout(title=go.layout.Title( font=dict(
-                family="Courier New, monospace",
-                size=10,
-            )))
-    fig.update_layout(template=template)
-    return fig  
-
-
-
-# ---------------------------------------------------------------------------- #
-#                                 all envelopes                                #
+#                             All Elution Profiles                             #
 # ---------------------------------------------------------------------------- #
 
 @app.callback(
     Output('plot_all_enveloppes', 'figure'),
     Input('mainDiv', "id")
 )
-def plotAllEnvelopes(input):
 
+
+def plotAllEnvelopes(input):
 
     rt_range = [spectrum.get_rt() for spectrum in exp.spectra.values()]
     fig = go.Figure()
@@ -420,14 +285,14 @@ def plotAllEnvelopes(input):
         if proteoform.get_elution_profile() != None:
             env = proteoform.get_elution_profile() #if envelope has been computed add line to the plot
 
-            xDataEnv = list(range(int(min(rt_range)),int(max(rt_range)),1))
-            zDataEnv = [proteoform.getMzFirstPsm() for x in xDataEnv]
+            data_yEnv = list(range(int(min(rt_range)),int(max(rt_range)),1))
+            zDataEnv = [proteoform.getMzFirstPsm() for x in data_yEnv]
 
-            yDataEnvFitted, parametersFitted = list(env.get_y_serie(xDataEnv, method = "fitted"))
-            if yDataEnvFitted[0] != None: fig.add_scatter( x=xDataEnv, y=yDataEnvFitted, mode='lines', marker=dict(size=4, color=c), name=proteoform.getModificationBrno(), line_shape='spline' )
+            yDataEnvFitted, parametersFitted = list(env.get_y_serie(data_yEnv, method = "fitted"))
+            if yDataEnvFitted[0] != None: fig.add_scatter( x=data_yEnv, y=yDataEnvFitted, mode='lines', marker=dict(size=4, color=c), name=proteoform.getModificationBrno(), line_shape='spline' )
             else:
-                yDataEnvEstim, parametersEstim = list(env.get_y_serie(xDataEnv, method = "estimated"))
-                if yDataEnvEstim[0] != None: fig.add_scatter( x=xDataEnv, y=yDataEnvEstim, mode='lines', marker=dict(size=4, color=c), name=proteoform.getModificationBrno(), line_shape='spline' )
+                yDataEnvEstim, parametersEstim = list(env.get_y_serie(data_yEnv, method = "estimated"))
+                if yDataEnvEstim[0] != None: fig.add_scatter( x=data_yEnv, y=yDataEnvEstim, mode='lines', marker=dict(size=4, color=c), name=proteoform.getModificationBrno(), line_shape='spline' )
 
     
     precIntens = [spectrum.getPrecIntens() for spectrum in exp.spectra.values()]
@@ -439,6 +304,94 @@ def plotAllEnvelopes(input):
  
     fig.update_layout(template=template)              
     return fig  
+
+
+
+# ---------------------------------------------------------------------------- #
+#                               Elution Profiles                               #
+# ---------------------------------------------------------------------------- #
+
+# --------------------------------- dropdown --------------------------------- #
+@app.callback(
+    Output('dropdown_proteoforms', 'options'),
+    Input('mainDiv', "id")
+)
+def dropdown_proteoforms(input):
+    """Create option list with proteoforms for dropdown"""
+    options = [{"label": proteo[1].getModificationBrno() + "  " + str(len(proteo[1].get_validated_linked_psm()) ) ,
+                "value": proteo[0], 
+                "sort":len(proteo[1].get_validated_linked_psm()) } for proteo in exp.proteoforms.items() if len(proteo[1].get_linked_psm()) > 4]
+    options = sorted(options, key=lambda x: x["sort"], reverse=True)
+
+    options = [{k: v for k, v in d.items() if k != 'sort'} for d in options]
+
+    return options
+
+# ---------------------------------------------------------------------------- #
+
+
+@app.callback(
+    Output('plot_elution_profiles', 'figure'),
+    [Input('dropdown_proteoforms', 'value')]
+)
+def plot_elution_profiles(proteoforms_input):
+    #avoid initial callback
+    print(proteoforms_input)
+    if proteoforms_input is None:
+        raise PreventUpdate
+
+    #Get plot boundaries
+    x_min_max = [0,0]
+    y_min_max = [0,0]
+    for proteo in proteoforms_input:
+        x_val = [psm.spectrum.get_rt() for psm in exp.proteoforms[proteo].get_validated_linked_psm()]
+        if min(x_val) < x_min_max[0]: x_min_max[0] = min(x_val)
+        if max(x_val) > x_min_max[1]: x_min_max[1] = max(x_val)
+        y_val = [psm.spectrum.getPrecIntens() for psm in exp.proteoforms[proteo].get_validated_linked_psm()]
+        if min(y_val) < y_min_max[0]: y_min_max[0] = min(y_val)
+        if max(y_val) > y_min_max[1]: y_min_max[1] = max(y_val)
+
+    print(x_min_max)
+    print(y_min_max)
+
+    #Instanciate figure
+    fig = go.Figure()
+    cols = constant.colors
+    cols_n = 0
+
+    #Plot each proteoforms:
+    for proteo in proteoforms_input:
+        print(proteo)
+        data_y = [psm.spectrum.get_rt() for psm in exp.proteoforms[proteo].get_validated_linked_psm()]
+        data_y_spectrum = [psm.spectrum.getPrecIntens() for psm in exp.proteoforms[proteo].get_validated_linked_psm()]
+        data_y_psm = [psm.get_prec_intens_ratio() for psm in exp.proteoforms[proteo].get_validated_linked_psm()]
+        spectrum_key  = [psm.spectrum.id for psm in exp.proteoforms[proteo].get_validated_linked_psm()]
+
+        fig.add_scatter( x=data_y, y=data_y_spectrum, mode='markers', marker=dict(size=10, color="grey"), name='Spectrum Intensity', customdata= spectrum_key)
+        fig.add_scatter( x=data_y, y=data_y_psm, mode='markers', marker=dict(size=7, color=cols[cols_n]), name='PSM Intensity',customdata=spectrum_key )
+
+        #add lines between PSM and spectrum intens points
+        for i in range(0,len(data_y),1):
+            fig.add_scatter( x=[data_y[i],data_y[i]] , y=[data_y_spectrum[i],data_y_psm[i]], mode='lines', marker=dict(size=1, color="grey") )
+
+
+        elution_profile = exp.proteoforms[proteo].get_elution_profile()
+        if elution_profile != None: #if elution profile model has been computed add line to the plot
+            data_x_elution_profile = list(range(int(x_min_max[0]),int(x_min_max[1]),1))
+            data_y_elution_profile_fitted, params_fitted = list(elution_profile.get_y_serie(data_x_elution_profile, method = "fitted"))
+            if data_y_elution_profile_fitted[0] != None: 
+                fig.add_scatter( x=data_x_elution_profile, y=data_y_elution_profile_fitted, mode='lines', marker=dict(size=4, color=cols[cols_n]), name='Fitted Parameters', line_shape='spline' )
+
+        cols_n += 1 
+    
+    fig.update_layout(title=go.layout.Title( font=dict(
+                family="Courier New, monospace",
+                size=10,
+            )))
+    fig.update_layout(template=template)
+
+    return fig  
+
 
 # ---------------------------------------------------------------------------- #
 #                               all envelopes 3D                               #
@@ -485,15 +438,15 @@ def plotAllEnvelopes3d(minMaxMz):
 
         env = proteoform.get_elution_profile() #if envelope has been computed add line to the plot
 
-        xDataEnv = list(range(int(min(rt_range)),int(max(rt_range)),1))
-        zDataEnv = [proteoform.getMzFirstPsm() for x in xDataEnv]
+        data_yEnv = list(range(int(min(rt_range)),int(max(rt_range)),1))
+        zDataEnv = [proteoform.getMzFirstPsm() for x in data_yEnv]
 
-        yDataEnvFitted, parametersFitted = list(env.get_y_serie(xDataEnv, method = "fitted"))
+        yDataEnvFitted, parametersFitted = list(env.get_y_serie(data_yEnv, method = "fitted"))
         if yDataEnvFitted[0] != None: 
-            fig.add_trace(go.Scatter3d( x=xDataEnv, y=yDataEnvFitted, z=zDataEnv, mode='lines',  marker=dict(color=proteoform.get_color()), name=proteoform.getModificationBrno()))
+            fig.add_trace(go.Scatter3d( x=data_yEnv, y=yDataEnvFitted, z=zDataEnv, mode='lines',  marker=dict(color=proteoform.get_color()), name=proteoform.getModificationBrno()))
         else:
-            yDataEnvEstim, parametersEstim = list(env.get_y_serie(xDataEnv, method = "estimated"))
-            if yDataEnvEstim[0] != None: fig.add_trace(go.Scatter3d( x=xDataEnv, y=yDataEnvEstim, z=zDataEnv, mode='lines',  marker=dict(color=proteoform.get_color()), name=proteoform.getModificationBrno()))
+            yDataEnvEstim, parametersEstim = list(env.get_y_serie(data_yEnv, method = "estimated"))
+            if yDataEnvEstim[0] != None: fig.add_trace(go.Scatter3d( x=data_yEnv, y=yDataEnvEstim, z=zDataEnv, mode='lines',  marker=dict(color=proteoform.get_color()), name=proteoform.getModificationBrno()))
     
     for proteoform in [x for x in proteoFilt.values()]:
         precIntens = [psm.spectrum.getPrecIntens() for psm in proteoform.get_validated_linked_psm()]
