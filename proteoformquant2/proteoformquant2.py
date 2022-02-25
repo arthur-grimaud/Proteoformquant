@@ -63,22 +63,22 @@ def main():
         pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
 
 
-    run.update_chimeric_spectra(max_rank = 5)
-    run.update_proteoforms_elution_profile()
-    run.update_psm_validation()
-    run.update_proteoform_intens()
+    # run.update_chimeric_spectra(max_rank = 5)
+    # run.update_proteoforms_elution_profile()
+    # run.update_psm_validation()
+    # run.update_proteoform_intens()
 
 
-    print(run.get_dataset_metrics())
+    # print(run.get_dataset_metrics())
 
     
 
-    ### Output ###
+    # ### Output ###
 
-    ### Report ###
-    sys.setrecursionlimit(10000)
-    with open('pfq_out_obj_test_2b.pkl', 'wb') as outp:
-        pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
+    # ### Report ###
+    # sys.setrecursionlimit(10000)
+    # with open('pfq_out_obj_test_2b.pkl', 'wb') as outp:
+    #     pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
 
 
 

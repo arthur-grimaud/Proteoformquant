@@ -7,6 +7,7 @@ delta_mod = {
     }
 
 from pyteomics import mass
+
 ion_formulas = {
         'a':        {'a': mass.Composition(formula='H-2O-1' + 'C-1O-1')},
         'b':        {'b': mass.Composition(formula='H-2O-1')},
@@ -30,6 +31,31 @@ ion_formulas = {
         "n-n":     {'nIn': mass.Composition(formula='P-1')},
         "b-y":      {'bIy': mass.Composition(formula='H-2O-1' + 'H-2O-1' + '')},
         "a-x":      {'aIx': mass.Composition(formula='H-2O-1' + 'H-2O-1' + 'C-1O-1'+ 'CO2')}
+    }
+
+ion_direction = {
+        'a':        "n-term",
+        'b':        "n-term",
+        'x':        "c-term",
+        'y':        "c-term",
+
+        'cdot':     "n-term",
+        'c':        "n-term",
+        'c-1':      "n-term",
+        'c+1':      "n-term",
+
+        'zdot':     "c-term",
+        'z+1':      "c-term",
+        'z+2':      "c-term",
+        'z+3':      "c-term",
+
+        "c-zdot":      "intern",
+        "c-z+1":      "intern",
+        "cdot-zdot":     "intern",
+        "cdot-z+1":      "intern",
+        "n-n":     "intern",
+        "b-y":      "intern",
+        "a-x":      "intern",
     }
 
 

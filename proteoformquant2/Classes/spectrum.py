@@ -21,7 +21,7 @@ class Spectrum():
 
     #Getters:
 
-    def getId(self):
+    def get_id(self):
         return self.id
 
     def getPrecMz(self):
@@ -45,10 +45,10 @@ class Spectrum():
     def getSumIntensAnnotFrag(self):
         return self.sumIntensAnnotFrag
 
-    def getValidatedPsm(self):
+    def get_validated_psm(self):
         return [psm for psm in self.psms if psm.isValidated == True]
 
-    def getNumberValidatedPsm(self):
+    def get_number_validated_psm(self):
         return len([psm for psm in self.psms if psm.isValidated == True])
 
 
@@ -102,7 +102,8 @@ class Spectrum():
     def updateRatio(self):
         #TODO works only for 2 validated psms
 
-        validatedPsms = [psm for psm in self.psms if psm.isValidated]
+        validatedPsms = self.get_validated_psm
+
         uniquePairwise = [] # list of list of unique ions names formatted as such [[List Unique validatedPsms[0 and 1]], [List Unique validatedPsms[1 and 2]], .... ]
         ratioPairwise = []
 
@@ -119,29 +120,82 @@ class Spectrum():
 
             for p in range(0, len(validatedPsms)-1):
 
-                A = self._getSumIntensitiesAnnotated(validatedPsms[p],uniquePairwise[p])
-                B = self._getSumIntensitiesAnnotated(validatedPsms[p+1],uniquePairwise[p])
+                A = self.__get_sum_intens_fragment_list(validatedPsms[p],uniquePairwise[p])
+                B = self.__get_sum_intens_fragment_list(validatedPsms[p+1],uniquePairwise[p])
+
+                validatedPsms[p].ratio = A/(A+B)
+                validatedPsms[p+1].ratio = B/(A+B)  
+
+
+    def update_psms_ratio(self):
+
+        validatedPsms = self.get_validated_psm()
+
+
+        
+        uniquePairwise = [] # list of list of unique ions names formatted as such [[List Unique validatedPsms[0 and 1]], [List Unique validatedPsms[1 and 2]], .... ]
+        ratioPairwise = []
+
+        if len(validatedPsms) == 1: #Only one validated proteoform
+            validatedPsms[0].ratio = 1.0
+
+        elif len(validatedPsms) == 2: #Pair of validated proteoform
+            uniques = self.__get_unique_fragments(validatedPsms[0], validatedPsms[1])
+            A = self.__get_sum_intens_fragment_list(validatedPsms[0],uniques)
+            B = self.__get_sum_intens_fragment_list(validatedPsms[1],uniques)
+            validatedPsms[0].ratio = A/(A+B)
+            validatedPsms[1].ratio = B/(A+B)  
+
+        else: #More than 2 validated proteoforms
+            
+            for p_A in range(0, len(validatedPsms)):
+                p_B = (p_A + 1) % len(validatedPsms)
+                
+                uniques = self.__get_unique_fragments(validatedPsms[p_A], validatedPsms[p_B])
+
+                A = self.__get_sum_intens_fragment_list(validatedPsms[p_A],uniques) 
+                B = self.__get_sum_intens_fragment_list(validatedPsms[p_B],uniques) 
+                
+                
+
+                self.__get_unique_fragments()
+                uniquePairwise.append(uniqueFragments) 
+
+            for p in range(0, len(validatedPsms)-1): 
+
+                A = self.__get_sum_intens_fragment_list(validatedPsms[p],uniquePairwise[p])
+                B = self.__get_sum_intens_fragment_list(validatedPsms[p+1],uniquePairwise[p])
 
                 validatedPsms[p].ratio = A/(A+B)
                 validatedPsms[p+1].ratio = B/(A+B)  
 
 
 
+    def __get_unique_fragments(self, proteo_a, proteo_b):
+        "from two proteoform object get the list of unique fragments (frag with mass shift)"
+        uniqueFragments = []
+        for fragType in validatedPsms[p].proteoform.theoFrag.keys():
+            for fragment in validatedPsms[p].proteoform.theoFrag[fragType]:
+                if validatedPsms[p].proteoform.theoFrag[fragType][fragment] != validatedPsms[p+1].proteoform.theoFrag[fragType][fragment]:
+                    uniqueFragments.append(fragment)
 
-    def _getSumIntensitiesAnnotated(self, psm, fragments):
+        return uniqueFragments
 
-        intensities = []
+    def get_sum_intens_fragment_list(self, psm, fragments):
+        #could be moved to psm object
+        intensities = [1]
         for fragType in psm.annotation.values():
             for i, fragCode in enumerate(fragType["fragCode"]):
                 if fragCode in fragments:
-                    intensities.append(fragType["intens"][i])
+                    intensities.append(int(fragType["intens"][i]))
 
-        #print(len(intensities))
+        #print(psm.annotation.values())
+        #print(fragments)
+        #print(intensities)
+        print(len(intensities))
         
         return(sum(intensities))
-            
 
-        pass
 
 
     

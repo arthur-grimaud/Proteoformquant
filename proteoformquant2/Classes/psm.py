@@ -5,6 +5,9 @@ um = unimod_mapper.UnimodMapper()
 from Utils.misc import truncate
 import pprint
 import spectrum_utils.spectrum as sus
+from Utils.constant import ion_direction
+
+
 class Psm():
 
     def __init__(self, rank, spectrum,  identificationItem):
@@ -45,7 +48,7 @@ class Psm():
     def getCalculatedMassToCharge(self):
         return self.calculatedMassToCharge
 
-    def getModificationBrno(self):
+    def get_modification_brno(self):
         """Returns modifications of a peptide in brno nomenclature: K27meK34ac"""
         deltaMods = constant.delta_mod
 
@@ -69,7 +72,7 @@ class Psm():
     def getModificationsSu(self):
         """Returns a dictionnary of modifications in the spectrum utils format: {'position(0-based)': 'mass shift'}"""
         modDict = {}
-        for mod in self.proteoform.getModificationDict():
+        for mod in self.proteoform.get_modification_dict():
             modDict[int(mod["location"])]=float(mod["monoisotopicMassDelta"]) #use list comprehension ??
         return modDict
 
@@ -106,6 +109,42 @@ class Psm():
         """given self.ratio return the corresponding annotated fragment intensity sum fraction for that psm"""
         return self.spectrum.getSumIntensAnnotFrag()*self.ratio
 
+
+    def get_fragments_at_range(self, bounds, direction):
+        """ Get a list of fragments names given a range of residue position (1-based) to be present in the fragments """
+        ## TODO DOES NOT WORK FOR INTERNAL IONS
+        fragments = []
+
+        theo_frags = self.proteoform.theoFrag
+        #TO FINISH
+
+        #print(bounds)
+        
+        for frag_type_name, frag_type in theo_frags.items():
+            #print(ion_direction[frag_type_name])
+            if ion_direction[frag_type_name] == direction:
+                #print("yes")
+                for frag_code in frag_type.keys():
+                    frag_code_list = frag_code.split(",")
+                    #print(frag_code)
+                    if direction == "n-term" :
+                        i = 1
+                    if direction == "c-term" :
+                        i = 0
+ 
+                    if bounds[0] <= int(frag_code_list[i]) and int(frag_code_list[i]) <= bounds[1]:
+                        fragments.append(frag_code)
+                        #print("nterm ion" + frag_code)
+                   
+        print(fragments)
+        return fragments      
+
+
+
+
+
+
+
     #Setters
 
     def setProteoform(self, proteoform):
@@ -116,7 +155,7 @@ class Psm():
 
            
             #get information to create a spectrum utils MsmsSpectrum object
-            id = self.spectrum.getId()
+            id = self.spectrum.get_id()
             fragIntens = self.spectrum.getFragIntens()
             fragMz= self.spectrum.getFragMz()
 
@@ -124,7 +163,7 @@ class Psm():
             chargeState = self.getChargeState()
             peptideSequence = self.getPeptideSequence()
             modifications =self.getModificationsSu()
-            mods_brno = self.getModificationBrno()
+            mods_brno = self.get_modification_brno()
 
 
             

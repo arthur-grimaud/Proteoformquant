@@ -23,6 +23,7 @@ class Proteoform():
 
         #Theoretical Fragments
         self.theoFrag = None
+        self.fragment_types = None #types of fragments computedS
 
         #All PSMs of that proteoform
         self.linkedPsm : list() = []
@@ -35,6 +36,8 @@ class Proteoform():
 
         #Summed intensity of linked psm
         self.totalIntens = 0  
+
+
 
     #Getters
 
@@ -51,11 +54,13 @@ class Proteoform():
     def getMzMean(self):
         pass
 
+    def get_peptide_sequence(self):
+        return self.peptideSequence
 
-    def getModificationDict(self):
+    def get_modification_dict(self):
         return self.modificationDict
 
-    def getModificationBrno(self):
+    def get_modification_brno(self):
         return self.modificationBrno
 
     def get_modification_proforma(self):
@@ -91,6 +96,9 @@ class Proteoform():
 
     def compute_theoretical_fragments(self, ionTypes):
         """ Returns and set a list of m/z of fragment ions  and informations on the type/position of each fragments for a given peptidoform/proteoform"""
+
+        #store the fragment types looked for:
+        self.fragment_types = ionTypes 
 
         ion_formulas = constant.ion_formulas 
         sequence = self.peptideSequence
@@ -141,7 +149,7 @@ class Proteoform():
             if env.score_fitted > elution_profile_score_threshold:
                 self.envelope = env
             else:
-                self.envelope = env # !!! 
+                #self.envelope = env # !!! 
                 print("Could not fit curve to chromatogram")
         else:
             #print("Not enough datapoints to compute envelope")

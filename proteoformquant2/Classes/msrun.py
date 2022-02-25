@@ -30,9 +30,11 @@ class Msrun():
         self.proteoforms: dict(Proteoform) = {}
         self.proteoform0 = Proteoform0()
 
+        #PARAMETERS
         self.precMzTolerance = 1.5
         self.intensityThreshold = 200000
         self.elution_profile_score_threshold = 0.7
+        self.fragments_types = ["c","zdot","z+1"]
 
 
     # ---------------------------------- getters --------------------------------- #
@@ -54,10 +56,10 @@ class Msrun():
 
         return {
             "TotalSpectra": len(self.spectra),
-            "AssignedSpectra(method1)": len([spectrum for spectrum in self.spectra.values() if spectrum.getNumberValidatedPsm() > 0]),
+            "AssignedSpectra(method1)": len([spectrum for spectrum in self.spectra.values() if spectrum.get_number_validated_psm() > 0]),
             "AssignedSpectra(method2)": 0,
             "UnassignedSpectra": len([spectrum for spectrum in self.proteoform0.linkedSpectra]),
-            "ChimericSpectra": len([spectrum for spectrum in self.spectra.values() if spectrum.getNumberValidatedPsm() > 1]),
+            "ChimericSpectra": len([spectrum for spectrum in self.spectra.values() if spectrum.get_number_validated_psm() > 1]),
             "TotalProteoforms": len(self.proteoforms)-1,
             "AvgEnvelopeScore": mean([proteoform.get_elution_profile().score_fitted for proteoform in self.proteoforms.values() if proteoform.get_elution_profile() != None ]),
             "MinEnvelopeScore": min([proteoform.get_elution_profile().score_fitted for proteoform in self.proteoforms.values() if proteoform.get_elution_profile() != None ]),
@@ -115,7 +117,7 @@ class Msrun():
                 for psm in self.spectra[specID].psms:
 
                     proforma = psm.get_modification_proforma()
-                    brno = psm.getModificationBrno()
+                    brno = psm.get_modification_brno()
                     seq = psm.getPeptideSequence()
                     brnoSeq = brno+"-"+seq #TODO use proforma
 
@@ -140,7 +142,7 @@ class Msrun():
 
         with Bar('Generating theoretical fragments', max=1) as bar:
             for proteoID in self.proteoforms:
-                self.proteoforms[proteoID].compute_theoretical_fragments(["c","zdot","z+1"])
+                self.proteoforms[proteoID].compute_theoretical_fragments(self.fragments_types)
                 bar.next()
 
         with Bar('Matching fragments', max=1) as bar:
@@ -181,7 +183,7 @@ class Msrun():
     def update_unassigned_spectra(self):
         """add spectra without any validated psm to "proteoform0" in self.proteoforms"""
         for spectrumID in self.spectra:
-            if self.spectra[spectrumID].getNumberValidatedPsm() == 0:
+            if self.spectra[spectrumID].get_number_validated_psm() == 0:
                 self.proteoform0.linkSpectrum(self.spectra[spectrumID])
 
 
@@ -202,7 +204,7 @@ class Msrun():
                     if altProteo.get_elution_profile() != None: 
                         if altProteo.get_elution_profile().get_y(spectrumRt) > self.intensityThreshold:
                             
-                            #print("spectrum at RT {0} psm: {1} matches proteoform {2}".format(spectrumRt, psmProforma, altProteo.getModificationBrno()))
+                            #print("spectrum at RT {0} psm: {1} matches proteoform {2}".format(spectrumRt, psmProforma, altProteo.get_modification_brno()))
                             psm.isValidated = True 
                             altProteo.link_psm(psm)
                             spectrum.updateRatio()
@@ -212,5 +214,5 @@ class Msrun():
         df = pd.DataFrame(columns=('PeptideSequence', 'PTM_code', 'ratio_pfq'))
         row = 0
         for proteo in self.proteoforms.values():
-            df.loc[row]= [proteo.peptideSequence,proteo.getModificationBrno(),proteoform.get_proteoform_total_intens()]
+            df.loc[row]= [proteo.peptideSequence,proteo.get_modification_brno(),proteoform.get_proteoform_total_intens()]
             row += 1
