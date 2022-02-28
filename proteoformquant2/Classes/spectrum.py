@@ -183,7 +183,7 @@ class Spectrum():
 
     def get_sum_intens_fragment_list(self, psm, fragments):
         #could be moved to psm object
-        intensities = [1]
+        intensities = []
         for fragType in psm.annotation.values():
             for i, fragCode in enumerate(fragType["fragCode"]):
                 if fragCode in fragments:
@@ -192,9 +192,11 @@ class Spectrum():
         #print(psm.annotation.values())
         #print(fragments)
         #print(intensities)
-        print(len(intensities))
-        
-        return(sum(intensities))
+        #print(len(intensities))
+        if len(intensities) == 0:
+            return 0
+        else:
+            return(sum(intensities))
 
 
 
