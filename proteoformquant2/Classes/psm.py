@@ -98,8 +98,20 @@ class Psm():
         
         mods = um.mass_to_ids(79.96,decimals=1)
 
-    def getAnnotation(self):
+    def get_annotation(self):
         return self.annotation
+
+    def get_annotation_pair_format(self, first_var, second_var):
+        "return annotated fragments in the following format: {(fragcode,intensity), ... }"""
+
+        frag_code_list = []
+        intens_list = []
+
+        for frag_type in self.annotation.values():
+            frag_code_list = frag_code_list + frag_type[first_var]
+            intens_list = intens_list + frag_type[second_var]
+
+        return list(zip(frag_code_list, intens_list))
 
     def get_prec_intens_ratio(self):
         """given self.ratio return the corresponding precursor intensity fraction for that psm"""
@@ -136,7 +148,7 @@ class Psm():
                         fragments.append(frag_code)
                         #print("nterm ion" + frag_code)
                    
-        print(fragments)
+        #print(fragments)
         return fragments      
 
 

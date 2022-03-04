@@ -169,7 +169,7 @@ class Proteoform():
                 self.totalIntens+=self.get_elution_profile().get_auc()
             return None
 
-        for psm in self.linkedPsm:
+        for psm in self.get_validated_linked_psm():
             if method == "precursor":
                 self.totalIntens+=psm.get_prec_intens_ratio()
             if method == "annotated":

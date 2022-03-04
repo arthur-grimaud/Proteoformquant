@@ -27,10 +27,12 @@ with open('pfq_out_obj_test_1b.pkl', 'rb') as inp:
 
 
 #S = exp.spectra["scan=2779"]
-S = exp.spectra["index=1853"]
-S = exp.spectra["index=989"]
+#S = exp.spectra["index=1853"]
+#S = exp.spectra["index=989"]
+S = exp.spectra["index=3151"]
 
-psms = S.psms[0:4]
+
+psms = S.psms[0:5]
 
 print("psms list")
 print([psm.get_modification_brno() for psm in psms])
@@ -54,13 +56,13 @@ print(mod_pos_list_n)
 print("modification positions direction dependnet C")
 print(mod_pos_list_c)
 
-intervals_n_term = [[mod_pos_list_n[p],mod_pos_list_n[p+1]-1] for p in range(len(mod_pos_list_n)-1)]
-intervals_c_term = [[mod_pos_list_c[p]+1,mod_pos_list_c[p+1]] for p in range(len(mod_pos_list_c)-1)]
+intervals_n = [[mod_pos_list_n[p],mod_pos_list_n[p+1]-1] for p in range(len(mod_pos_list_n)-1)]
+intervals_c = [[mod_pos_list_c[p]+1,mod_pos_list_c[p+1]] for p in range(len(mod_pos_list_c)-1)]
 
 print("positions intervals N")
-print(intervals_n_term)
+print(intervals_n)
 print("positions intervals C")
-print(intervals_c_term)
+print(intervals_c)
 
 
 mod_mass_matrix = np.zeros( (len(psms), len(mod_pos_list)) )
@@ -115,10 +117,10 @@ for col in range(unique_matrix_n.shape[1]):
 
 print("Grouping matrix N and C term")
 print("Nterm")
-print(intervals_n_term)
+print(intervals_n)
 print(unique_matrix_n)
 print("Cterm")
-print(intervals_c_term)
+print(intervals_c)
 print(unique_matrix_c)
 
 
@@ -158,8 +160,8 @@ def reduce_unique_matrix(unique_matrix, intervals):
     
 
 
-red_unique_matrix_n, red_intervals_n_term = reduce_unique_matrix(unique_matrix_n, intervals_n_term)
-red_unique_matrix_c, red_intervals_c_term = reduce_unique_matrix(unique_matrix_c, intervals_c_term)
+red_unique_matrix_n, red_intervals_n = reduce_unique_matrix(unique_matrix_n, intervals_n)
+red_unique_matrix_c, red_intervals_c = reduce_unique_matrix(unique_matrix_c, intervals_c)
 
 
 
@@ -180,8 +182,8 @@ def get_intensities_matrix(unique_matrix, intervals, psms, direction):
 
     return intensity_matrix
 
-intensity_matrix_c = get_intensities_matrix(red_unique_matrix_c, red_intervals_c_term,  psms, "c-term") 
-intensity_matrix_n = get_intensities_matrix(red_unique_matrix_n, red_intervals_n_term,  psms, "n-term") 
+intensity_matrix_c = get_intensities_matrix(red_unique_matrix_c, red_intervals_c,  psms, "c-term") 
+intensity_matrix_n = get_intensities_matrix(red_unique_matrix_n, red_intervals_n,  psms, "n-term") 
 
 t_red_unique_matrix_c = red_unique_matrix_c.transpose()
 t_red_unique_matrix_n = red_unique_matrix_n.transpose()
@@ -191,11 +193,11 @@ t_intensity_matrix_n = intensity_matrix_n.transpose()
 
 print("### reduced matrices and intensity  ###")
 print("Nterm")
-print(red_intervals_n_term)
+print(red_intervals_n)
 print(red_unique_matrix_n)
 print(intensity_matrix_n)
 print("Cterm")
-print(red_intervals_c_term)
+print(red_intervals_c)
 print(red_unique_matrix_c)
 print(intensity_matrix_c)
 
@@ -282,8 +284,10 @@ def get_equation_system(unique_matrix_t, intensity_matrix_t):
             # print(intens_proteos_at_loc)
             intens_proteos_at_loc  = sum(intens_proteos_at_loc)
 
-
-            var = intens_proteos_at_loc/sum_intens_at_loc
+            if sum_intens_at_loc != 0:
+                var = intens_proteos_at_loc/sum_intens_at_loc
+            else:
+                var = 0
 
             #print("{0} / {1} = {2}".format(intens_proteos_at_loc,intens_proteos_at_loc,var))
 
@@ -309,7 +313,11 @@ print(variables)
 from scipy.optimize import nnls
 
 print("### Result Least Square (non-negative) ###")
-print(nnls(equations, variables))
+print(nnls(equations, variables)[0])
+print("sum ratios")
+print(sum(nnls(equations, variables)[0]))
+print("Residuals")
+print(nnls(equations, variables)[1])
 
 
 

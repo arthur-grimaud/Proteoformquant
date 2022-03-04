@@ -74,15 +74,13 @@ class ElutionProfile():
 
         return self.param_fitted
 
-    def get_elution_profile_mean(self, method):
+    def get_elution_profile_param_m(self, method):
         if method == "fitted":
-            m, s, a, k =  self.param_estimated[0], self.param_estimated[1], self.param_estimated[2], self.param_estimated[3]
+            return self.param_estimated[0]
         elif method == "estimated":
-            m, s, a, k =  self.parametersFitted[0], self.parametersFitted[1], self.parametersFitted[2], self.parametersFitted[3]
+            return self.parametersFitted[0]
         else: 
             print("Specify method (fitted or estimated)")
-
-        return m + (math.sqrt(2/math.pi)) * ((s*a)/math.sqrt(1+(a**2)) ) 
 
     def get_elution_profile_std(self, method ): #might be incorrect
         if method == "fitted":
@@ -113,13 +111,14 @@ class ElutionProfile():
         
         #Fit model without outliers removal
         self.param_estimated, self.param_fitted, self.score_estimated, self.score_fitted = self.fit_skew_normal(self.data_x, self.data_y)
-        # Fit model with outliers removal if below score threshold
-        if self.score_fitted < self.score_threshold:
-            self.param_estimated, self.param_fitted, self.score_estimated, self.score_fitted, self.psms_outliers, self.psms_included = self.exclude_outliers_mean_method()
+        
+        # # Fit model with outliers removal if below score threshold
+        # if self.score_fitted < self.score_threshold:
+        #     self.param_estimated, self.param_fitted, self.score_estimated, self.score_fitted, self.psms_outliers, self.psms_included = self.exclude_outliers_mean_method()
 
         
-        #Add to outliers:
-        self.psms_outliers, self.psms_included = self.exclude_outlier_non_significant(0.5)
+        # #Add to outliers:
+        # self.psms_outliers, self.psms_included = self.exclude_outlier_non_significant(0.5)
 
 
 
@@ -342,9 +341,9 @@ class ElutionProfile():
 
         #parameters bounds
         parameterBounds = []
-        parameterBounds.append([min(data_x)-((max(data_x)-min(data_x))) , max(data_x)+((max(data_x)-min(data_x)))]) # search bounds for m
-        parameterBounds.append([0.1, stdev(data_x)*10]) # search bounds for s
-        parameterBounds.append([0, max(data_y)*5]) # search bounds for a
+        parameterBounds.append([min(data_x)-((max(data_x)-min(data_x))) , max(data_x)+((max(data_x)-min(data_x)))+1]) # search bounds for m
+        parameterBounds.append([0.1, stdev(data_x)*10+1]) # search bounds for s
+        parameterBounds.append([0, max(data_y)*5+1]) # search bounds for a
         parameterBounds.append([-0.2, 0.8]) # search bounds for k
 
         return parameterBounds

@@ -19,12 +19,12 @@ from Classes.proteoform0 import Proteoform0
 import pprint
 class Msrun():
 
-    def __init__(self, runId:str = "Default run ID", dbse:str = "comet" ):
+    def __init__(self, run_id:str = "Default run ID", dbse:str = "comet" ):
         
-        self.runId = runId
+        self.run_id = run_id
         self.dbse = dbse
-        self.identFn: str = "Not Specified" 
-        self.spectraFn: str = "Not Specified"
+        self.ident_fn: str = "Not Specified" 
+        self.spectra_fn: str = "Not Specified"
 
         self.spectra: dict(Spectrum) = {} 
         self.proteoforms: dict(Proteoform) = {}
@@ -33,7 +33,7 @@ class Msrun():
         #PARAMETERS
         self.precMzTolerance = 1.5
         self.intensityThreshold = 200000
-        self.elution_profile_score_threshold = 0.7
+        self.elution_profile_score_threshold = 0.0
         self.fragments_types = ["c","zdot","z+1"]
 
 
@@ -70,10 +70,10 @@ class Msrun():
 
     # ----------------------------------- main ----------------------------------- #
  
-    def read_mzid(self, identFn):
+    def read_mzid(self, ident_fn):
         """Read a spectra identification file in .mzIdenMl whose path is specfieid in self.inputFn"""
-        self.identFn = identFn #Store File that has been read
-        mzidObj = mzid.read(identFn) #Create a pyteomics' mzid iterator
+        self.ident_fn = ident_fn #Store File that has been read
+        mzidObj = mzid.read(ident_fn) #Create a pyteomics' mzid iterator
 
         with Bar('loading identifications', max=1) as bar:
 
@@ -83,11 +83,11 @@ class Msrun():
                 bar.next()
         pass
 
-    def add_mgf_data(self, spectraFn):
+    def add_mgf_data(self, spectra_fn):
         """Add info from mgf file to spectrum objects in self.spectra"""
 
-        self.spectraFn = spectraFn #Store File that has been read
-        mgfObj = mgf.read(spectraFn)
+        self.spectra_fn = spectra_fn #Store File that has been read
+        mgfObj = mgf.read(spectra_fn)
 
 
         with Bar('loading spectra', max=1) as bar:
@@ -99,7 +99,7 @@ class Msrun():
                     index = specID.split("=")[1]
 
                 specMgf = mgfObj.get_spectrum(index) #need to be splited 
-                self.spectra[specID].setSpecDataMgf(specMgf)
+                self.spectra[specID].set_spec_data_mgf(specMgf)
                 bar.next()
         pass
 
@@ -187,6 +187,18 @@ class Msrun():
                 self.proteoform0.linkSpectrum(self.spectra[spectrumID])
 
 
+    def validate_all_psms(self):
+        for spectrum in self.spectra.values():
+            for psm in spectrum.psms:
+                psm.isValidated = True
+            
+
+
+    def update_psms_ratio(self):
+        for spectrum in self.spectra.values():
+            spectrum.update_psms_ratio()
+
+
     def update_chimeric_spectra(self, max_rank):
 
         """ For every psm of rank = rank try to find a matching envelope, and assign to that proteoform it if it is the case"""
@@ -207,7 +219,7 @@ class Msrun():
                             #print("spectrum at RT {0} psm: {1} matches proteoform {2}".format(spectrumRt, psmProforma, altProteo.get_modification_brno()))
                             psm.isValidated = True 
                             altProteo.link_psm(psm)
-                            spectrum.updateRatio()
+                            spectrum.update_ratio_pairs()
                             
                        
     def result_dataframe_pfq1_format(self):

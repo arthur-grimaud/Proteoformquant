@@ -34,33 +34,33 @@ def main():
 
     verbose = args.verbose
     indentFn = args.indentFn
-    spectraFn = args.spectraFn
+    spectra_fn = args.spectra_fn
     outputFn = args.outputFn
     dbse = args.dbse
 
     print("Starting " +  progName )
 
     ### Read Data ###
-    run = Msrun(runId="1", dbse = dbse)
+    run = Msrun(run_id="1", dbse = dbse)
     run.read_mzid(indentFn)
-    run.add_mgf_data(spectraFn)
+    run.add_mgf_data(spectra_fn)
     
     ### Prepare Data ###
     run.add_proteoforms()
     run.match_fragments()
 
     ### Quantification ###
-    run.update_proteoforms_elution_profile()
-    run.update_psm_validation()
-    run.update_proteoform_intens()
-    run.update_unassigned_spectra()
+    # run.update_proteoforms_elution_profile()
+    # run.update_psm_validation()
+    # run.update_proteoform_intens()
+    # run.update_unassigned_spectra()
 
-    print(run.get_dataset_metrics())
+    # print(run.get_dataset_metrics())
 
-    ### Report ###
-    sys.setrecursionlimit(10000)
-    with open('pfq_out_obj_test_1b.pkl', 'wb') as outp:
-        pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
+    # ### Report ###
+    # sys.setrecursionlimit(10000)
+    # with open('pfq_out_obj_test_1b.pkl', 'wb') as outp:
+    #     pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
 
 
     # run.update_chimeric_spectra(max_rank = 5)
@@ -71,8 +71,6 @@ def main():
 
     # print(run.get_dataset_metrics())
 
-    
-
     # ### Output ###
 
     # ### Report ###
@@ -81,7 +79,20 @@ def main():
     #     pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
 
 
+    ### Test Validate all ###
+    run.update_proteoform_intens()
+    run.update_proteoforms_elution_profile()
 
+    with open('pfq_out_obj_test_1a.pkl', 'wb') as outp:
+        pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
+
+    run.validate_all_psms()
+    run.update_psms_ratio()
+    run.update_proteoform_intens()
+    run.update_proteoforms_elution_profile()
+
+    with open('pfq_out_obj_test_1b.pkl', 'wb') as outp:
+        pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
 
     
 

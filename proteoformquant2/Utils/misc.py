@@ -1,11 +1,14 @@
 import math
 from itertools import tee
-
+import numpy as np
 def truncate(num, n):
     integer = int(num * (10**n))/(10**n)
     return integer
 
-
+def find_nearest(array, value):
+    array = np.asarray(array)
+    idx = (np.abs(array - value)).argmin()
+    return idx
 
 
 # def match(mz1, mz2):
