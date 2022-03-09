@@ -20,6 +20,16 @@ class Spectrum():
         self.sumIntensAnnotFrag = 0
 
         self.quant_residuals = 0
+
+        #MultiQuant Attr (will be removed)
+
+        self.unique_matrix = None
+        self.intensity_matrix = None
+        self.unique_matrix_r = None
+        self.intensity_matrix_r = None
+        self.equations = None
+        self.variables = None
+        self.proteforms_multiquant = None
             
         pass
     
@@ -97,9 +107,9 @@ class Spectrum():
 
     #other methods:
 
-    def annotateFragPsm(self):
+    def annotateFragPsm(self, frag_mz_tol):
         for psm in self.psms:
-            psm.setAnnotatedFragments()
+            psm.setAnnotatedFragments(frag_mz_tol = frag_mz_tol)
             
     def updateValidation(self):
         pass
@@ -117,7 +127,11 @@ class Spectrum():
         else:
             psms = [psm for idx, psm in self.psms if idx in psms_rank]
         print(psms)
-        self.__ratios_multiple(psms)
+
+        if len(psms) > 0:
+            self.__ratios_multiple(psms)
+        else:
+            print("No valid PSM")
         #self.__ratios_pair(get_validated_psm())
 
 
@@ -129,10 +143,12 @@ class Spectrum():
             for mod in psm.proteoform.get_modification_dict():
                 if mod["location"] not in mod_pos_list:
                     mod_pos_list.append(mod["location"])
+        mod_pos_list = sorted(mod_pos_list)
+        self.proteforms_multiquant = [psm.get_modification_brno() for psm in psms]
 
         #Add start and end of the sequence, sort the postions and create "interval of interest" for both n and c term frags 
-        mod_pos_list_n = sorted([*mod_pos_list, 1, len(psm.proteoform.get_peptide_sequence())+1])
-        mod_pos_list_c = sorted([*mod_pos_list, 0, len(psm.proteoform.get_peptide_sequence())])
+        mod_pos_list_n = sorted([*mod_pos_list, 1, len(psms[0].proteoform.get_peptide_sequence())+1])
+        mod_pos_list_c = sorted([*mod_pos_list, 0, len(psms[0].proteoform.get_peptide_sequence())])
         intervals_n = [[mod_pos_list_n[p],mod_pos_list_n[p+1]-1] for p in range(len(mod_pos_list_n)-1)]
         intervals_c = [[mod_pos_list_c[p]+1,mod_pos_list_c[p+1]] for p in range(len(mod_pos_list_c)-1)]
 
@@ -178,13 +194,21 @@ class Spectrum():
         #Combine matrices
         unique_matrix = np.vstack((t_red_unique_matrix_c, t_red_unique_matrix_n))
         intensity_matrix = np.vstack((t_intensity_matrix_c, t_intensity_matrix_n))
+        #save matrices: 
+        self.unique_matrix = unique_matrix
+        self.intensity_matrix = intensity_matrix
     
         #reduce equations that are redundant
         unique_matrix, intensity_matrix = self.__merge_equations(unique_matrix, intensity_matrix)
+        #save matrices
+        self.unique_matrix_r = unique_matrix
+        self.intensity_matrix_r = intensity_matrix
 
         #get eq system
         equations, variables = self.__equation_system(unique_matrix, intensity_matrix)
 
+        self.equations = unique_matrix
+        self.variables = intensity_matrix
 
         #Non linear least square solving:
         results = nnls(equations, variables)

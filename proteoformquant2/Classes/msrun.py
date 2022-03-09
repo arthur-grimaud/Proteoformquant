@@ -31,10 +31,11 @@ class Msrun():
         self.proteoform0 = Proteoform0()
 
         #PARAMETERS
-        self.precMzTolerance = 1.5
+        self.prec_mz_tol = 1.5   #in Da
+        self.frag_mz_tol = 0.015  #in Da
         self.intensityThreshold = 200000
-        self.elution_profile_score_threshold = 0.0
-        self.fragments_types = ["c","zdot","z+1"]
+        self.elution_profile_score_threshold = 0.5
+        self.fragments_types = ["c","zdot","z+1","z+2"]
 
 
     # ---------------------------------- getters --------------------------------- #
@@ -61,8 +62,8 @@ class Msrun():
             "UnassignedSpectra": len([spectrum for spectrum in self.proteoform0.linkedSpectra]),
             "ChimericSpectra": len([spectrum for spectrum in self.spectra.values() if spectrum.get_number_validated_psm() > 1]),
             "TotalProteoforms": len(self.proteoforms)-1,
-            "AvgEnvelopeScore": mean([proteoform.get_elution_profile().score_fitted for proteoform in self.proteoforms.values() if proteoform.get_elution_profile() != None ]),
-            "MinEnvelopeScore": min([proteoform.get_elution_profile().score_fitted for proteoform in self.proteoforms.values() if proteoform.get_elution_profile() != None ]),
+            #"AvgEnvelopeScore": mean([proteoform.get_elution_profile().score_fitted for proteoform in self.proteoforms.values() if proteoform.get_elution_profile() != None ]),
+            #"MinEnvelopeScore": min([proteoform.get_elution_profile().score_fitted for proteoform in self.proteoforms.values() if proteoform.get_elution_profile() != None ]),
             #"MedianEnvelopeS":   median([proteoform.get_elution_profile().param_fitted[1] for proteoform in self.proteoforms.values() if proteoform.get_elution_profile() != None ]),
             #"MedianEnvelopeA":   median([proteoform.get_elution_profile().param_fitted[2] for proteoform in self.proteoforms.values() if proteoform.get_elution_profile() != None ]),
             #"MedianEnvelopeK":   median([proteoform.get_elution_profile().param_fitted[3] for proteoform in self.proteoforms.values() if proteoform.get_elution_profile() != None ])
@@ -137,7 +138,7 @@ class Msrun():
 
 
 
-    def match_fragments(self, msmsTol= 0.02, internal = False):
+    def match_fragments(self, internal = False):
         """If mgf and identification data are provided in a spectrum object, get the annotated fragments for each PSM"""
 
         with Bar('Generating theoretical fragments', max=1) as bar:
@@ -147,7 +148,7 @@ class Msrun():
 
         with Bar('Matching fragments', max=1) as bar:
             for spectrumID in self.spectra:
-                self.spectra[spectrumID].annotateFragPsm()
+                self.spectra[spectrumID].annotateFragPsm(frag_mz_tol = self.frag_mz_tol)
                 self.spectra[spectrumID].setSumIntensAnnotFrag()
                 bar.next()
 
@@ -218,13 +219,29 @@ class Msrun():
                             
                             #print("spectrum at RT {0} psm: {1} matches proteoform {2}".format(spectrumRt, psmProforma, altProteo.get_modification_brno()))
                             psm.isValidated = True 
-                            altProteo.link_psm(psm)
-                            spectrum.update_ratio_pairs()
-                            
-                       
+                            #altProteo.link_psm(psm)
+    
+                   
     def result_dataframe_pfq1_format(self):
-        df = pd.DataFrame(columns=('PeptideSequence', 'PTM_code', 'ratio_pfq'))
-        row = 0
+        df = pd.DataFrame(columns=('protein','sequence', 'brno', 'proforma', 'intensity', 'linked_psm', 'linked_psm_validated', 'rt_peak'))
+
         for proteo in self.proteoforms.values():
-            df.loc[row]= [proteo.peptideSequence,proteo.get_modification_brno(),proteoform.get_proteoform_total_intens()]
-            row += 1
+
+            #get Elution profile max peak rt
+            if proteo.get_elution_profile() != None:
+                rt_peak = proteo.get_elution_profile().get_x_at_max_y()
+            else:
+                rt_peak = "NA"
+            
+            df.loc[len(df)]= [
+                proteo.get_protein_ids(),
+                proteo.peptideSequence, 
+                proteo.get_modification_brno(), 
+                proteo.get_modification_proforma(), 
+                proteo.get_proteoform_total_intens(), 
+                len(proteo.get_linked_psm()), 
+                len(proteo.get_validated_linked_psm()), 
+                rt_peak
+                ]
+
+        return df

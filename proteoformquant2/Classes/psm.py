@@ -162,7 +162,7 @@ class Psm():
     def setProteoform(self, proteoform):
         self.proteoform = proteoform
 
-    def setAnnotatedFragments(self, fragTol=0.015, maxCharge=1):
+    def setAnnotatedFragments(self, frag_mz_tol, maxCharge=1):
 
 
            
@@ -200,7 +200,7 @@ class Psm():
 
                     try:
                         spectrumSu = spectrumSu.annotate_mz_fragment(fragment_mz = float(frag[1]), fragment_charge = maxCharge,
-                                            fragment_tol_mass = fragTol, fragment_tol_mode = "Da", text = frag[0])
+                                            fragment_tol_mass = frag_mz_tol, fragment_tol_mode = "Da", text = frag[0])
                     except (ValueError): #necessary as the method .annotate_mz_fragment throw an error if the mz is not found
                         pass
 

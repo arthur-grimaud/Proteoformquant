@@ -11,6 +11,7 @@ from Utils import input
 #Classes
 from Classes.msrun import Msrun 
 import resource
+import pandas as pd
 
 def main():
 
@@ -40,6 +41,8 @@ def main():
 
     print("Starting " +  progName )
 
+    # --------------------------------- Analysis --------------------------------- #
+
     ### Read Data ###
     run = Msrun(run_id="1", dbse = dbse)
     run.read_mzid(indentFn)
@@ -48,53 +51,49 @@ def main():
     ### Prepare Data ###
     run.add_proteoforms()
     run.match_fragments()
-
-    ### Quantification ###
-    # run.update_proteoforms_elution_profile()
-    # run.update_psm_validation()
-    # run.update_proteoform_intens()
-    # run.update_unassigned_spectra()
-
-    # print(run.get_dataset_metrics())
-
-    # ### Report ###
-    # sys.setrecursionlimit(10000)
-    # with open('pfq_out_obj_test_1b.pkl', 'wb') as outp:
-    #     pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
+    
 
 
-    # run.update_chimeric_spectra(max_rank = 5)
-    # run.update_proteoforms_elution_profile()
-    # run.update_psm_validation()
-    # run.update_proteoform_intens()
-
-
-    # print(run.get_dataset_metrics())
-
-    # ### Output ###
-
-    # ### Report ###
-    # sys.setrecursionlimit(10000)
-    # with open('pfq_out_obj_test_2b.pkl', 'wb') as outp:
-    #     pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
-
-
-    ### Test Validate all ###
+    ## Quantification ### First rank only no valid
     run.update_proteoform_intens()
-    run.update_proteoforms_elution_profile()
+    ### Report ###
+    print(run.get_dataset_metrics())
+    sys.setrecursionlimit(10000)
+    with open('pfq_out_obj_test_1o.pkl', 'wb') as outp:
+        pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
+    run.result_dataframe_pfq1_format().to_csv('pfq_out_obj_test_3o.csv')  
+     
 
+    ## Quantification ### First rank only valid elution profile 
+    run.update_proteoforms_elution_profile()
+    run.update_psm_validation()
+    run.update_unassigned_spectra()
+    run.update_proteoform_intens()
+    ### Report ### 
+    print(run.get_dataset_metrics())
+    sys.setrecursionlimit(10000)
     with open('pfq_out_obj_test_1a.pkl', 'wb') as outp:
         pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
+    run.result_dataframe_pfq1_format().to_csv('pfq_out_obj_test_3a.csv')  
 
-    run.validate_all_psms()
+
+
+    ## Quantification ### chimeric valid elution profile
+    run.update_chimeric_spectra(max_rank=100)
     run.update_psms_ratio()
-    run.update_proteoform_intens()
     run.update_proteoforms_elution_profile()
-
+    run.update_psm_validation()
+    run.update_unassigned_spectra()
+    run.update_proteoform_intens()
+    ### Report ###
+    print(run.get_dataset_metrics())
+    sys.setrecursionlimit(10000)
     with open('pfq_out_obj_test_1b.pkl', 'wb') as outp:
         pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
+    run.result_dataframe_pfq1_format().to_csv('pfq_out_obj_test_3b.csv')
 
-    
+
+
 
 if __name__ == '__main__':
     #sys.argv = ["programName.py","--input","test.txt","--output","tmp/test.txt"]

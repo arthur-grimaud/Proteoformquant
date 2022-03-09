@@ -90,12 +90,51 @@ class ElutionProfile():
         else:
             print("Specify method (fitted or estimated) ")
 
+    def get_elution_profile_param_k(self, method): 
+        if method == "fitted":
+            return self.param_estimated[1]
+        elif method == "estimated":
+            return self.parametersFitted[1]
+        else:
+            print("Specify method (fitted or estimated) ")
+
     def get_auc(self, x_a, x_b):
 
         try:
             return integrate.quad(lambda x: self.__skewnormal(x, *self.param_fitted), x_a, x_b)[0]
         except(TypeError):
             return 0
+
+    def get_x_at_max_y(self):
+        """ Returns the x value for the peak of the elution profile  COULD EXIST A MATHEMATICAL SOLUTION"""
+        m = self.get_elution_profile_param_m("fitted")
+        k = self.get_elution_profile_param_k("fitted")
+
+        y = self.get_y(m)
+         
+        search = True
+        x = m
+
+        if k > 0:
+            while search:
+                if y < self.get_y(x+1) :
+                    x = x+1
+                    y = self.get_y(x)
+                else:
+                    search = False
+
+        elif k < 0:
+            while search:
+                if y < self.get_y(x-1) :
+                    x = x-1
+                    y = self.get_y(x)
+                else:
+                    search = False
+
+        return x
+
+
+
         
 
     # ---------------------------------- Fitting --------------------------------- #
@@ -112,13 +151,13 @@ class ElutionProfile():
         #Fit model without outliers removal
         self.param_estimated, self.param_fitted, self.score_estimated, self.score_fitted = self.fit_skew_normal(self.data_x, self.data_y)
         
-        # # Fit model with outliers removal if below score threshold
-        # if self.score_fitted < self.score_threshold:
-        #     self.param_estimated, self.param_fitted, self.score_estimated, self.score_fitted, self.psms_outliers, self.psms_included = self.exclude_outliers_mean_method()
+        # Fit model with outliers removal if below score threshold
+        if self.score_fitted < self.score_threshold:
+            self.param_estimated, self.param_fitted, self.score_estimated, self.score_fitted, self.psms_outliers, self.psms_included = self.exclude_outliers_mean_method()
 
         
-        # #Add to outliers:
-        # self.psms_outliers, self.psms_included = self.exclude_outlier_non_significant(0.5)
+        #Add to outliers:
+        self.psms_outliers, self.psms_included = self.exclude_outlier_non_significant(0.5)
 
 
 
@@ -239,7 +278,7 @@ class ElutionProfile():
         subsets_rt = [[psm.spectrum.get_rt() for psm in self.psms_included]]
         subsets_index = [0]
 
-        print(subsets_psms[0][0].get_modification_brno())
+        #print(subsets_psms[0][0].get_modification_brno())
         
 
         #Create a list of psms subsets

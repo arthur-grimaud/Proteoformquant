@@ -100,7 +100,8 @@ app.layout = html.Div([
 
     html.Div(children=[
         html.Label('Additional Plot'),
-        dcc.Graph(id = 'misc_plot'),
+        dcc.Graph(id = 'misc_plot', style={'display': 'inline-block'}),
+        dcc.Graph(id = 'misc_plot2', style={'display': 'inline-block'}),
         ]
     ),
 
@@ -169,6 +170,7 @@ def popup(v1, v2, v3, v4, v5, clicked,is_open,children):
             str_info.append("Residuals from multiple proteo quant")
             str_info.append(spectrum.quant_residuals)
             str_info.append(html.Br())
+     
             for psm in spectrum.psms:
                 str_info.append("Rank: {0}, Proteoform: {1}, isValidated: {2}, ratio: {3}".format(psm.rank, psm.proteoform.get_modification_brno(), psm.isValidated, psm.ratio))
                 str_info.append(html.Br())
@@ -177,6 +179,10 @@ def popup(v1, v2, v3, v4, v5, clicked,is_open,children):
                     dbc.ModalBody(
                     html.Div([
                         html.P(str_info,style = {'fontFamily':'monospace'}),
+                        html.Div(children=[
+                            dcc.Graph(figure = get_table(spectrum.unique_matrix_r.transpose(), spectrum.proteforms_multiquant ),id = 'table_unique', style={'display': 'inline-block'}),
+                            dcc.Graph(figure = get_table(spectrum.intensity_matrix_r.transpose(), spectrum.proteforms_multiquant),id = 'table_intensity', style={'display': 'inline-block'})
+                        ]),
                         dcc.Graph(figure = spectrum_plot(spectrum),id = 'plot_spectrum')      
                     ])),
                     dbc.ModalFooter(dbc.Button("Close", id="close"))
@@ -189,6 +195,7 @@ def popup(v1, v2, v3, v4, v5, clicked,is_open,children):
             str_info = []
             str_info.append(proteoform.get_elution_profile().score_fitted)
             str_info.append(html.Br())
+            
 
             return [dbc.ModalHeader("Proteoform"),
                     dbc.ModalBody(
@@ -204,6 +211,20 @@ def popup(v1, v2, v3, v4, v5, clicked,is_open,children):
 
     else:
         raise dash.exceptions.PreventUpdate
+
+def get_table(mat, proteos):
+
+    fig = go.Figure(data=[go.Table(
+    header=dict(values=proteos,
+                align='left'),
+    cells=dict(values=mat, 
+               line_color='darkslategray',
+               fill_color='lightcyan',
+               align='left'))
+    ])
+
+    fig.update_layout(template=template)
+    return fig
 
 def spectrum_plot(spectrum):
     m = 0
@@ -226,15 +247,13 @@ def spectrum_plot(spectrum):
     fig.update_layout(template=template)
     return fig
 
-def ms2_chromatogram_plot(proteoform, top_n_frag = 20):
+def ms2_chromatogram_plot(proteoform, top_n_frag = 40):
 
     #get most intense fragments at elution peak:
-    mean_elution_profile_model = proteoform.get_elution_profile().get_elution_profile_param_m("fitted") #get RT of elution peak
-    linked_psms = [psm for psm in proteoform.get_validated_linked_psm()]
-    linked_psms_mz = [psm.spectrum.get_rt() for psm in proteoform.get_validated_linked_psm()]
+    mean_elution_profile_model = proteoform.get_elution_profile().get_x_at_max_y() #get RT of elution peak
+    linked_psms = [psm for psm in proteoform.get_linked_psm()]
+    linked_psms_mz = [psm.spectrum.get_rt() for psm in proteoform.get_linked_psm()]
     peak_psm = linked_psms[misc.find_nearest(linked_psms_mz,mean_elution_profile_model)] #psm at max elution 
-
-    print(peak_psm)
 
     annotated_frag_code_intens = peak_psm.get_annotation_pair_format("fragCode","intens")
     frag_codes, intensities = zip(*annotated_frag_code_intens) #unzip values
@@ -242,9 +261,11 @@ def ms2_chromatogram_plot(proteoform, top_n_frag = 20):
     if top_n_frag < len(intensities):
         idx_top_frags = sorted(range(len(intensities)), key=lambda i: intensities[i], reverse=True)[:top_n_frag]
         print(idx_top_frags)
+    else: 
+        idx_top_frags = range(0,len(frag_codes)-1)
+        print(idx_top_frags)
 
     frag_codes_top = [frag_code for idx, frag_code in enumerate(frag_codes) if idx in idx_top_frags] #get fragment codes of top n most intens fragments
-    print(frag_codes_top)
     #data table of frag intensities
     intensities_top_frag = pd.DataFrame(columns = frag_codes_top)
     
@@ -252,12 +273,19 @@ def ms2_chromatogram_plot(proteoform, top_n_frag = 20):
         psm_annot_pair = psm.get_annotation_pair_format("fragCode","intens")
         dict_psm_annot_pair = dict(psm_annot_pair)
         intens_row = [ dict_psm_annot_pair[code] if code in dict_psm_annot_pair.keys() else 0 for code in frag_codes_top ]
-        print(intens_row)
 
         intensities_top_frag.loc[len(intensities_top_frag)] = intens_row
 
     rt_psms = [psm.spectrum.get_rt() for psm in linked_psms]
-    fig = go.Figure(data=[go.Surface(z=intensities_top_frag.values, y=rt_psms, x=frag_codes_top)])
+
+    print("dim dataframe")
+    print(intensities_top_frag.shape)
+
+    print("len retention time")
+    print(len(rt_psms))
+
+
+    fig = go.Figure(data=[go.Heatmap(z= np.transpose(np.asarray(intensities_top_frag.values)), y=frag_codes_top)]) #, 
     fig.update_layout(template=template)
     return fig
   
@@ -370,7 +398,10 @@ def plotAllEnvelopes(input):
 )
 def dropdown_proteoforms(input):
     """Create option list with proteoforms for dropdown"""
-    options = [{"label": proteo[1].get_modification_brno() + "  " + str(len(proteo[1].get_validated_linked_psm()) ) ,
+
+
+
+    options = [{"label": " ".join([proteo[1].get_modification_brno(), str(len(proteo[1].get_validated_linked_psm())), str(proteo[1].get_protein_ids()) ]),
                 "value": proteo[0], 
                 "sort":len(proteo[1].get_validated_linked_psm()) } for proteo in exp.proteoforms.items() if len(proteo[1].get_linked_psm()) > 4]
     options = sorted(options, key=lambda x: x["sort"], reverse=True)
@@ -416,7 +447,7 @@ def plot_elution_profiles(proteoforms_input):
         data_x_all = [psm.spectrum.get_rt() for psm in exp.proteoforms[proteo].get_linked_psm()]
         data_y_all = [psm.spectrum.getPrecIntens() for psm in exp.proteoforms[proteo].get_linked_psm()]
         spectrum_key = [psm.spectrum.id for psm in exp.proteoforms[proteo].get_linked_psm()]
-        fig.add_scatter( x=data_x_all, y=data_y_all, mode='markers', marker=dict(size=7, color="grey"), marker_symbol="x-open", name='Spectrum Intensity unvalid', customdata= spectrum_key)
+        fig.add_scatter( x=data_x_all, y=data_y_all, mode='markers', marker=dict(size=7, color="grey",  opacity=0.5), marker_symbol="x-open", name='Spectrum Intensity unvalid', customdata= spectrum_key)
 
         
         data_y = [psm.spectrum.get_rt() for psm in exp.proteoforms[proteo].get_validated_linked_psm()]
@@ -424,12 +455,12 @@ def plot_elution_profiles(proteoforms_input):
         data_y_psm = [psm.get_prec_intens_ratio() for psm in exp.proteoforms[proteo].get_validated_linked_psm()]
         spectrum_key  = [psm.spectrum.id for psm in exp.proteoforms[proteo].get_validated_linked_psm()]
 
-        fig.add_scatter( x=data_y, y=data_y_spectrum, mode='markers', marker=dict(size=10, color="grey"), name='Spectrum Intensity', customdata= spectrum_key)
-        fig.add_scatter( x=data_y, y=data_y_psm, mode='markers', marker=dict(size=7, color=cols[cols_n]), name='PSM Intensity',customdata=spectrum_key )
+        fig.add_scatter( x=data_y, y=data_y_spectrum, mode='markers', marker=dict(size=9, color="grey",  opacity=0.5), name='Spectrum Intensity', customdata= spectrum_key)
+        fig.add_scatter( x=data_y, y=data_y_psm, mode='markers', marker=dict(size=8, color=cols[cols_n]), name='PSM Intensity',customdata=spectrum_key )
 
         #add lines between PSM and spectrum intens points
         for i in range(0,len(data_y),1):
-            fig.add_scatter( x=[data_y[i],data_y[i]] , y=[data_y_spectrum[i],data_y_psm[i]], mode='lines', marker=dict(size=1, color="grey") )
+            fig.add_scatter( x=[data_y[i],data_y[i]] , y=[data_y_spectrum[i],data_y_psm[i]], mode='lines', marker=dict(size=1, color="#c9c9c9",  opacity=0.5), line={'dash': 'dash'} )
 
 
         elution_profile = exp.proteoforms[proteo].get_elution_profile()
@@ -441,9 +472,9 @@ def plot_elution_profiles(proteoforms_input):
             
             proteoform_key = np.repeat(proteo, [len(data_x_elution_profile)], axis=0)
             if data_y_elution_profile_fitted[0] != None: 
-                fig.add_scatter( x=data_x_elution_profile, y=data_y_elution_profile_fitted, mode='lines', marker=dict(size=4, color=cols[cols_n]), name='Fitted Parameters', line_shape='spline', customdata=proteoform_key )
+                fig.add_scatter( x=data_x_elution_profile, y=data_y_elution_profile_fitted, mode='lines', marker=dict(size=6, color=cols[cols_n]), name='Fitted Parameters', line_shape='spline', customdata=proteoform_key )
             if data_y_elution_profile_estimated[0] != None: 
-                fig.add_scatter( x=data_x_elution_profile, y=data_y_elution_profile_estimated, mode='lines', marker=dict(size=3, color=cols[cols_n]), line={'dash': 'dash'}, name='Estimated Parameters', line_shape='spline',customdata=proteoform_key )
+                fig.add_scatter( x=data_x_elution_profile, y=data_y_elution_profile_estimated, mode='lines', marker=dict(size=2, color=cols[cols_n]), line={'dash': 'dash'}, name='Estimated Parameters', line_shape='spline',customdata=proteoform_key )
 
         cols_n += 1 
     
@@ -451,7 +482,7 @@ def plot_elution_profiles(proteoforms_input):
                 family="Courier New, monospace",
                 size=10,
             )))
-    fig.update_layout(template=template)
+    fig.update_layout(template=template, height=1000)
 
     return fig  
 
@@ -581,8 +612,42 @@ def plot_envelopes_parameters(minMaxMz):
     fig.add_scatter( x=env_m, y=stats.zscore(env_a), mode='markers', marker=dict(size=10, color="green"), name='A')
 
 
-    fig.update_layout(template=template)
+    fig.update_layout(template=template,height=500, width=500)
     return fig  
+
+
+
+@app.callback(
+    Output('misc_plot2', 'figure'),
+    Input('mainDiv', "id")
+    # Input('input_max_mz', "value")
+)
+def plot_count_proteoform(input):
+
+    #proteocount
+    # proteoform_count = {}
+
+    # for proteo in exp.proteoforms.values():
+    #     proteoform_count[proteo.get_modification_proforma()] = len(proteo.get_linked_psm())
+    
+    # fig = px.bar(x=proteoform_count.keys(), y=proteoform_count.values())
+    # fig.update_layout(template=template,height=500, width=500)
+    # fig.update_layout( xaxis={'categoryorder':'total descending', "ticks":'', "showticklabels":False})
+
+    #all frag mz error
+    errors = []
+    for proteo in exp.proteoforms.values():
+        for psm in proteo.get_linked_psm():
+            print(psm.rank)
+            for frag_type_name, fragtype in psm.annotation.items():
+                if frag_type_name == "z+2":
+                    errors = errors + fragtype["mzErrorList"]
+
+    print(len(errors))
+    fig = px.histogram(x=errors)
+
+
+    return fig 
 
 
 # ---------------------------------------------------------------------------- #

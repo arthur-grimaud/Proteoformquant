@@ -44,7 +44,6 @@ class Proteoform():
     def getTheoFrag(self):
         return self.theoFrag
 
-
     def getMzFirstPsm(self):
         return self.linkedPsm[0].getCalculatedMassToCharge()
 
@@ -82,7 +81,9 @@ class Proteoform():
 
     def get_elution_profile(self):
         return self.envelope
-        
+
+    def get_protein_ids(self):
+        return self.protein_ids     
 
     #Setters
 
