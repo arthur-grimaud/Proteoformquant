@@ -59,9 +59,9 @@ def main():
     ### Report ###
     print(run.get_dataset_metrics())
     sys.setrecursionlimit(10000)
-    with open('pfq_out_obj_test_1o.pkl', 'wb') as outp:
+    with open('pfq_out_obj_test_2o.pkl', 'wb') as outp:
         pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
-    run.result_dataframe_pfq1_format().to_csv('pfq_out_obj_test_3o.csv')  
+    run.result_dataframe_pfq1_format().to_csv('pfq_out_obj_test_2o.csv')  
      
 
     ## Quantification ### First rank only valid elution profile 
@@ -72,9 +72,9 @@ def main():
     ### Report ### 
     print(run.get_dataset_metrics())
     sys.setrecursionlimit(10000)
-    with open('pfq_out_obj_test_1a.pkl', 'wb') as outp:
+    with open('pfq_out_obj_test_2a.pkl', 'wb') as outp:
         pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
-    run.result_dataframe_pfq1_format().to_csv('pfq_out_obj_test_3a.csv')  
+    run.result_dataframe_pfq1_format().to_csv('pfq_out_obj_test_2a.csv')  
 
 
 
@@ -88,11 +88,24 @@ def main():
     ### Report ###
     print(run.get_dataset_metrics())
     sys.setrecursionlimit(10000)
-    with open('pfq_out_obj_test_1b.pkl', 'wb') as outp:
+    with open('pfq_out_obj_test_2b.pkl', 'wb') as outp:
         pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
-    run.result_dataframe_pfq1_format().to_csv('pfq_out_obj_test_3b.csv')
+    run.result_dataframe_pfq1_format().to_csv('pfq_out_obj_test_2b.csv')
 
 
+  ## Quantification ### chimeric valid elution profile
+    run.update_chimeric_spectra(max_rank=100)
+    run.update_psms_ratio()
+    run.update_proteoforms_elution_profile()
+    run.update_psm_validation()
+    run.update_unassigned_spectra()
+    run.update_proteoform_intens()
+    ### Report ###
+    print(run.get_dataset_metrics())
+    sys.setrecursionlimit(10000)
+    with open('pfq_out_obj_test_2c.pkl', 'wb') as outp:
+        pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
+    run.result_dataframe_pfq1_format().to_csv('pfq_out_obj_test_2c.csv')
 
 
 if __name__ == '__main__':

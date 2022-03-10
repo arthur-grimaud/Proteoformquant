@@ -223,15 +223,17 @@ class Msrun():
     
                    
     def result_dataframe_pfq1_format(self):
-        df = pd.DataFrame(columns=('protein','sequence', 'brno', 'proforma', 'intensity', 'linked_psm', 'linked_psm_validated', 'rt_peak'))
+        df = pd.DataFrame(columns=('protein','sequence', 'brno', 'proforma', 'intensity', 'linked_psm', 'linked_psm_validated', 'rt_peak', 'auc'))
 
         for proteo in self.proteoforms.values():
 
             #get Elution profile max peak rt
             if proteo.get_elution_profile() != None:
                 rt_peak = proteo.get_elution_profile().get_x_at_max_y()
+                auc = proteo.get_elution_profile().get_auc(rt_peak-1000, rt_peak+1000) #TODO hard coded
             else:
                 rt_peak = "NA"
+                auc="NA"
             
             df.loc[len(df)]= [
                 proteo.get_protein_ids(),
@@ -241,7 +243,8 @@ class Msrun():
                 proteo.get_proteoform_total_intens(), 
                 len(proteo.get_linked_psm()), 
                 len(proteo.get_validated_linked_psm()), 
-                rt_peak
+                rt_peak,
+                auc
                 ]
 
         return df
