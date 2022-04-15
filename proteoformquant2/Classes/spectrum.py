@@ -12,6 +12,14 @@ class Spectrum():
 
      
         self.id = spectrumID  #Unique ID for the spectrum
+
+        #print(identMzid)
+
+        try:
+            self.spectrum_title = identMzid['spectrum title']
+        except(KeyError):
+            self.spectrum_title = identMzid['spectrumID']
+
         self.psms : list(Psm) = []  #list of PSM for that spectrum
         
         if(identMzid != None):
@@ -30,6 +38,7 @@ class Spectrum():
         self.equations = None
         self.variables = None
         self.proteforms_multiquant = None
+        self.intervals = None
             
         pass
     
@@ -56,6 +65,13 @@ class Spectrum():
 
     def getSumIntensFrag(self):
         return sum(self.fragIntens)
+
+    def get_sum_intens_frag_at_mz(self, mz_range):
+        #return the sum of intensity at specified mz range
+
+        intensities = [pair[1] for pair in zip(self.fragMz,self.fragIntens) if pair[0] > mz_range[0] and pair[0] < mz_range[1]]
+        print(intensities)
+        return sum(intensities)
     
     def getSumIntensAnnotFrag(self):
         return self.sumIntensAnnotFrag
@@ -86,8 +102,15 @@ class Spectrum():
         self.precMz: float = specMgf["params"]["pepmass"][0]
         self.rt: float = specMgf["params"]["rtinseconds"]
         
-    def setSpecDataMzxml(self, specMgf):
-        pass
+    def set_spec_data_mzml(self, spec_mzml):
+        "add spetrum information from a pyteomics mzml object"
+        print(spec_mzml['scanList']['scan'][0]['scan start time'])
+
+        self.fragIntens: array = spec_mzml["intensity array"]
+        self.fragMz: array = spec_mzml["m/z array"]
+        self.precIntens: float = spec_mzml['precursorList']['precursor'][0]["selectedIonList"]["selectedIon"][0]["selected ion m/z"]
+        self.precMz: float = spec_mzml['precursorList']['precursor'][0]["selectedIonList"]["selectedIon"][0]["peak intensity"]
+        self.rt: float = spec_mzml['scanList']['scan'][0]['scan start time']
 
     def setSumIntensAnnotFrag(self):
         """For proteoforms in self.psms where isvalidated is true, set self.sumIntensAnnotFrag as the sum of annotated peaks"""
@@ -126,7 +149,7 @@ class Spectrum():
             psms = self.get_validated_psm()
         else:
             psms = [psm for idx, psm in self.psms if idx in psms_rank]
-        print(psms)
+        #print(psms)
 
         if len(psms) > 0:
             self.__ratios_multiple(psms)
@@ -183,7 +206,7 @@ class Spectrum():
         #compute intensity matrices
         intensity_matrix_n = self.__intensity_matrix(red_unique_matrix_n, red_intervals_n,  psms, "n-term") 
         intensity_matrix_c = self.__intensity_matrix(red_unique_matrix_c, red_intervals_c,  psms, "c-term") 
-       
+        
         #transpose
         t_red_unique_matrix_n = red_unique_matrix_n.transpose()
         t_red_unique_matrix_c = red_unique_matrix_c.transpose()

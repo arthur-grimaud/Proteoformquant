@@ -151,9 +151,9 @@ class ElutionProfile():
         #Fit model without outliers removal
         self.param_estimated, self.param_fitted, self.score_estimated, self.score_fitted = self.fit_skew_normal(self.data_x, self.data_y)
         
-        # Fit model with outliers removal if below score threshold
-        if self.score_fitted < self.score_threshold:
-            self.param_estimated, self.param_fitted, self.score_estimated, self.score_fitted, self.psms_outliers, self.psms_included = self.exclude_outliers_mean_method()
+        # # Fit model with outliers removal if below score threshold
+        # if self.score_fitted < self.score_threshold:
+        #     self.param_estimated, self.param_fitted, self.score_estimated, self.score_fitted, self.psms_outliers, self.psms_included = self.exclude_outliers_mean_method()
 
         
         #Add to outliers:
@@ -304,7 +304,7 @@ class ElutionProfile():
         #Find best score that retain the maximum number of psms
         kn = KneeLocator(subsets_index, subsets_scores, S=2, curve='concave', direction='increasing',interp_method= "polynomial", polynomial_degree=2)
         index = kn.knee
-        print(index)
+        #print(index)
         #Return best fit results
         if index != None and index != 0:
             try:
@@ -322,9 +322,9 @@ class ElutionProfile():
             print("NO OPTI: could not optimize fit by removing data points")
             pass
 
-        print(subsets_index)
-        print(subsets_scores)
-        print(score_fitted)
+        # print(subsets_index)
+        # print(subsets_scores)
+        # print(score_fitted)
         return param_estimated, param_fitted, score_estimated, score_fitted, psms_outliers, psms_included
 
 

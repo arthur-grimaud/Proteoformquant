@@ -151,9 +151,41 @@ class Psm():
         #print(fragments)
         return fragments      
 
+    def get_intensity_at_pos(self,pos, direction):
+        """ Get the intensity of the annotated fragment at position "pos",
+            where pos define the amino acid index (1 based) to the left (n-term)
+            of the fragmentation site (e.g pos=3 get the intens of a c3 ion and 
+            a z7 ion for an peptide of 10 AA).
+            if direction = both the sum of z and c ions is returned"""
 
+        intensity = 0
 
+        for frag_type_name, frag_type in self.annotation.items():
+            direction_frag_type = ion_direction[frag_type_name]
 
+            if direction_frag_type == direction or direction == "both":
+                
+                if direction_frag_type == "n-term" :
+                    try:
+                        #print(str("1:"+str(pos)))
+                        index = frag_type['pos'].index(str("1:"+str(pos)))
+                        intensity += frag_type['intens'][index]
+                    except ValueError:
+                        pass
+
+                if direction_frag_type == "c-term" :
+                    try:
+                        #print(str( str(pos) + str(len(self.proteoform.peptideSequence)) ))
+                        index = frag_type['pos'].index(str( str(pos+1) + ":"+ str(len(self.proteoform.peptideSequence)) ))
+                        intensity += frag_type['intens'][index]
+                    except ValueError:
+                        pass
+        if intensity == 0:
+            return None
+        
+        return intensity
+
+                                
 
 
 

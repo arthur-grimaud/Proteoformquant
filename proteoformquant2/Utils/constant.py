@@ -24,13 +24,13 @@ ion_formulas = {
         'z+2':      {'z+2': mass.Composition(formula='H-2O-1' + 'N-1' + 'OH3')}, #z+M(2H)
         'z+3':      {'z+3': mass.Composition(formula='H-2O-1' + 'N-1' + 'OH4')},
 
-        "c-zdot":      {'cIzdot': mass.Composition(formula='H-2O-1' +'H-2O-1'+'OH5')},  # -O   = c + z (from msnbase issue 82)
-        "c-z+1":      {'cIz+1': mass.Composition(formula='H-2O-1' +'H-2O-1'+'OH6')},
-        "cdot-zdot":      {'cdotIzdot': mass.Composition(formula='H-2O-1' +'H-2O-1' + 'OH4')},
-        "cdot-z+1":      {'cdotIz+1': mass.Composition(formula='H-2O-1' +'H-2O-1' +'OH5')},
-        "n-n":     {'nIn': mass.Composition(formula='P-1')},
-        "b-y":      {'bIy': mass.Composition(formula='H-2O-1' + 'H-2O-1' + '')},
-        "a-x":      {'aIx': mass.Composition(formula='H-2O-1' + 'H-2O-1' + 'C-1O-1'+ 'CO2')}
+        "c-zdot":      {'c-zdot': mass.Composition(formula='H-2O-1' +'H-2O-1'+'OH5')},  # -O   = c + z (from msnbase issue 82)
+        "c-z+1":      {'c-z+1': mass.Composition(formula='H-2O-1' +'H-2O-1'+'OH6')},
+        "cdot-zdot":      {'cdot-zdot': mass.Composition(formula='H-2O-1' +'H-2O-1' + 'OH4')},
+        "cdot-z+1":      {'cdot-z+1': mass.Composition(formula='H-2O-1' +'H-2O-1' +'OH5')},
+        "n-n":     {'n-n': mass.Composition(formula='P-1')},
+        "b-y":      {'b-y': mass.Composition(formula='H-2O-1' + 'H-2O-1' + '')},
+        "a-x":      {'a-x': mass.Composition(formula='H-2O-1' + 'H-2O-1' + 'C-1O-1'+ 'CO2')}
     }
 
 ion_direction = {

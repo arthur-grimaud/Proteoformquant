@@ -118,7 +118,8 @@ class Proteoform():
                 sub_sequences = [(sequence[i-1:j],i,j,ion_type, [mod["location"] for mod in modifications if i <= mod["location"] <= j  ] ) for i in range(1,len(sequence)) for j in range(i + 1, len(sequence))]
                 #compute internal frag masses
                 frag_masses_iontype.update({ ','.join(str(s) for s in seq[1:4]): round(mass.fast_mass(sequence=seq[0], ion_type=ion_type, ion_comp= ion_formulas[ion_type]) + sum_mods(modifications, seq[1], seq[2]),4) for seq in sub_sequences })
-            
+
+
             else: #Terminal Fragment
                 if any(i in ion_type for i in ["a","b","c"]): #Nterm
                     sum_mods = lambda modifications,i,j : sum( [mod["monoisotopicMassDelta"] for mod in modifications if  mod["location"] <= j] )
@@ -166,7 +167,7 @@ class Proteoform():
         
         if method == "AUC":
             if self.get_elution_profile() != None:
-                print(self.get_elution_profile().get_auc())
+                #print(self.get_elution_profile().get_auc())
                 self.totalIntens+=self.get_elution_profile().get_auc()
             return None
 

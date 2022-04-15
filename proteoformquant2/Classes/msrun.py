@@ -1,6 +1,7 @@
 ### Import ###
 from pyteomics import mzid 
 from pyteomics import mgf
+from pyteomics import mzml
 from chart_studio.plotly import plot, iplot
 import plotly.express as px
 import plotly.graph_objs as go
@@ -10,11 +11,15 @@ from statistics import mean
 from statistics import median
 from progress.bar import Bar
 import pandas as pd
+import networkx as nx
+from itertools import combinations
 
 #Custom classes
 from Classes.spectrum import Spectrum
 from Classes.proteoform import Proteoform
 from Classes.proteoform0 import Proteoform0
+
+from Utils import misc
 
 import pprint
 class Msrun():
@@ -29,13 +34,15 @@ class Msrun():
         self.spectra: dict(Spectrum) = {} 
         self.proteoforms: dict(Proteoform) = {}
         self.proteoform0 = Proteoform0()
+        
+        self.proteoform_isobaric_group = []
 
         #PARAMETERS
         self.prec_mz_tol = 1.5   #in Da
         self.frag_mz_tol = 0.015  #in Da
-        self.intensityThreshold = 200000
-        self.elution_profile_score_threshold = 0.5
-        self.fragments_types = ["c","zdot","z+1","z+2"]
+        self.intensityThreshold = 20000
+        self.elution_profile_score_threshold = 0.3
+        self.fragments_types = ["c","zdot","z+1","z+2","c-zdot", "c-z+1", "cdot-zdot", "c-z+1", "a-x"]
 
 
     # ---------------------------------- getters --------------------------------- #
@@ -70,6 +77,9 @@ class Msrun():
         }
 
     # ----------------------------------- main ----------------------------------- #
+
+
+    # ------------------------- DATA PREPARATION METHODS ------------------------ #
  
     def read_mzid(self, ident_fn):
         """Read a spectra identification file in .mzIdenMl whose path is specfieid in self.inputFn"""
@@ -87,25 +97,61 @@ class Msrun():
     def add_mgf_data(self, spectra_fn):
         """Add info from mgf file to spectrum objects in self.spectra"""
 
-        self.spectra_fn = spectra_fn #Store File that has been read
-        mgfObj = mgf.read(spectra_fn)
+        self.spectra_fn = spectra_fn #Store File name that has been read
+        mgf_obj = mgf.read(spectra_fn, index_by_scans=True)
 
 
         with Bar('loading spectra', max=1) as bar:
 
             for specID in self.spectra: #Take into account how DBSEs store spectra ids 
+
+            
+
                 if self.dbse == "mascot":
                     index = str(int(specID.split("=")[1]) + 1)
                 if self.dbse == "comet":
                     index = specID.split("=")[1]
 
-                specMgf = mgfObj.get_spectrum(index) #need to be splited 
+
+                try:
+                    specMgf = mgf_obj.get_spectrum(index) #need to be splited 
+                except(KeyError):
+                    specMgf = mgf_obj.get_spectrum
+
                 self.spectra[specID].set_spec_data_mgf(specMgf)
                 bar.next()
         pass
 
-    def addMzmlData(self):
+    def add_mzml_data(self, spectra_fn):
         """Add info from mzml file to spectrum objects in self.spectra add Proteform objects to self.Proteoforms"""
+
+        self.spectra_fn = spectra_fn #Store File name that has been read
+        mzml_obj = mzml.read(spectra_fn)
+        
+        with Bar('loading spectra', max=1) as bar:
+
+            for specID in self.spectra: #Take into account how DBSEs store spectra ids 
+
+                
+
+                if self.dbse == "mascot":
+                    index = str(int(specID.split("=")[1]) + 1)
+                if self.dbse == "comet":
+                    index = specID.split("=")[1]
+
+
+                print(index)
+                try:
+                    spec_mzml = mzml_obj.get_by_id(index, id_key="index") #need to be splited 
+                except(KeyError):
+                    print("Key error spectrum not found")
+                
+                print(spec_mzml)
+
+                self.spectra[specID].set_spec_data_mzml(spec_mzml)
+                bar.next()
+        pass
+
         pass
     
     def add_proteoforms(self):
@@ -154,7 +200,10 @@ class Msrun():
 
         pass
 
-    
+
+    # ------------------------- QUANTIFICATION METHODS ------------------------ #
+
+
     def update_proteoforms_elution_profile(self):
         """For each proteoforms in self. proteoforms model the elution profile"""
         with Bar('Updating proteoforms envelopes', max=1) as bar:
@@ -187,22 +236,24 @@ class Msrun():
             if self.spectra[spectrumID].get_number_validated_psm() == 0:
                 self.proteoform0.linkSpectrum(self.spectra[spectrumID])
 
-
     def validate_all_psms(self):
         for spectrum in self.spectra.values():
             for psm in spectrum.psms:
                 psm.isValidated = True
-            
+    
+    def filter_proteform_low_count(self, min_n_psm ):
+        for proteoform in self.proteoforms.values():
+            if(len(proteoform.get_validated_linked_psm()) < min_n_psm):
+                for psm in proteoform.get_linked_psm():
+                    psm.isValidated == False
 
 
-    def update_psms_ratio(self):
-        for spectrum in self.spectra.values():
-            spectrum.update_psms_ratio()
+    
 
 
     def update_chimeric_spectra(self, max_rank):
 
-        """ For every psm of rank = rank try to find a matching envelope, and assign to that proteoform it if it is the case"""
+        """ For every psm of rank < rank try to find a matching envelope, and assign to that proteoform it if it is the case"""
         for spectrum in self.spectra.values():
             spectrumMz = spectrum.getPrecMz()
             spectrumRt = spectrum.get_rt()
@@ -248,3 +299,153 @@ class Msrun():
                 ]
 
         return df
+
+    def get_dataframe_fragment_annotation(self, max_rank = 1):
+        "Create a dataframe where each row is the annotation for one PSM (TAKES FIRST RANK)"
+
+
+        df = pd.DataFrame(columns=('scan','sequence', 'brno', 'proforma', 'prec_intens', "sum_intens_frag","prec_in_msms"))
+
+        for spectrum in self.spectra.values():
+            
+            
+            for psm in spectrum.psms[:max_rank]:
+
+                print(psm.spectrum.get_id())
+                print(psm.proteoform.get_protein_ids())
+                #add information spectrum and psm
+                dict_add = {'scan':psm.spectrum.get_id(),
+                            'sequence':psm.proteoform.peptideSequence, 
+                            'brno':psm.get_modification_brno(), 
+                            'proforma':psm.proteoform.get_modification_proforma(), 
+                            'prec_intens':psm.spectrum.getPrecIntens(),
+                            'sum_intens_frag':psm.spectrum.getSumIntensFrag(),
+                            'prec_in_msms': psm.spectrum.get_sum_intens_frag_at_mz([psm.spectrum.getPrecMz()-20, psm.spectrum.getPrecMz()+20])   }
+                
+                
+                #add annotation:
+                #print(psm.get_annotation())
+                for frag_type in psm.get_annotation().values():
+                    #print(frag_type)
+
+                    annotation_frag_type = {frag_type["fragCode"][i]:frag_type["intens"][i] for i in range(0,len(frag_type["fragCode"]))}
+
+                    #print(annotation_frag_type)
+                    dict_add.update(annotation_frag_type)
+                
+                print(dict_add)
+                df_add = pd.DataFrame(dict_add, index=[0]) 
+
+                dfs = [df, df_add]
+
+                df = pd.concat(dfs)
+
+
+        return df
+
+    # ----------------------- TESTING GROUP QUANTIFICATION ----------------------- #
+
+    def set_proteoform_isobaric_groups(self):
+        """ From self.proteoforms define self.proteoform_isobaric_group where isobaric proteoform are grouped """
+
+        all_proteoform_pairs = [] #pairs of proteoform founds together in the psms of a spectra
+
+        for spectrum in self.spectra.values():
+            proforma_psms =  [psm.get_modification_proforma() for psm in spectrum.psms]
+            proforma_combinations = [(a, b) for idx, a in enumerate(proforma_psms) for b in proforma_psms[idx + 1:]]
+
+            for c in proforma_combinations:
+                if c not in all_proteoform_pairs:
+                    all_proteoform_pairs.append(c)
+
+        #find groups (connected graphs) in the network defined from the edgelist "all-proteoform-pairs"
+        G=nx.from_edgelist(all_proteoform_pairs)
+        l=list(nx.connected_components(G))
+        print(l)
+        self.proteoform_isobaric_group = l
+
+
+    def update_psms_validation_proteoform_subset(self, spectra_subset, proteoforms_proforma):
+        for spectrum in spectra_subset:
+            for psm in spectrum.psms:
+                if psm.proteoform.get_modification_proforma() in proteoforms_proforma:
+                    psm.isValidated = True
+                else:
+                    psm.isValidated = False
+
+    def update_psms_ratio_subset(self, spectra_subset):
+        for spectrum in spectra_subset:
+            spectrum.update_psms_ratio()
+
+    def update_proteoforms_elution_profile_subset(self, proteoform_subset):
+        """For each proteoforms in self. proteoforms model the elution profile"""
+        with Bar('Updating proteoforms envelopes', max=1) as bar:
+
+            #TODO add a function thjat set the bounds based on the entire set of envelopes  
+            for proteoform in proteoform_subset:
+                proteoform.model_elution_profile(self.elution_profile_score_threshold)
+                bar.next()
+        pass
+
+
+    def find_optimal_proteoform_set(self):
+
+        for group in self.proteoform_isobaric_group:
+            print("PROTEFORM ISOBARIC GROUP:  ",  group)
+
+            #create a list of PSMs linked count for each proteoform in the group
+            group_psm_count = [len(self.proteoforms[proforma].get_linked_psm()) for proforma in group]
+            sorted_group = [x for _, x in sorted(zip(group_psm_count, group), reverse=True)]
+
+            for proteoform_proforma in sorted_group:
+                print("proteoform linked psm", len(self.proteoforms[proteoform_proforma].get_linked_psm()))
+
+               
+                # p
+
+
+                # for proforma_subset in misc.combinations(proteo_group):
+                    
+                #     #Get the set of spectra in the proteoform group:
+                #     #Get the set of proteoform object in the proteform group:
+                #     spectra_subset = []
+                #     proteoform_subset = []
+                #     for proforma in proforma_subset:
+                #         proteoform = self.proteoforms[proforma]
+                #         proteoform_subset.append(proteoform)
+                #         for psm in proteoform.get_linked_psm():
+                #             if psm.spectrum not in spectra_subset:
+                #                 spectra_subset.append(psm.spectrum)
+
+                #     print("Proteoform combination:  ",  [p.get_modification_brno() for p in proteoform_subset])
+
+                #     self.update_psms_validation_proteoform_subset(spectra_subset, proforma_subset)
+                #     self.update_psms_ratio_subset(spectra_subset)
+                #     self.update_proteoforms_elution_profile_subset(proteoform_subset)
+
+
+                #     residuals = [spectrum.quant_residuals for spectrum in spectra_subset if spectrum.quant_residuals !=0]
+                #     if len(residuals) > 1: 
+                #         print(mean(residuals))
+                #     else: 
+                #         print("no mean")
+
+
+                
+            
+
+
+
+
+
+
+            
+            
+
+        
+
+
+
+
+
+

@@ -3,6 +3,7 @@
 
 argparse
 dash
+dash_daq
 matplotlib
 numpy
 objbrowser
@@ -16,6 +17,7 @@ chart_studio
 lxml
 unimod-mapper 
 progress
+networkx
 
 
 ###### Requirements with Version Specifiers ######

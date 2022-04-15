@@ -1,6 +1,9 @@
 import math
 from itertools import tee
 import numpy as np
+from itertools import compress, product
+
+
 def truncate(num, n):
     integer = int(num * (10**n))/(10**n)
     return integer
@@ -10,6 +13,8 @@ def find_nearest(array, value):
     idx = (np.abs(array - value)).argmin()
     return idx
 
+def combinations(items):
+    return ( set(compress(items,mask)) for mask in product(*[[0,1]]*len(items)) )
 
 # def match(mz1, mz2):
 #     if abs( (1-mz1/mz2) * 1000000) <= 2:

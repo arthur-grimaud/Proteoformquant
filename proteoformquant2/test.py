@@ -24,14 +24,14 @@ import itertools
 from scipy.optimize import nnls
 import itertools
 
-with open('pfq_out_obj_test_4b.pkl', 'rb') as inp:
+with open('pfq_out_obj_test_1.pkl', 'rb') as inp:
     exp = pickle.load(inp) 
 
 
 #S = exp.spectra["scan=2779"]
 #S = exp.spectra["index=1853"]
 #S = exp.spectra["index=989"]
-S = exp.spectra["index=1937"]
+S = exp.spectra["scan=1657"]
 
 
 
@@ -160,8 +160,8 @@ def ratios_multiple(psms):
                 mod_pos_list.append(mod["location"])
 
     mod_pos_list = sorted(mod_pos_list)
-    #print("::::")
-    #print(mod_pos_list)
+    print("::::")
+    print(mod_pos_list)
    
     proteforms_multiquant = [psm.get_modification_brno() for psm in psms]
 
@@ -171,10 +171,10 @@ def ratios_multiple(psms):
     intervals_n = [[mod_pos_list_n[p],mod_pos_list_n[p+1]-1] for p in range(len(mod_pos_list_n)-1)]
     intervals_c = [[mod_pos_list_c[p]+1,mod_pos_list_c[p+1]] for p in range(len(mod_pos_list_c)-1)]
 
-    # print("::::")
-    # print(intervals_n)
-    # print("::::")
-    # print(intervals_c)
+    print("::::")
+    print(intervals_n)
+    print("::::")
+    print(intervals_c)
     #Create matrix with modification induced mass shift (row = proteoform, col position)
     mod_mass_matrix = np.zeros( (len(psms), len(mod_pos_list)) )
     for row, psm in enumerate(psms):
@@ -185,9 +185,9 @@ def ratios_multiple(psms):
             mod_mass_matrix[row,col] = mod["monoisotopicMassDelta"]
 
 
-    # print("***********")
-    # print(mod_mass_matrix)
-    # print("***********")
+    print("***********")
+    print(mod_mass_matrix)
+    print("***********")
     #Compute matrix with cumulative mass shift for n and c term fragments ( row: proteoform, column:corresponding position interval)
     
     additive_mass_n = np.zeros((mod_mass_matrix.shape[0], mod_mass_matrix.shape[1]+1))
@@ -199,12 +199,12 @@ def ratios_multiple(psms):
         additive_mass_c[:,col-1] = np.add( additive_mass_c[:,col], mod_mass_matrix[:,col-1])
     
 
-    # print("-----------------------------")
+    print("-----------------------------")
 
-    # print(additive_mass_n)
-    # print(additive_mass_c)
+    print(additive_mass_n)
+    print(additive_mass_c)
 
-    # print("-----------------------------")
+    print("-----------------------------")
 
 
     #Compute grouping matrix, give a common index to intervals with same mass across proteoforms (e.g [[54,54][54,59]] = [[1,1][1,2]])
@@ -212,12 +212,12 @@ def ratios_multiple(psms):
     unique_matrix_c =  group_matrix(additive_mass_c)
 
 
-    # print("----------||||-----------")
+    print("----------||||-----------")
 
-    # print(unique_matrix_n)
-    # print(unique_matrix_c)
+    print(unique_matrix_n)
+    print(unique_matrix_c)
 
-    # print("------------|||||------------")
+    print("------------|||||------------")
 
     #reduce intervales
     red_unique_matrix_n, red_intervals_n = reduce_intervals(unique_matrix_n, intervals_n)
@@ -228,12 +228,12 @@ def ratios_multiple(psms):
     intensity_matrix_c = get_intensity_matrix(red_unique_matrix_c, red_intervals_c,  psms, "c-term") 
 
 
-    # print("..................")
-    # print(red_unique_matrix_n)
-    # print(red_intervals_n)
-    # print(red_unique_matrix_c)
-    # print(red_intervals_c)
-    # print("..................")
+    print("..................")
+    print(red_unique_matrix_n)
+    print(red_intervals_n)
+    print(red_unique_matrix_c)
+    print(red_intervals_c)
+    print("..................")
     
     #transpose
     t_red_unique_matrix_n = red_unique_matrix_n.transpose()
@@ -250,27 +250,27 @@ def ratios_multiple(psms):
     unique_matrix = unique_matrix
     intensity_matrix = intensity_matrix
 
-    #print(unique_matrix)
-    #print(intensity_matrix)
+    print(unique_matrix)
+    print(intensity_matrix)
 
     #reduce equations that are redundant
     unique_matrix, intensity_matrix = merge_equations(unique_matrix, intensity_matrix)
 
-    #print(unique_matrix)
-    #print(intensity_matrix)
+    print(unique_matrix)
+    print(intensity_matrix)
 
     #get eq system
     equations, variables = equation_system(unique_matrix, intensity_matrix)
 
-    #print(equations)
-    #print(variables)
+    print(equations)
+    print(variables)
 
     #Non linear least square solving:
     results = nnls(equations, variables)
     ratios_psms = [ratio/sum(results[0]) for ratio in results[0]] #normalized ratios
     quant_residuals = results[1]
 
-    return quant_residuals
+    return ratios_psms, quant_residuals
     # #assign rations: 
     # for idx, psm in enumerate(psms):
     #     psm.ratio = ratios_psms[idx]
@@ -279,12 +279,17 @@ def ratios_multiple(psms):
 
 
 
-psms = S.psms
+psms = S.psms[0:10]
 
-combinations = list(itertools.combinations(range(0,len(psms)-1), 3))
 
-for comb in combinations:
 
-    print(comb)
-    psms = [psm for i,psm in enumerate(S.psms) if i in comb]
-    print(ratios_multiple(psms))
+quant, residuals = ratios_multiple(psms)
+print("results")
+print(quant)
+# combinations = list(itertools.combinations(range(0,len(psms)-1), 3))
+
+# for comb in combinations:
+
+#     print(comb)
+#     psms = [psm for i,psm in enumerate(S.psms) if i in comb]
+#     print(ratios_multiple(psms))

@@ -46,66 +46,37 @@ def main():
     ### Read Data ###
     run = Msrun(run_id="1", dbse = dbse)
     run.read_mzid(indentFn)
+    #run.add_mgf_data(spectra_fn)
     run.add_mgf_data(spectra_fn)
     
     ### Prepare Data ###
     run.add_proteoforms()
     run.match_fragments()
+
+    ### Export Fragment Annotation ###
+    run.get_dataframe_fragment_annotation().to_csv(outputFn + ".csv")
+
+    
+    ### Quantification ###
+    
+
+    #run.update_proteoforms_elution_profile()
+    #run.update_psm_validation()
+    #run.update_unassigned_spectra()
+    #run.update_psms_ratio()
+
     
 
 
-    ## Quantification ### First rank only no valid
-    run.update_proteoform_intens()
-    ### Report ###
-    print(run.get_dataset_metrics())
-    sys.setrecursionlimit(10000)
-    with open('pfq_out_obj_test_2o.pkl', 'wb') as outp:
-        pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
-    run.result_dataframe_pfq1_format().to_csv('pfq_out_obj_test_2o.csv')  
-     
-
-    ## Quantification ### First rank only valid elution profile 
-    run.update_proteoforms_elution_profile()
-    run.update_psm_validation()
-    run.update_unassigned_spectra()
-    run.update_proteoform_intens()
-    ### Report ### 
-    print(run.get_dataset_metrics())
-    sys.setrecursionlimit(10000)
-    with open('pfq_out_obj_test_2a.pkl', 'wb') as outp:
-        pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
-    run.result_dataframe_pfq1_format().to_csv('pfq_out_obj_test_2a.csv')  
+    # with open('pfq_out_obj.pkl', 'wb') as outp:
+    #     pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
+    # run.result_dataframe_pfq1_format().to_csv('pfq_out_obj.csv')
 
 
 
-    ## Quantification ### chimeric valid elution profile
-    run.update_chimeric_spectra(max_rank=100)
-    run.update_psms_ratio()
-    run.update_proteoforms_elution_profile()
-    run.update_psm_validation()
-    run.update_unassigned_spectra()
-    run.update_proteoform_intens()
-    ### Report ###
-    print(run.get_dataset_metrics())
-    sys.setrecursionlimit(10000)
-    with open('pfq_out_obj_test_2b.pkl', 'wb') as outp:
-        pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
-    run.result_dataframe_pfq1_format().to_csv('pfq_out_obj_test_2b.csv')
 
 
-  ## Quantification ### chimeric valid elution profile
-    run.update_chimeric_spectra(max_rank=100)
-    run.update_psms_ratio()
-    run.update_proteoforms_elution_profile()
-    run.update_psm_validation()
-    run.update_unassigned_spectra()
-    run.update_proteoform_intens()
-    ### Report ###
-    print(run.get_dataset_metrics())
-    sys.setrecursionlimit(10000)
-    with open('pfq_out_obj_test_2c.pkl', 'wb') as outp:
-        pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
-    run.result_dataframe_pfq1_format().to_csv('pfq_out_obj_test_2c.csv')
+
 
 
 if __name__ == '__main__':
