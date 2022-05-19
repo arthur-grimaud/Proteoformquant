@@ -30,7 +30,7 @@ from Classes.problem_wrapper import ProblemWrapper
 from pymoo.core.evaluator import Evaluator
 from pymoo.core.population import Population
 from pymoo.factory import get_problem
-
+from pymoo.algorithms.moo.nsga2 import NSGA2
 
 # GA
 import pymoo
@@ -682,10 +682,10 @@ class Msrun:
                 proteoform = self.proteoforms[proforma]
                 self.proteoform_subset.append(proteoform)
 
-                rt_range = proteoform.get_rt_range_r1()
-                print(rt_range)
-                self.variables.append(mean(rt_range))
-                self.variables.append(mean(rt_range))
+                # get starting values (center of mass based on psm rank and precursor intensity)
+                rt_center = proteoform.get_rt_center()
+                self.variables.append(rt_center)
+                self.variables.append(rt_center)
 
                 for psm in proteoform.get_linked_psm():
                     if psm.spectrum not in self.spectra_subset:
@@ -693,10 +693,10 @@ class Msrun:
 
             # Generate list of variables to optimize in the form [Proteo1-lowerbound, Proteo1-upperbound, Proteo2...]
 
-            gen = 10
-
-            size_start_pop = 10
-            offsprings = 60
+            gen = 70
+            size_start_pop = 20
+            offsprings = 100
+            pop_size = 30
 
             self.variables = np.asarray([self.variables] * size_start_pop)
             noise = np.random.normal(0, 50, self.variables.shape)
@@ -717,8 +717,15 @@ class Msrun:
             pop = Population.new("X", X)
             Evaluator().eval(problem, pop)
 
-            algorithm = ES(n_offsprings=offsprings, pop_size=10, rule=1.0 / 5.0, sampling=pop)
+            # algorithm = ES(n_offsprings=offsprings, pop_size=size_start_pop, rule=1.0 / 5.0, sampling=pop)
             # algorithm = GA(pop_size=pop)
+            algorithm = NSGA2(
+                pop_size=pop_size,
+                sampling=pop,
+                crossover=get_crossover("bin_two_point"),
+                mutation=get_mutation("int_pm"),
+                eliminate_duplicates=True,
+            )
 
             # Run optimization
             res = minimize(problem, algorithm, ("n_gen", gen), verbose=True, save_history=True, seed=1)
@@ -818,23 +825,33 @@ class Msrun:
             fig.add_vrect(
                 x0=self.proteoforms[proteo].min_bound_rt,
                 x1=self.proteoforms[proteo].max_bound_rt,
-                annotation_text=self.proteoforms[proteo].get_modification_brno(),
-                annotation_position="top left",
-                opacity=0.1,
+                # annotation_text=self.proteoforms[proteo].get_modification_brno(),
+                # annotation_position="top left",
+                opacity=0.05,
                 fillcolor=cols[cols_n],
+            )
+
+            fig.add_trace(
+                go.Scatter(
+                    x=[self.proteoforms[proteo].min_bound_rt - 10],
+                    y=[(0 - (cols_n + 1) * 100000) - 50000],
+                    text=[self.proteoforms[proteo].get_modification_brno()],
+                    mode="text",
+                )
             )
 
             fig.add_shape(
                 type="rect",
                 x0=self.proteoforms[proteo].min_bound_rt,
-                y0=0 - cols_n * 100000,
+                y0=0 - (cols_n + 1) * 100000,
                 x1=self.proteoforms[proteo].max_bound_rt,
-                y1=0 - (cols_n + 1) * 100000,
+                y1=0 - (cols_n + 2) * 100000,
                 line=dict(
                     color=cols[cols_n],
                     width=2,
                 ),
                 fillcolor=cols[cols_n],
+                layer="below",
             )
 
             # add lines between PSM and spectrum intens points

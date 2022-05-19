@@ -60,18 +60,26 @@ class Proteoform:
     def getMzMean(self):
         pass
 
-    def get_rt_range_r1(self):
-        """returns themin and max rt in associated psm of rank 1"""
-        rts = [psm.spectrum.get_rt() for psm in self.get_linked_psm() if psm.get_rank() == 1]
+    def get_rt_center(self):
+        """returns rt "center" based on the weigthed average of psm's precursor mass"""
+        rts = [psm.spectrum.get_rt() for psm in self.get_linked_psm()]
+        weights = [psm.spectrum.getPrecIntens() / psm.get_rank() for psm in self.get_linked_psm()]
 
-        if len(rts) == 0:
-            return (
-                self.get_linked_psm()[0].spectrum.get_rt(),
-                self.get_linked_psm()[-1].spectrum.get_rt(),
-            )
+        numerator = sum([rts[i] * weights[i] for i in range(len(rts))])
+        denominator = sum(weights)
 
-        rt_range = (min(rts), max(rts))
-        return rt_range
+        print(round(numerator / denominator, 2))
+
+        return round(numerator / denominator, 2)
+
+        # if len(rts) == 0:
+        #     return (
+        #         self.get_linked_psm()[0].spectrum.get_rt(),
+        #         self.get_linked_psm()[-1].spectrum.get_rt(),
+        #     )
+
+        # rt_range = (min(rts), max(rts))
+        # return rt_range
 
     def get_peptide_sequence(self):
         return self.peptideSequence
