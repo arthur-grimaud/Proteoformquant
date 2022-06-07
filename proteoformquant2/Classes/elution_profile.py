@@ -11,6 +11,13 @@ from statistics import mean, median, stdev
 from scipy.optimize import least_squares
 from sympy import subsets, true
 import sympy as sy
+from scipy.optimize import fsolve as fsolve
+from scipy.integrate import quad
+import mpmath as mp
+from scipy.stats import norm
+from scipy.special import owens_t
+from scipy.stats import spearmanr
+import warnings
 
 
 class ElutionProfile:
@@ -35,6 +42,20 @@ class ElutionProfile:
 
     # ---------------------------------- Getters --------------------------------- #
 
+    def is_parameters_fitted(self):
+        # return true if curve_fit results is available in the instance
+        if self.param_fitted[0] == None:
+            return False
+        else:
+            return True
+
+    def is_modeled(self):
+        # return true if curve_fit results is available in the instance
+        if self.param_fitted[0] == None:
+            return False
+        else:
+            return True
+
     def get_y_serie(self, x_values, method="best"):
         """
         for a list of x values return the estimated y values given the fitted function
@@ -47,24 +68,17 @@ class ElutionProfile:
         else:
             return [None], [None]
 
-    def get_y(self, x, method="best"):
+    def get_y(self, x):  # , method="best"):
         """
         for x return the estimated y value given the fitted function
         uses estimated parameters if fitted parameters are not determined
         """
-        if self.param_fitted[0] != None and method in ["fitted", "best"]:
+        if self.param_fitted[0] != None:  # and method in ["fitted", "best"]:
             return self.skewnormal(x, *self.param_fitted)
-        elif method in ["estimated", "best"]:
-            return self.skewnormal(x, *self.param_estimated)
+        # elif method in ["estimated", "best"]:
+        #     return self.skewnormal(x, *self.param_estimated)
         else:
             return None
-
-    def is_parameters_fitted(self):
-        # return true if curve_fit results is available in the instance
-        if self.param_fitted[0] == None:
-            return False
-        else:
-            return True
 
     def get_score(self):
         if self.is_parameters_fitted():
@@ -74,30 +88,29 @@ class ElutionProfile:
 
     def get_parameters_fitted(self):
         # returns parameters of curve_fit
-
         return self.param_fitted
 
     def get_elution_profile_param_m(self, method):
-        if method == "fitted":
+        if method == "estimated":
             return self.param_estimated[0]
-        elif method == "estimated":
-            return self.parametersFitted[0]
+        elif method == "fitted":
+            return self.param_fitted[0]
         else:
             print("Specify method (fitted or estimated)")
 
     def get_elution_profile_std(self, method):  # might be incorrect
-        if method == "fitted":
+        if method == "estimated":
             return self.param_estimated[1]
-        elif method == "estimated":
-            return self.parametersFitted[1]
+        elif method == "fitted":
+            return self.param_fitted[1]
         else:
             print("Specify method (fitted or estimated) ")
 
     def get_elution_profile_param_k(self, method):
-        if method == "fitted":
+        if method == "estimated":
             return self.param_estimated[1]
-        elif method == "estimated":
-            return self.parametersFitted[1]
+        elif method == "fitted":
+            return self.param_fitted[1]
         else:
             print("Specify method (fitted or estimated) ")
 
@@ -107,6 +120,45 @@ class ElutionProfile:
             return integrate.quad(lambda x: self.skewnormal(x, *self.param_fitted), x_a, x_b)[0]
         except (TypeError):
             return 0
+
+    def bounds_area_equation(self, x1x2, m, s, a, k):
+        # print("params of bounds area equation")
+        # print(x1x2, m, s, a, k)
+
+        x1, x2 = x1x2
+
+        # percentage area
+        total_auc = a
+        bound_auc = self.skewnorm_cdf(x2, m, s, a, k) - self.skewnorm_cdf(x1, m, s, a, k)
+        area_95 = total_auc * 0.99 - bound_auc
+
+        # x1 x2 at same height
+        fx1_fx2_equal = self.skewnormal(x1, *[m, s, a, k]) - self.skewnormal(x2, *[m, s, a, k])
+
+        # print("returns of bounds area equation")
+        # print((area_95, fx1_fx2_equal))
+
+        return (area_95, fx1_fx2_equal)
+
+    def get_bounds_area(self):
+
+        m, s, a, k = self.get_parameters_fitted()
+
+        # print(m, s, a, k)
+
+        res = fsolve(
+            self.bounds_area_equation,
+            [m, m],
+            args=(m, s, a, k),
+            factor=0.01,  # TODO factor probably increase time maybe mplemented consecutive search with lower factor only if minima isn't reached
+        )
+
+        # print("m, s, a, k ", m, s, a, k)
+        # print("res ", res)
+        return res
+
+    def get_total_auc(self):  # TODO hard-coded
+        return self.get_auc(-10000, 20000)
 
     def get_x_at_max_y(self):
         """Returns the x value for the peak of the elution profile  COULD EXIST A MATHEMATICAL SOLUTION"""
@@ -135,6 +187,35 @@ class ElutionProfile:
                     search = False
 
         return x
+
+    def get_y_range_central_auc(self, auc_percent=99):
+        """get the range on the y axis were the auc representing auc_percent of the total auc"""
+        print("WIP")
+        pass
+
+    def get_x_range_for_y(self, Y):
+        """Return the estimation of x values for y = constante"""
+
+        m = self.param_fitted[0]
+        s = self.param_fitted[1]
+        a = self.param_fitted[2]
+        k = self.param_fitted[3]
+
+        results_min, infodict, ier, mesg = fsolve(
+            lambda x: self.skewnormal(x, *self.param_fitted) - Y, m - (s * (1 + np.abs(k))), full_output=True
+        )
+
+        if ier != 1:  # if no solution if found
+            return (0, 0)
+
+        results_max, infodict, ier, mesg = fsolve(
+            lambda x: self.skewnormal(x, *self.param_fitted) - Y, m + (s * (1 + np.abs(k))), full_output=True
+        )
+
+        if ier != 1:  # if no solution if found
+            return (0, 0)
+
+        return (results_min[0], results_max[0])
 
     # ---------------------------------- Fitting --------------------------------- #
 
@@ -172,6 +253,8 @@ class ElutionProfile:
         if param_bounds[0] == None:  # If no parameters bounds are suplied, estimate them
             param_bounds = self.__get_parameter_bounds_skewnormal(data_x, data_y)
 
+        # print(param_bounds)
+
         # Determine initial parameters
         if param_init[0] == None:  # If no initial parameters are suplied, estimate them
             param_init = self.__estimate_initial_parameters(self.skewnormal, data_x, data_y)
@@ -179,16 +262,16 @@ class ElutionProfile:
         # Save initial parameters as "estimated"
         param_estimated = param_init
         # goodness of the fit with estimated parameters
-        score_estimated = self.__pearson_test_log(self.skewnormal, param_estimated, data_x, data_y)
+        score_estimated = self.__pearson_test(self.skewnormal, param_estimated, data_x, data_y)
 
         try:
-
             param_bounds_curve_fit = tuple(
                 [
                     tuple([param_bounds[x][b] for x in range(len(param_bounds))])
                     for b in range(len(param_bounds[0]))
                 ]
             )  # convert bounds for "curve_fit"
+
             param_fitted = least_squares(
                 self.__skewnormal_residuals,
                 param_estimated,
@@ -197,166 +280,44 @@ class ElutionProfile:
                 f_scale=1,
                 args=(data_x, data_y),
             )
+
             param_fitted = param_fitted.x
 
             # #Optimize curve fit
             # param_bounds_curve_fit = tuple([ tuple([param_bounds[x][b] for x in range(len(param_bounds))]) for b in range(len(param_bounds[0]))]) #convert bounds for "curve_fit"
             # param_fitted = curve_fit(self.__skewnormal, data_x, data_y, param_estimated, bounds=param_bounds_curve_fit)[0]
             # #goodness of the fit with fitted parameters
-            score_fitted = self.__pearson_test_log(self.skewnormal, param_fitted, data_x, data_y)
+
+            score_fitted = self.__pearson_test(self.skewnormal, param_fitted, data_x, data_y)
+            # print(score_fitted)
+
         except (RuntimeError):
             param_fitted = [None]
             score_fitted = 0
-            print("Curve_fit failed")
+            # print("Curve_fit failed")
 
         return param_estimated, param_fitted, score_estimated, score_fitted
 
-    # def fit_skew_normal(self, data_x, data_y, param_init = [None], param_bounds = [None]):
-    #     """ startPrevFit """
-
-    #     #Transform to numpy array (might not be needed)
-    #     data_x = np.array(data_x)
-    #     data_y = np.array(data_y)
-
-    #     #Determine parameters bounds
-    #     if param_bounds[0] == None: #If no parameters bounds are suplied, estimate them
-    #         param_bounds = self.__get_parameter_bounds_skewnormal(data_x, data_y)
-
-    #     #Determine initial parameters
-    #     if param_init[0] == None: #If no initial parameters are suplied, estimate them
-    #         param_init = self.__estimate_initial_parameters(self.__skewnormal,data_x, data_y)
-
-    #     #Save initial parameters as "estimated"
-    #     param_estimated = param_init
-    #     #goodness of the fit with estimated parameters
-    #     score_estimated = self.__pearson_test(self.__skewnormal, param_estimated, data_x, data_y)
-
-    #     try:
-    #         #Optimize curve fit
-    #         param_bounds_curve_fit = tuple([ tuple([param_bounds[x][b] for x in range(len(param_bounds))]) for b in range(len(param_bounds[0]))]) #convert bounds for "curve_fit"
-    #         param_fitted = curve_fit(self.__skewnormal, data_x, data_y, param_estimated, bounds=param_bounds_curve_fit)[0]
-    #         #goodness of the fit with fitted parameters
-    #         score_fitted = self.__pearson_test(self.__skewnormal, param_fitted, data_x, data_y)
-    #     except(RuntimeError):
-    #         param_fitted = [None]
-    #         score_fitted = 0
-    #         print("Curve_fit failed")
-
-    #     return param_estimated, param_fitted, score_estimated, score_fitted
-
-    # ---------------------------------- Outlier detection --------------------------------- #
-
-    def exclude_outlier_non_significant(self, auc_percent_threshold):
-        "Exclude datapoint on the tails of the elution profile model that would represent less than X%  of the area under the curve"
-
-        psms_included = self.psms_included
-        psms_outliers = self.psms_outliers
-
-        for psm in self.psms_included:
-
-            auc_l_r = (
-                self.get_auc(-np.inf, psm.spectrum.get_rt()),
-                self.get_auc(psm.spectrum.get_rt(), np.inf),
-            )
-            auc_tot = sum(auc_l_r)
-            if auc_tot > 0:
-                auc_min = min(auc_l_r)
-
-                auc_percent = (auc_min / auc_tot) * 100
-
-                if auc_percent < auc_percent_threshold / 2:  # diveded by 2 because two tailed
-                    psms_outliers.append(psm)
-
-        psms_included = [psm for psm in self.psms_included if psm not in psms_outliers]
-
-        return psms_outliers, psms_included
-
-    def exclude_outliers_mean_method(self):
-        "Try imrove the fit of the curve by iteratively removing datapoints the furthest from the RT mean"
-
-        subsets_psms = [self.psms_included]
-        subsets_rt = [[psm.spectrum.get_rt() for psm in self.psms_included]]
-        subsets_index = [0]
-
-        # print(subsets_psms[0][0].get_modification_brno())
-
-        # Create a list of psms subsets
-        for i in range(0, len(subsets_psms[0]) - 5):
-            m = mean(subsets_rt[i])
-            outIndex = subsets_rt[i].index(max(subsets_rt[i], key=lambda x: abs(x - m)))
-            subsets_psms.append([v for y, v in enumerate(subsets_psms[i]) if y != outIndex])
-            subsets_rt.append([v for y, v in enumerate(subsets_rt[i]) if y != outIndex])
-            subsets_index.append(i + 1)
-
-        # Compute fit score for each subsets
-        subsets_scores = []
-        for psmsSubset in subsets_psms:
-            data_yT = np.array([psm.spectrum.get_rt() for psm in psmsSubset])
-            yDataT = np.array([psm.get_prec_intens_ratio() for psm in psmsSubset])
-            # refit the curve to subset
-            param_estimated, param_fitted, score_estimated, score_fitted = self.fit_skew_normal(
-                data_yT, yDataT
-            )
-            # store score and subset
-
-            subsets_scores.append(score_fitted)
-
-        # Find best score that retain the maximum number of psms
-        kn = KneeLocator(
-            subsets_index,
-            subsets_scores,
-            S=2,
-            curve="concave",
-            direction="increasing",
-            interp_method="polynomial",
-            polynomial_degree=2,
-        )
-        index = kn.knee
-        # print(index)
-        # Return best fit results
-        if index != None and index != 0:
-            try:
-                data_x = np.array([psm.spectrum.get_rt() for psm in subsets_psms[index]])
-                data_y = np.array([psm.get_prec_intens_ratio() for psm in subsets_psms[index]])
-                param_estimated, param_fitted, score_estimated, score_fitted = self.fit_skew_normal(
-                    data_x, data_y
-                )
-                psms_outliers = [
-                    psm for psm in self.psms_included if psm not in subsets_psms[index]
-                ]  # TODO check whether outlier needs to be removed for proteoform.linkedPSMSs
-                psms_included = [psm for psm in self.psms_included if psm in subsets_psms[index]]
-            except (TypeError):
-                print("TYPE ERROR: could not optimize fit by removing data points")
-                psms_outliers = []
-        else:
-            psms_outliers = []
-            psms_included = self.psms_included
-            print("NO OPTI: could not optimize fit by removing data points")
-            pass
-
-        # print(subsets_index)
-        # print(subsets_scores)
-        # print(score_fitted)
-        return param_estimated, param_fitted, score_estimated, score_fitted, psms_outliers, psms_included
-
     # ----------------------------- Model's function ----------------------------- #
 
+    # def skewnormal(self, x, m, s, a, k):
+    #     return a * np.exp(k * (x - m) / s - np.sqrt((x - m) / s * (x - m) / s + 1))
+
+    # def __skewnormal_residuals(self, par, x, y):
+    # m, s, a, k = par
+    # return (a * np.exp(k * (x - m) / s - np.sqrt((x - m) / s * (x - m) / s + 1))) - y
+
     def skewnormal(self, x, m, s, a, k):
-        return a * np.exp(k * (x - m) / s - np.sqrt((x - m) / s * (x - m) / s + 1))
+        u = (x - m) / s
+        return a * ((2 / s) * norm.pdf(u) * norm.cdf(k * u))
+
+    def skewnorm_cdf(self, x, m, s, a, k):
+        u = (x - m) / s
+        return a * (norm.cdf(u) - 2 * owens_t(u, k))
 
     def __skewnormal_residuals(self, par, x, y):
         m, s, a, k = par
-        return (a * np.exp(k * (x - m) / s - np.sqrt((x - m) / s * (x - m) / s + 1))) - y
-
-    def __skewnormal_cdf(self, x, m, s, a, k, range_start, range_end):
-        values = []
-        for value in x:
-            integral = integrate.quad(lambda x: self.skewnormal(x, m, s, a, k), range_start, value)[0]
-            normalized = (
-                integral / integrate.quad(lambda x: self.skewnormal(x, m, s, a, k), range_start, range_end)[0]
-            )
-            values.append(normalized)
-        return np.array(values)
+        return self.skewnormal(x, m, s, a, k) - y
 
     # ------------------------------ Error Functions ----------------------------- #
 
@@ -388,9 +349,9 @@ class ElutionProfile:
         parameterBounds.append(
             [min(data_x) - ((max(data_x) - min(data_x))), max(data_x) + ((max(data_x) - min(data_x))) + 1]
         )  # search bounds for m
-        parameterBounds.append([0.1, stdev(data_x) * 10 + 1])  # search bounds for s
-        parameterBounds.append([0, max(data_y) * 5 + 1])  # search bounds for a
-        parameterBounds.append([-0.2, 0.8])  # search bounds for k
+        parameterBounds.append([0.1, stdev(data_x) * 1500 + 1])  # search bounds for s
+        parameterBounds.append([0, 1000])  # search bounds for a
+        parameterBounds.append([-10, 10])  # search bounds for k
 
         return parameterBounds
 
@@ -398,15 +359,10 @@ class ElutionProfile:
 
         parameter_estim = []
         parameter_estim.append(median(data_x))  # estimation for m
-        parameter_estim.append(stdev(data_x) / 2)  # estimation for s
-        parameter_estim.append(max(data_y) * 2)  # estimation for a
+        parameter_estim.append(stdev(data_x))  # estimation for s
+        parameter_estim.append(max(data_y) * 10)  # estimation for a
         parameter_estim.append(0)  # estimation for k
         return np.array(parameter_estim)
-
-    # def __estimate_initial_parameters(self, model, data_x, data_y):
-
-    #     result = differential_evolution(self.__MSPD, self.__get_parameter_bounds_skewnormal(data_x, data_y), args =(model, data_x, data_y), seed=1)
-    #     return result.x
 
     # -------------------------------- Scoring Fit ------------------------------- #
 
@@ -416,8 +372,15 @@ class ElutionProfile:
     def __pearson_test(self, model, parameters, data_x, data_y):  # !! NOT KS !! to be renamed
         x = np.array(data_y).reshape((-1, 1))
         y = np.array([model(x, *parameters) for x in data_x])
-        model = LinearRegression().fit(x, y)
-        return model.score(x, y)
+        # model = LinearRegression().fit(x, y)
+        # return model.score(x, y)
+        try:
+            cor_results = spearmanr(x, y)
+        except warnings:
+            print("Issue in spearmanR scoring, returning score of 0")
+            return 0
+
+        return cor_results.correlation
 
     def __pearson_test_log(self, model, parameters, data_x, data_y):  # !! NOT KS !! to be renamed
         x = np.array(data_y).reshape((-1, 1))
@@ -436,9 +399,9 @@ class ElutionProfile:
 
     def scoring_return(self, model, parameters, data_x, data_y):  # for testing purpose return pred vs expect
         x = np.array(data_y)
-        x = np.log2(x, out=np.zeros_like(x), where=(x != 0))
+        # x = np.log2(x, out=np.zeros_like(x), where=(x != 0))
         y = np.array([model(x, *parameters) for x in data_x])
-        y = np.log2(y, out=np.zeros_like(y), where=(y != 0))
+        # y = np.log2(y, out=np.zeros_like(y), where=(y != 0))
         # print(x)
         # print(y)
         return x, y

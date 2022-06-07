@@ -112,7 +112,7 @@ def main():
     ### Quantification groups ###
 
     run.set_proteoform_isobaric_groups()
-    run.find_optimal_proteoform_set_2()
+    run.optimize_proteoform_subsets()
 
     with open("test_res_1_1.pkl", "wb") as outp:
         pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)

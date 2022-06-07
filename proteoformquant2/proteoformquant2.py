@@ -68,13 +68,18 @@ def main():
 
     # ### Prepare Data ###
 
-    # run.fdr_filtering(decoy_tag="decoy_", score_name="Comet:xcorr")
+    # run.fdr_filtering(decoy_tag="decoy_", score_name="Amanda:AmandaScore")
     # run.add_proteoforms()
     # run.filter_proteform_low_count(min_n_psm=5)
     # run.match_fragments()
+    # run.scale_precursor_intensities()
 
-    # ### Export Fragment Annotation ###
-    # # run.get_dataframe_fragment_annotation().to_csv(outputFn + ".csv")
+    # ## Export Fragment Annotation ###
+    # outputFn = "out"
+    # run.get_dataframe_fragment_annotation().to_csv(outputFn + ".csv")
+
+    # with open("test_res_p.pkl", "wb") as outp:
+    #     pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
 
     # with open("test_save_1_1.pkl", "wb") as outp:
     #     pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
@@ -82,28 +87,35 @@ def main():
     with open("test_save_1_1.pkl", "rb") as inp:
         run = pickle.load(inp)
 
-    # For testing purpose filter protroforms:
-    proteoform_to_keep = {
-        "ARTKQTARKSTGGKAPRKQLATK[Trimethyl]AARKSAPATGGVKKPHRYRPGTVALRE",
-        "ARTKQTARKSTGGKAPRKQLATKAARK[Trimethyl]SAPATGGVKKPHRYRPGTVALRE",
-        "ARTKQTARKSTGGKAPRKQLATK[Acetyl]AARKSAPATGGVKKPHRYRPGTVALRE",
-        "ARTKQTARK[Acetyl]STGGKAPRKQLATKAARKSAPATGGVKKPHRYRPGTVALRE",
-        "ARTKQTARKSTGGKAPRKQLATKAARKSAPATGGVK[Trimethyl]KPHRYRPGTVALRE",
-        "ARTKQTARKSTGGKAPRK[Acetyl]QLATKAARKSAPATGGVKKPHRYRPGTVALRE",
-        "ARTKQTARKSTGGKAPRKQLATKAARKSAPATGGVK[Acetyl]KPHRYRPGTVALRE",
-        "ARTKQTARKSTGGKAPRKQLATKAARK[Acetyl]SAPATGGVKKPHRYRPGTVALRE",
-        "ARTKQTARKSTGGK[Acetyl]APRKQLATKAARKSAPATGGVKKPHRYRPGTVALRE",
-        "ARTKQTARKSTGGKAPRK[Trimethyl]QLATKAARKSAPATGGVKKPHRYRPGTVALRE",
-        "ARTKQTARKSTGGKAPRKQLATKAARKSAPATGGVKK[Acetyl]PHRYRPGTVALRE",
-        "ARTKQTARKSTGGKAPRKQLATKAARKSAPATGGVKK[Trimethyl]PHRYRPGTVALRE",
-    }
-    # only correct
+    # # # For testing purpose filter protroforms:
     # proteoform_to_keep = {
     #     "ARTKQTARKSTGGKAPRKQLATK[Trimethyl]AARKSAPATGGVKKPHRYRPGTVALRE",
     #     "ARTKQTARKSTGGKAPRKQLATKAARK[Trimethyl]SAPATGGVKKPHRYRPGTVALRE",
+    #     "ARTKQTARKSTGGKAPRKQLATK[Acetyl]AARKSAPATGGVKKPHRYRPGTVALRE",
+    #     "ARTKQTARK[Acetyl]STGGKAPRKQLATKAARKSAPATGGVKKPHRYRPGTVALRE",
+    #     "ARTKQTARKSTGGKAPRKQLATKAARKSAPATGGVK[Trimethyl]KPHRYRPGTVALRE",
+    #     "ARTKQTARKSTGGKAPRK[Acetyl]QLATKAARKSAPATGGVKKPHRYRPGTVALRE",
     #     "ARTKQTARKSTGGKAPRKQLATKAARKSAPATGGVK[Acetyl]KPHRYRPGTVALRE",
     #     "ARTKQTARKSTGGKAPRKQLATKAARK[Acetyl]SAPATGGVKKPHRYRPGTVALRE",
+    #     "ARTKQTARKSTGGK[Acetyl]APRKQLATKAARKSAPATGGVKKPHRYRPGTVALRE",
+    #     "ARTKQTARKSTGGKAPRK[Trimethyl]QLATKAARKSAPATGGVKKPHRYRPGTVALRE",
+    #     "ARTKQTARKSTGGKAPRKQLATKAARKSAPATGGVKK[Acetyl]PHRYRPGTVALRE",
+    #     "ARTKQTARKSTGGKAPRKQLATKAARKSAPATGGVKK[Trimethyl]PHRYRPGTVALRE",
     # }
+
+    # only correct
+    proteoform_to_keep = {
+        "ARTKQTARKSTGGKAPRKQLATK[Trimethyl]AARKSAPATGGVKKPHRYRPGTVALRE",
+        "ARTKQTARKSTGGKAPRKQLATKAARK[Trimethyl]SAPATGGVKKPHRYRPGTVALRE",
+        "ARTKQTARKSTGGKAPRKQLATKAARKSAPATGGVK[Acetyl]KPHRYRPGTVALRE",
+        "ARTKQTARKSTGGKAPRKQLATKAARK[Acetyl]SAPATGGVKKPHRYRPGTVALRE",
+    }
+
+    # proteoform_to_keep = {
+    #     "ARTK[Methyl]QTARKSTGGKAPRKQLATKAARKSAPATGGVKKPHRYRPGTVALRE",
+    #     "ARTKQTARK[Methyl]STGGKAPRKQLATKAARKSAPATGGVKKPHRYRPGTVALRE",
+    # }
+
     p_del_list = []
     for key in run.proteoforms.keys():
         if key not in proteoform_to_keep:
@@ -118,13 +130,19 @@ def main():
     for spectrum in run.spectra.values():
         spectrum.psms = [i for i in spectrum.get_psms() if i != 0]
 
-    ### Quantification groups ###
+    # ### Quantification groups ###
+    # run.test_proteoform_subsets_scoring()
+
+    # with open("test_res_best.pkl", "wb") as outp:
+    #     pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
+
+    print(run.proteoforms)
 
     run.set_proteoform_isobaric_groups()
-    run.find_optimal_proteoform_set_2()
+    run.optimize_proteoform_subsets()
 
-    with open("test_res_1_1.pkl", "wb") as outp:
-        pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
+    # with open("test_res_1_1.pkl", "wb") as outp:
+    #     pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
 
     ### Quantification Standard ###
 
@@ -137,8 +155,8 @@ def main():
     # run.update_unassigned_spectra()
     # run.update_proteoform_intens()
 
-    # with open("test_res_1_1.pkl", "wb") as outp:
-    #     pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
+    with open("test_res_1_1.pkl", "wb") as outp:
+        pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
     # run.result_dataframe_pfq1_format().to_csv("pfq_out_obj_1.csv")
 
 

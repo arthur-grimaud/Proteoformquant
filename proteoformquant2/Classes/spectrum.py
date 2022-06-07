@@ -5,6 +5,7 @@ from Classes.psm import Psm
 
 from itertools import compress
 from scipy.optimize import nnls
+from fnnls import fnnls
 import numpy as np
 import pprint
 
@@ -97,7 +98,10 @@ class Spectrum:
     def get_number_validated_psm(self):
         return len([psm for psm in self.get_psms() if psm.is_validated == True and psm.is_excluded == False])
 
-    def get_residuals(self):
+    def get_residuals(self, threshold=0):
+        """returns the residuals, threshold if the minimum value for residuals to be taken into acount"""
+        if self.quant_residuals < threshold:
+            return None
         return self.quant_residuals
 
     # Setters
@@ -120,7 +124,7 @@ class Spectrum:
 
     def set_spec_data_mzml(self, spec_mzml):
         "add spetrum information from a pyteomics mzml object"
-        #print(spec_mzml["scanList"]["scan"][0]["scan start time"])
+        # print(spec_mzml["scanList"]["scan"][0]["scan start time"])
 
         self.fragIntens: array = spec_mzml["intensity array"]
         self.fragMz: array = spec_mzml["m/z array"]
@@ -244,6 +248,13 @@ class Spectrum:
         self.intensity_matrix = intensity_matrix
 
         if verbose:
+            print("PSMS:")
+            for p in psms:
+                print(p.proteoform.protein_ids)
+                print(p.get_modification_proforma())
+                print(p.spectrum.id)
+                print(p.rank)
+
             print("intervals_n: \n", intervals_n)
             print("intervals_c: \n", intervals_c)
 
@@ -420,6 +431,10 @@ class Spectrum:
 
                 variables.append(var)
                 equations.append(1 * np.array(retaining_ratios))
+
+        # print(equations)
+        # print(variables)
+        # print(W)
 
         W = np.append(W, np.max(W))
         W = W / np.max(W)

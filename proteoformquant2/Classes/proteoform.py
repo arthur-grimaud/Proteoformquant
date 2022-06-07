@@ -5,6 +5,7 @@ import plotly.graph_objs as go
 from Classes.elution_profile import ElutionProfile
 from Utils import constant
 from statistics import mean
+import numpy as np
 
 
 class Proteoform:
@@ -130,13 +131,109 @@ class Proteoform:
         return self.protein_ids
 
     def get_fit_score(self):
-        if self.get_elution_profile() != None:
-            if self.get_elution_profile().is_parameters_fitted():
-                return self.get_elution_profile().score_fitted
-            else:
-                return 0
-        else:
+
+        if self.get_number_validated_linked_psm == 0:  # If there is no validated PSM do not return the score
+            return None
+
+        if self.get_elution_profile() == None:
             return 0
+
+        if self.get_elution_profile().is_parameters_fitted() == False:
+            return 0
+
+        return self.get_elution_profile().score_fitted
+
+    def get_coverage(self, y_limit, n_quantiles=10):
+        """Return the percentage of elution profile quantile for which a psm is found
+        n_quantiles: int, number of quantiles (intervals) to compute the score
+        y_limit: intensity value to determine the RT range on which to compute the quantiles
+        """
+
+        y_limit = 100000
+
+        if (
+            self.get_number_validated_linked_psm() == 0
+        ):  # If there is no validated PSM do not return the score
+            return None
+
+        if self.get_number_validated_linked_psm() < 3:  # If there is only one return worst score
+            return 0
+
+        if self.get_elution_profile() == None:
+            return 0  # If no fit is found return worst score
+
+        if self.get_elution_profile().is_parameters_fitted() == False:
+            return 0  # If no fit is found return worst score
+
+        psms_rt = [psm.spectrum.get_rt() for psm in self.get_validated_linked_psm()]
+
+        n_quantiles = 4
+
+        # print("n quantiles:", n_quantiles)
+
+        range_rt = self.get_elution_profile().get_x_range_for_y(Y=y_limit)
+
+        if range_rt[0] == range_rt[1]:
+            # print("no interval")
+            return 0
+
+        intervals_rt = np.linspace(range_rt[0], range_rt[1], n_quantiles + 1)
+
+        intervals_count = [0] * n_quantiles
+
+        print("len count", len(intervals_count))
+        print("len intervals", len(intervals_rt))
+        print("range rt", range_rt)
+        print("intervals rt", intervals_rt)
+
+        for i in range(len(intervals_rt) - 1):
+
+            n_psm_in_interval = len(
+                [rt for rt in psms_rt if intervals_rt[i] <= rt and rt < intervals_rt[i + 1]]
+            )
+
+            intervals_count[i] = n_psm_in_interval
+
+        print(intervals_count)
+
+        return len([i for i in intervals_count if i > 0]) / n_quantiles
+
+    def get_coverage_2(self):
+
+        if (
+            self.get_number_validated_linked_psm() == 0
+        ):  # If there is no validated PSM do not return the score
+            return None
+
+        if self.get_number_validated_linked_psm() < 3:  # Not enough PSM return worst score
+            return 0
+
+        if self.get_elution_profile() == None:
+            return 0  # If no fit is found return worst score
+
+        if self.get_elution_profile().is_parameters_fitted() == False:
+            return 0  # If no fit is found return worst score
+
+        psms_rt = [psm.spectrum.get_rt() for psm in self.get_validated_linked_psm()]
+        range_rt = self.get_elution_profile().get_bounds_area()
+        n_quantiles = len(psms_rt) - 1
+
+        if range_rt[0] == range_rt[1]:
+            return 0
+
+        intervals_rt = np.linspace(range_rt[0], range_rt[1], n_quantiles + 1)
+
+        intervals_count = [0] * n_quantiles
+
+        for i in range(len(intervals_rt) - 1):
+
+            n_psm_in_interval = len(
+                [rt for rt in psms_rt if intervals_rt[i] <= rt and rt < intervals_rt[i + 1]]
+            )
+
+            intervals_count[i] = n_psm_in_interval
+
+        return len([i for i in intervals_count if i > 0]) / n_quantiles
 
     def get_ratio_left_right(self):
         """get the ratio of psm before max elution peak and after max elution peak RT"""
@@ -147,6 +244,8 @@ class Proteoform:
             EP = self.get_elution_profile()
             if EP.is_parameters_fitted():
                 EP_peak_rt = EP.get_x_at_max_y()
+
+                print("Peak retention time ", EP_peak_rt)
 
                 for psm in self.get_validated_linked_psm():
 
@@ -171,7 +270,7 @@ class Proteoform:
 
                 auc_inter = EP.get_auc(self.min_bound_rt, self.max_bound_rt)
                 auc_tot = EP.get_auc(
-                    self.min_bound_rt - 200, self.max_bound_rt + 200
+                    self.min_bound_rt - 500, self.max_bound_rt + 500
                 )  # TODO hardcoded, change this
 
                 if auc_tot != 0:

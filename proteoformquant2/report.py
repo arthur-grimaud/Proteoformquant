@@ -151,6 +151,8 @@ def popup(v1, v2, v3, v4, v5, clicked, is_open, children):
 
     # print( ctx.triggered[0]["value"])
 
+    print(ctx.triggered[0]["value"])
+
     if ctx.triggered[0]["prop_id"] == "close.n_clicks":
         # you pressed the closed button, keeping the modal children as is, and
         # close the modal itself.
@@ -218,13 +220,22 @@ def popup(v1, v2, v3, v4, v5, clicked, is_open, children):
                 dbc.ModalFooter(dbc.Button("Close", id="close")),
             ], True
 
-        except KeyError:  # In case click data is not acorresponding to a spectrum try to display proteoform info
+        except (
+            KeyError,
+            TypeError,
+        ):  # In case click data is not acorresponding to a spectrum try to display proteoform info
             key = ctx.triggered[0]["value"]["points"][0]["customdata"]
             proteoform = exp.proteoforms[key]
 
             str_info = []
-            str_info.append(proteoform.get_elution_profile().score_fitted)
+            str_info.append("proteoform EP fit score")
+            str_info.append(proteoform.get_fit_score())
             str_info.append(html.Br())
+            str_info.append("proteoform EP coverage")
+            str_info.append(proteoform.get_coverage_2())
+            str_info.append(html.Br())
+            str_info.append("proteoform EP balance")
+            str_info.append(proteoform.get_ratio_left_right())
 
             return [
                 dbc.ModalHeader("Proteoform"),
@@ -257,7 +268,7 @@ def popup(v1, v2, v3, v4, v5, clicked, is_open, children):
 def get_table(mat, proteos):
     print(mat)
 
-    if mat.any() == True:
+    if type(mat) != NoneType and mat.any() == True:
 
         fig = go.Figure(
             data=[
@@ -434,12 +445,13 @@ def fit_expect_predict(proteoform):
     fig = go.Figure()
 
     fig.add_scatter(
-        x=data_y_expect,
-        y=data_y_predict,
+        x=list(range(len(data_y_expect))),
+        y=data_y_predict - data_y_expect,
         mode="markers",
-        marker=dict(size=4, color="black"),
-        name="predicted vs expected",
+        marker=dict(size=7, color="black"),
+        name="predicted(yaxis) vs expected(xaxis)",
     )
+
     fig.update_layout(template=template)
     return fig
 
