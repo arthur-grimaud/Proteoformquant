@@ -691,13 +691,15 @@ class Msrun:
         # TODO lower penality for low residuals
 
         residuals = [
-            spectra.get_residuals(threshold=0.1)
+            spectra.get_residuals(threshold=0.0)
             for spectra in spectra_subset
-            if spectra.get_residuals(threshold=0.1) != None
+            if spectra.get_residuals(threshold=0.0) != None
         ]
 
         if len(residuals) == 0:
             return 1
+
+        # print(residuals)
 
         return mean(residuals)
 

@@ -64,10 +64,10 @@ class Proteoform:
     def get_rt_center(self):
         """returns rt "center" based on the weigthed average of psm's precursor mass"""
         rts = [psm.spectrum.get_rt() for psm in self.get_linked_psm()]
-        weights = [psm.spectrum.getPrecIntens() / psm.get_rank() for psm in self.get_linked_psm()]
+        weights = [(psm.spectrum.getPrecIntens() + 1) / psm.get_rank() for psm in self.get_linked_psm()]
 
         numerator = sum([rts[i] * weights[i] for i in range(len(rts))])
-        denominator = sum(weights)
+        denominator = sum(weights) + 1
 
         print(round(numerator / denominator, 2))
 
@@ -106,15 +106,19 @@ class Proteoform:
         """Return a the number of element in curated list of linked psm whose self.is_validated = true"""
         return len([psm for psm in self.linkedPsm if psm.is_validated])
 
+    def get_number_linked_psm_Rx(self, rank):
+        """Return a the number of element in curated list of linked psm whose rank is equal to x"""
+        return len([psm for psm in self.linkedPsm if psm.rank == rank])
+
     def get_weighted_number_linked_psm(self, max_rank):
         """Returns the sum of linked PSM weigthed by their rank"""
-        weights = range(max_rank, 0, -1)  # score for each psm rank
+        weights = range(max_rank + 1, 1, -1)  # score for each psm rank
 
         return sum([weights[psm.get_rank() - 1] for psm in self.linkedPsm])
 
     def get_weighted_number_linked_validated_psm(self, max_rank):
         """Returns the sum of linked PSM weigthed by their rank"""
-        weights = range(max_rank, 0, -1)  # score for each psm rank
+        weights = range(max_rank + 1, 1, -1)  # score for each psm rank
 
         return sum([weights[psm.get_rank() - 1] for psm in self.get_validated_linked_psm()])
 

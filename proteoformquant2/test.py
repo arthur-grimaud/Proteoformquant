@@ -47,18 +47,35 @@ from scipy.stats import skewnorm
 from scipy.stats import norm
 from scipy.special import owens_t
 
+# ----------------------------- DATA PREPARATION ----------------------------- #
 
-with open("test_save_1_1.pkl", "rb") as inp:
+with open("test_save_1_2.pkl", "rb") as inp:
     run = pickle.load(inp)
 
 
+# proteoform_to_keep = [
+#     "ARTKQTARKSTGGKAPRKQLATKAARKSAPATGGVK[Acetyl]KPHRYRPGTVALRE",
+#     "ARTKQTARKSTGGKAPRKQLATKAARK[Acetyl]SAPATGGVKKPHRYRPGTVALRE",
+#     # "ARTKQTARKSTGGKAPRKQLATK[Trimethyl]AARKSAPATGGVKKPHRYRPGTVALRE",
+#     "ARTKQTARKSTGGKAPRKQLATKAARK[Trimethyl]SAPATGGVKKPHRYRPGTVALRE",
+#     "ARTKQTARKSTGGKAPRKQLATKAARKSAPATGGVK[Trimethyl]KPHRYRPGTVALRE",
+# ]
+
 proteoform_to_keep = [
-    "ARTKQTARKSTGGKAPRKQLATKAARKSAPATGGVK[Acetyl]KPHRYRPGTVALRE",
-    "ARTKQTARKSTGGKAPRKQLATKAARK[Acetyl]SAPATGGVKKPHRYRPGTVALRE",
-    # "ARTKQTARKSTGGKAPRKQLATK[Trimethyl]AARKSAPATGGVKKPHRYRPGTVALRE",
-    "ARTKQTARKSTGGKAPRKQLATKAARK[Trimethyl]SAPATGGVKKPHRYRPGTVALRE",
-    "ARTKQTARKSTGGKAPRKQLATKAARKSAPATGGVK[Trimethyl]KPHRYRPGTVALRE",
+    "ARTKQTARKSTGGKAPRKQLATKAARKSAPATGGVK[Acetyl]KPHRYRPGTVALRE",  # K36ac
+    "ARTKQTARKSTGGKAPRKQLATKAARK[Acetyl]SAPATGGVKKPHRYRPGTVALRE",  # K27ac
+    "ARTKQTARKSTGGKAPRKQLATKAARK[Trimethyl]SAPATGGVKKPHRYRPGTVALRE",  # K27me3
+    "ARTKQTARKSTGGKAPRKQLATKAARKSAPATGGVKK[Acetyl]PHRYRPGTVALRE",  # K37ac
+    "ARTKQTARKSTGGKAPRKQLATK[Trimethyl]AARKSAPATGGVKKPHRYRPGTVALRE",  # K23me3
+    "ARTKQTARKSTGGKAPRKQLATK[Acetyl]AARKSAPATGGVKKPHRYRPGTVALRE",  # K23ac
+    # "ARTKQTARK[Acetyl]STGGKAPRKQLATKAARKSAPATGGVKKPHRYRPGTVALRE",  # K9ac
+    "ARTKQTARKSTGGKAPRKQLATKAARKSAPATGGVK[Trimethyl]KPHRYRPGTVALRE",  # K36me3
+    # "ARTKQTARKSTGGKAPRK[Acetyl]QLATKAARKSAPATGGVKKPHRYRPGTVALRE",  # K18ac
+    # "ARTKQTARKSTGGK[Acetyl]APRKQLATKAARKSAPATGGVKKPHRYRPGTVALRE",
+    # "ARTKQTARKSTGGKAPRK[Trimethyl]QLATKAARKSAPATGGVKKPHRYRPGTVALRE",
+    # "ARTKQTARKSTGGKAPRKQLATKAARKSAPATGGVKK[Trimethyl]PHRYRPGTVALRE",  # K37me3
 ]
+
 
 p_del_list = []
 for key in run.proteoforms.keys():
@@ -71,13 +88,19 @@ for key in p_del_list:
     del run.proteoforms[key]
 print("deleted proteo")
 
+
+for proteo in proteoform_to_keep:
+    proteo = run.proteoforms[proteo]
+    print(proteo.get_modification_brno())
+    print(proteo.get_number_linked_psm_Rx(rank=1))
+    print(proteo.get_number_linked_psm_Rx(rank=2))
+    # print(proteo.get_linked_psm())
+
+
 for spectrum in run.spectra.values():
     spectrum.psms = [i for i in spectrum.get_psms() if i != 0]
 
-
 # Get list of proteoform and spectra objects in the group
-
-
 run.proteoform_subset = []
 run.spectra_subset = []
 run.variables = []
@@ -95,15 +118,19 @@ for proforma in proteoform_to_keep:
         if psm.spectrum not in run.spectra_subset:
             run.spectra_subset.append(psm.spectrum)
 
+with open("test_res_1.pkl", "wb") as outp:
+    pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
+# ---------------------------------- TESTING --------------------------------- #
 
-bounds = [4450, 4610, 4550, 4700, 4760, 5000, 4600, 4700]
+
+bounds = [4450, 4700, 4550, 4700, 4760, 5000, 4600, 4700]
 
 print(proteoform_to_keep)
 
-for g in range(0, 25):
+for g in range(0, 30):
 
     bounds[6] += 8
-    bounds[7] += 5
+    bounds[7] += 8
     # print(bounds)
 
     run.update_proteoform_subset_validation(run.proteoform_subset, bounds)
@@ -123,10 +150,21 @@ for g in range(0, 25):
         g,
         run.proteoforms[proteoform_to_keep[3]].get_coverage_2(),
         run.proteoforms[proteoform_to_keep[3]].get_fit_score(),
+        run.get_residuals_subset(run.spectra_subset),
     )
 
     fig = run.plot_elution_profiles(proteoform_to_keep, count=g)
     fig.write_image("images/fig_" + f"{g:03}" + ".png")
+
+
+bounds = [4450, 4700, 4550, 4700, 4760, 5000, 4781, 4924]
+
+run.update_proteoform_subset_validation(run.proteoform_subset, bounds)
+run.update_psms_ratio_subset(run.spectra_subset)
+run.update_proteoforms_elution_profile_subset(run.proteoform_subset)
+
+with open("test_res_1.pkl", "wb") as outp:
+    pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
 
 # ------------------------------------- s ------------------------------------ #
 # ------------------------------------- s ------------------------------------ #

@@ -27,7 +27,7 @@ import plotly.graph_objects as go
 #                                  Data import                                 #
 # ---------------------------------------------------------------------------- #
 
-with open("test_res_1_1.pkl", "rb") as inp:
+with open("test_res_1.pkl", "rb") as inp:
     exp = pickle.load(inp)
 
 print(exp.get_dataset_metrics())
@@ -268,7 +268,12 @@ def popup(v1, v2, v3, v4, v5, clicked, is_open, children):
 def get_table(mat, proteos):
     print(mat)
 
-    if type(mat) != NoneType and mat.any() == True:
+    if mat is None:
+        fig = go.Figure()
+        fig.update_layout(template=template)
+        return fig
+
+    if mat.any() == True:
 
         fig = go.Figure(
             data=[
