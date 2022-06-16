@@ -60,31 +60,31 @@ def main():
     # sys.stdout = TracePrints()
     # --------------------------------- Analysis --------------------------------- #
 
-    ### Read Data ###
-    run = Msrun(run_id="1", dbse=dbse)
-    run.read_mzid(indentFn)
+    # ### Read Data ###
+    # run = Msrun(run_id="1", dbse=dbse)
+    # run.read_mzid(indentFn)
+    # # run.read_mgf(spectra_fn)
     # run.read_mgf(spectra_fn)
-    run.read_mgf(spectra_fn)
 
-    ### Prepare Data ###
+    # ### Prepare Data ###
 
-    run.fdr_filtering(decoy_tag="decoy_", score_name="Amanda:AmandaScore")
-    run.add_proteoforms()
-    run.filter_proteform_low_count(min_n_psm=5)
-    run.match_fragments()
-    run.scale_precursor_intensities()
+    # run.fdr_filtering(decoy_tag="decoy_", score_name="Amanda:AmandaScore")
+    # run.add_proteoforms()
+    # run.filter_proteform_low_count(min_n_psm=5)
+    # run.match_fragments()
+    # run.scale_precursor_intensities()
 
-    # ## Export Fragment Annotation ###
-    # outputFn = "out"
-    # run.get_dataframe_fragment_annotation().to_csv(outputFn + ".csv")
+    # # ## Export Fragment Annotation ###
+    # # outputFn = "out"
+    # # run.get_dataframe_fragment_annotation().to_csv(outputFn + ".csv")
 
-    # with open("test_res_p.pkl", "wb") as outp:
+    # # with open("test_res_p.pkl", "wb") as outp:
+    # #     pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
+
+    # with open("test_save_1_2.pkl", "wb") as outp:
     #     pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
 
-    with open("test_save_1_2.pkl", "wb") as outp:
-        pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
-
-    with open("test_save_1_2.pkl", "rb") as inp:
+    with open("test_save_1_1.pkl", "rb") as inp:
         run = pickle.load(inp)
 
     # # # For testing purpose filter protroforms:

@@ -350,7 +350,7 @@ class ElutionProfile:
             [min(data_x) - ((max(data_x) - min(data_x))), max(data_x) + ((max(data_x) - min(data_x))) + 1]
         )  # search bounds for m
         parameterBounds.append([0.1, stdev(data_x) * 1500 + 1])  # search bounds for s
-        parameterBounds.append([0, 1000])  # search bounds for a
+        parameterBounds.append([0, 10000])  # search bounds for a
         parameterBounds.append([0, 10])  # search bounds for k
 
         return parameterBounds

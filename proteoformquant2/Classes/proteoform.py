@@ -82,6 +82,12 @@ class Proteoform:
         # rt_range = (min(rts), max(rts))
         # return rt_range
 
+    def get_rt_range(self, rank=1):
+        """returns the RT range for linked psm of rank <= rank"""
+        rts = [psm.spectrum.get_rt() for psm in self.get_linked_psm() if psm.rank <= rank]
+
+        return [min(rts), max(rts)]
+
     def get_peptide_sequence(self):
         return self.peptideSequence
 
@@ -137,7 +143,7 @@ class Proteoform:
     def get_fit_score(self):
 
         if self.get_number_validated_linked_psm == 0:  # If there is no validated PSM do not return the score
-            return None
+            return 0
 
         if self.get_elution_profile() == None:
             return 0
@@ -207,7 +213,7 @@ class Proteoform:
         if (
             self.get_number_validated_linked_psm() == 0
         ):  # If there is no validated PSM do not return the score
-            return None
+            return 0
 
         if self.get_number_validated_linked_psm() < 3:  # Not enough PSM return worst score
             return 0
@@ -238,6 +244,26 @@ class Proteoform:
             intervals_count[i] = n_psm_in_interval
 
         return len([i for i in intervals_count if i > 0]) / n_quantiles
+
+    def get_min_max_rt_range_shift(self, side):
+        if (
+            self.get_number_validated_linked_psm() == 0
+        ):  # If there is no validated PSM do not return the score
+            return [0, 0]
+
+        if self.get_elution_profile() == None:
+            return [0, 0]  # If no fit is found
+
+        if self.get_elution_profile().is_parameters_fitted() == False:
+            return [0, 0]  # If no fit is found e
+
+        psms_rt = [psm.spectrum.get_rt() for psm in self.get_validated_linked_psm()]
+        range_rt = self.get_elution_profile().get_bounds_area()
+
+        if side == "min":
+            return min(psms_rt), range_rt[0]
+        if side == "max":
+            return max(psms_rt), range_rt[1]
 
     def get_ratio_left_right(self):
         """get the ratio of psm before max elution peak and after max elution peak RT"""

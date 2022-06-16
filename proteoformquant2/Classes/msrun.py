@@ -770,7 +770,7 @@ class Msrun:
     def update_proteoform_subset_validation(self, proteoform_subset, boundaries):
 
         p = 0
-        for b in range(0, len(boundaries), 2):
+        for b in range(len(boundaries)):
 
             proteoform = proteoform_subset[p]
             p += 1
@@ -778,14 +778,12 @@ class Msrun:
 
             # min_idx = min(boundaries[b], boundaries[b + 1])
             # max_idx = max(boundaries[b], boundaries[b + 1])
-
-            proteoform.min_bound_rt = min(boundaries[b], boundaries[b + 1])
-            proteoform.max_bound_rt = max(boundaries[b], boundaries[b + 1])
+            # print(boundaries[b])
+            proteoform.min_bound_rt = boundaries[b][0]
+            proteoform.max_bound_rt = boundaries[b][1]
 
             for psm in proteoform.get_linked_psm():
-                if psm.spectrum.get_rt() >= min(
-                    boundaries[b], boundaries[b + 1]
-                ) and psm.spectrum.get_rt() <= max(boundaries[b], boundaries[b + 1]):
+                if psm.spectrum.get_rt() >= boundaries[b][0] and psm.spectrum.get_rt() <= boundaries[b][1]:
                     psm.is_validated = True
                     v += 1
                 else:
@@ -1008,120 +1006,126 @@ class Msrun:
 
         # Plot each proteoforms:
         for proteo in proteoforms_input:
+            if self.proteoforms[proteo].min_bound_rt != 0:
 
-            data_x_all = [psm.spectrum.get_rt() for psm in self.proteoforms[proteo].get_linked_psm()]
-            data_y_all = [psm.spectrum.getPrecIntens() for psm in self.proteoforms[proteo].get_linked_psm()]
-            fig.add_scatter(
-                x=data_x_all,
-                y=data_y_all,
-                mode="markers",
-                marker=dict(size=10, color="grey", opacity=0.5),
-                marker_symbol="x-open",
-                name="Spectrum Intensity unvalid",
-            )
-
-            data_y = [psm.spectrum.get_rt() for psm in self.proteoforms[proteo].get_validated_linked_psm()]
-            data_y_spectrum = [
-                psm.spectrum.getPrecIntens() for psm in self.proteoforms[proteo].get_validated_linked_psm()
-            ]
-            data_y_psm = [
-                psm.get_prec_intens_ratio() for psm in self.proteoforms[proteo].get_validated_linked_psm()
-            ]
-
-            fig.add_scatter(
-                x=data_y,
-                y=data_y_spectrum,
-                mode="markers",
-                marker=dict(size=15, color="grey", opacity=0.5),
-                name="Spectrum Intensity",
-            )
-
-            fig.add_scatter(
-                x=data_y,
-                y=data_y_psm,
-                mode="markers",
-                marker=dict(size=12, color=cols[cols_n]),
-                name="PSM Intensity",
-            )
-
-            fig.add_vrect(
-                x0=self.proteoforms[proteo].min_bound_rt,
-                x1=self.proteoforms[proteo].max_bound_rt,
-                # annotation_text=self.proteoforms[proteo].get_modification_brno(),
-                # annotation_position="top left",
-                opacity=0.05,
-                fillcolor=cols[cols_n],
-            )
-
-            fig.add_trace(
-                go.Scatter(
-                    x=[self.proteoforms[proteo].min_bound_rt - 10],
-                    y=[(0 - (cols_n + 1) * 5) - 4],
-                    text=[self.proteoforms[proteo].get_modification_brno()],
-                    mode="text",
-                )
-            )
-
-            fig.add_shape(
-                type="rect",
-                x0=self.proteoforms[proteo].min_bound_rt,
-                y0=0 - (cols_n + 1) * 5,
-                x1=self.proteoforms[proteo].max_bound_rt,
-                y1=0 - (cols_n + 2) * 5,
-                line=dict(
-                    color=cols[cols_n],
-                    width=2,
-                ),
-                fillcolor=cols[cols_n],
-                layer="below",
-            )
-
-            # add lines between PSM and spectrum intens points
-            for i in range(0, len(data_y), 1):
+                data_x_all = [psm.spectrum.get_rt() for psm in self.proteoforms[proteo].get_linked_psm()]
+                data_y_all = [
+                    psm.spectrum.getPrecIntens() for psm in self.proteoforms[proteo].get_linked_psm()
+                ]
                 fig.add_scatter(
-                    x=[data_y[i], data_y[i]],
-                    y=[data_y_spectrum[i], data_y_psm[i]],
-                    mode="lines",
-                    marker=dict(size=2, color="#c9c9c9", opacity=0.5),
-                    line={"dash": "dash"},
+                    x=data_x_all,
+                    y=data_y_all,
+                    mode="markers",
+                    marker=dict(size=10, color="grey", opacity=0.5),
+                    marker_symbol="x-open",
+                    name="Spectrum Intensity unvalid",
                 )
 
-            elution_profile = self.proteoforms[proteo].get_elution_profile()
-            # print(elution_profile)
+                data_y = [
+                    psm.spectrum.get_rt() for psm in self.proteoforms[proteo].get_validated_linked_psm()
+                ]
+                data_y_spectrum = [
+                    psm.spectrum.getPrecIntens()
+                    for psm in self.proteoforms[proteo].get_validated_linked_psm()
+                ]
+                data_y_psm = [
+                    psm.get_prec_intens_ratio() for psm in self.proteoforms[proteo].get_validated_linked_psm()
+                ]
 
-            if elution_profile != None:  # if elution profile model has been computed add line to the plot
-                data_x_elution_profile = list(range(int(x_min_max[0]), int(x_min_max[1]), 1))
-                data_y_elution_profile_fitted, params_fitted = list(
-                    elution_profile.get_y_serie(data_x_elution_profile, method="fitted")
+                fig.add_scatter(
+                    x=data_y,
+                    y=data_y_spectrum,
+                    mode="markers",
+                    marker=dict(size=15, color="grey", opacity=0.5),
+                    name="Spectrum Intensity",
                 )
-                data_y_elution_profile_estimated, params_fitted = list(
-                    elution_profile.get_y_serie(data_x_elution_profile, method="estimated")
+
+                fig.add_scatter(
+                    x=data_y,
+                    y=data_y_psm,
+                    mode="markers",
+                    marker=dict(size=12, color=cols[cols_n]),
+                    name="PSM Intensity",
                 )
 
-                # print(data_y_elution_profile_fitted)
+                fig.add_vrect(
+                    x0=self.proteoforms[proteo].min_bound_rt,
+                    x1=self.proteoforms[proteo].max_bound_rt,
+                    # annotation_text=self.proteoforms[proteo].get_modification_brno(),
+                    # annotation_position="top left",
+                    opacity=0.05,
+                    fillcolor=cols[cols_n],
+                )
 
-                if data_y_elution_profile_fitted[0] != None:
-                    fig.add_scatter(
-                        x=data_x_elution_profile,
-                        y=data_y_elution_profile_fitted,
-                        mode="lines",
-                        marker=dict(size=15, color=cols[cols_n]),
-                        name="Fitted Parameters",
-                        line_shape="spline",
+                fig.add_trace(
+                    go.Scatter(
+                        x=[self.proteoforms[proteo].min_bound_rt - 10],
+                        y=[(0 - (cols_n + 1) * 2) - 1],
+                        text=[self.proteoforms[proteo].get_modification_brno()],
+                        mode="text",
                     )
+                )
 
-                if data_y_elution_profile_estimated[0] != None:
+                fig.add_shape(
+                    type="rect",
+                    x0=self.proteoforms[proteo].min_bound_rt,
+                    y0=0 - (cols_n + 1) * 2,
+                    x1=self.proteoforms[proteo].max_bound_rt,
+                    y1=0 - (cols_n + 2) * 2,
+                    line=dict(
+                        color=cols[cols_n],
+                        width=2,
+                    ),
+                    fillcolor=cols[cols_n],
+                    layer="below",
+                )
+
+                # add lines between PSM and spectrum intens points
+                for i in range(0, len(data_y), 1):
                     fig.add_scatter(
-                        x=data_x_elution_profile,
-                        y=data_y_elution_profile_estimated,
+                        x=[data_y[i], data_y[i]],
+                        y=[data_y_spectrum[i], data_y_psm[i]],
                         mode="lines",
-                        marker=dict(size=3, color=cols[cols_n]),
+                        marker=dict(size=2, color="#c9c9c9", opacity=0.5),
                         line={"dash": "dash"},
-                        name="Estimated Parameters",
-                        line_shape="spline",
                     )
 
-            cols_n += 1
+                elution_profile = self.proteoforms[proteo].get_elution_profile()
+                # print(elution_profile)
+
+                if elution_profile != None:  # if elution profile model has been computed add line to the plot
+                    data_x_elution_profile = list(range(int(x_min_max[0]), int(x_min_max[1]), 1))
+                    data_y_elution_profile_fitted, params_fitted = list(
+                        elution_profile.get_y_serie(data_x_elution_profile, method="fitted")
+                    )
+                    data_y_elution_profile_estimated, params_fitted = list(
+                        elution_profile.get_y_serie(data_x_elution_profile, method="estimated")
+                    )
+
+                    # print(data_y_elution_profile_fitted)
+
+                    if data_y_elution_profile_fitted[0] != None:
+                        fig.add_scatter(
+                            x=data_x_elution_profile,
+                            y=data_y_elution_profile_fitted,
+                            mode="lines",
+                            marker=dict(size=15, color=cols[cols_n]),
+                            name="Fitted Parameters",
+                            line_shape="spline",
+                        )
+
+                    if data_y_elution_profile_estimated[0] != None:
+                        fig.add_scatter(
+                            x=data_x_elution_profile,
+                            y=data_y_elution_profile_estimated,
+                            mode="lines",
+                            marker=dict(size=3, color=cols[cols_n]),
+                            line={"dash": "dash"},
+                            name="Estimated Parameters",
+                            line_shape="spline",
+                        )
+
+                cols_n += 1
 
         fig.update_layout(
             title=go.layout.Title(
