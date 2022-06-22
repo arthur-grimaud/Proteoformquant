@@ -49,6 +49,9 @@ class Proteoform:
 
     # Getters
 
+    def get_sequence(self):
+        return self.peptideSequence
+
     def getTheoFrag(self):
         return self.theoFrag
 
@@ -470,7 +473,8 @@ class Proteoform:
         if method == "AUC":
             if self.get_elution_profile() != None:
                 # print(self.get_elution_profile().get_auc())
-                self.totalIntens += self.get_elution_profile().get_auc()
+                self.totalIntens = self.get_elution_profile().get_auc()
+                return self.totalIntens
             return None
 
         for psm in self.get_validated_linked_psm():
@@ -478,6 +482,8 @@ class Proteoform:
                 self.totalIntens += psm.get_prec_intens_ratio()
             if method == "annotated":
                 self.totalIntens += psm.getAnnotMsmsIntensRatio()
+
+        return self.totalIntens
 
     def update_proteoform_psm_validation(self):
         """ """

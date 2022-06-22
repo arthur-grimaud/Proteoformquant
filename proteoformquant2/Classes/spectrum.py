@@ -1,4 +1,6 @@
 from array import array
+from pickle import FALSE
+
 
 from yaml import warnings
 from Classes.psm import Psm
@@ -11,7 +13,7 @@ import pprint
 
 
 class Spectrum:
-    def __init__(self, spectrumID, identMzid=None):
+    def __init__(self, spectrumID, identMzid=None, max_rank=10):
 
         self.id = spectrumID  # Unique ID for the spectrum
 
@@ -35,7 +37,7 @@ class Spectrum:
         self.psms: list(Psm) = []  # list of PSM for that spectrum
 
         if identMzid != None:
-            self.set_ident_data_mzid(identMzid)
+            self.set_ident_data_mzid(identMzid, max_rank)
 
         self.sumIntensAnnotFrag = 0
         self.quant_residuals = 0
@@ -106,13 +108,16 @@ class Spectrum:
 
     # Setters
 
-    def set_ident_data_mzid(self, identMzid):
+    def set_ident_data_mzid(self, identMzid, max_rank):
         """fill PSM list from identification result dict from pyteomics"""
         for identItem in identMzid["SpectrumIdentificationItem"]:
             # Iterate over identification item and create an instance of the object psm for each
             # print("*************PSM************")
             # print(identItem)
-            self.psms.append(Psm(rank=len(self.get_psms()) + 1, spectrum=self, identificationItem=identItem))
+            if len(self.get_psms()) + 1 <= max_rank:
+                self.psms.append(
+                    Psm(rank=len(self.get_psms()) + 1, spectrum=self, identificationItem=identItem)
+                )
 
     def set_spec_data_mgf(self, specMgf):
         "add spetrum information from a pyteomics mgf object"
@@ -285,8 +290,18 @@ class Spectrum:
         self.unique_matrix_r = unique_matrix
         self.intensity_matrix_r = intensity_matrix
 
+        # Check whether any fragment are found in pairs
+        if np.all((self.intensity_matrix_r == 0)):
+            for idx, psm in enumerate(psms):
+                psm.ratio = 0
+            if verbose:
+                print("NO FRAGMENTS FOUND FOR STOCHIOMETRY DETERMINATION")
+            return 0
+
         # get eq system and weights
         equations, variables, W = self.__equation_system(unique_matrix, intensity_matrix)
+
+        # print(type(equations))
 
         if verbose:
             print("Weights: \n", W)
@@ -304,7 +319,6 @@ class Spectrum:
         # results = nnls(equations, variables)
 
         # Non negative least square solving WEIGHTED:
-
         results = nnls(np.sqrt(W)[:, None] * equations, np.sqrt(W) * variables)
 
         ratios_psms = [ratio / sum(results[0]) for ratio in results[0]]  # normalized ratios
@@ -437,6 +451,7 @@ class Spectrum:
         # print(W)
 
         W = np.append(W, np.max(W))
+
         W = W / np.max(W)
         variables.append(1)
         equations.append(np.ones(unique_matrix_t.shape[1]))

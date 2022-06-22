@@ -6,6 +6,7 @@ from Utils.misc import truncate
 import pprint
 import spectrum_utils.spectrum as sus
 from Utils.constant import ion_direction
+import warnings
 
 
 class Psm:
@@ -98,29 +99,29 @@ class Psm:
 
     def get_modification_proforma(self, mod_mass_to_name=None):
         """Returns the proteoform modification in the proforma format"""
+        with warnings.catch_warnings():  # catch warnings from unimod
+            if self.Modification == []:
+                return self.PeptideSequence
+            else:
+                sequence_list = list(self.PeptideSequence.strip(" "))
 
-        if self.Modification == []:
-            return self.PeptideSequence
-        else:
-            sequence_list = list(self.PeptideSequence.strip(" "))
+                for mod in reversed(self.Modification):
 
-            for mod in reversed(self.Modification):
+                    modMass = mod["monoisotopicMassDelta"]
 
-                modMass = mod["monoisotopicMassDelta"]
+                    if mod_mass_to_name is None:  # if called without mod to mass dict
+                        modName = um.id_to_name(um.mass_to_ids(modMass, decimals=2)[0])[0]
+                    elif (
+                        modMass not in mod_mass_to_name
+                    ):  # if called with mod to mass dict but mass not added yet
+                        modName = um.id_to_name(um.mass_to_ids(modMass, decimals=2)[0])[0]
+                        mod_mass_to_name[modMass] = modName  # mass found in mass
+                    else:
+                        modName = mod_mass_to_name[modMass]
 
-                if mod_mass_to_name is None:  # if called without mod to mass dict
-                    modName = um.id_to_name(um.mass_to_ids(modMass, decimals=2)[0])[0]
-                elif (
-                    modMass not in mod_mass_to_name
-                ):  # if called with mod to mass dict but mass not added yet
-                    modName = um.id_to_name(um.mass_to_ids(modMass, decimals=2)[0])[0]
-                    mod_mass_to_name[modMass] = modName  # mass found in mass
-                else:
-                    modName = mod_mass_to_name[modMass]
+                    sequence_list.insert(int(mod["location"]), "[{0}]".format(modName))
 
-                sequence_list.insert(int(mod["location"]), "[{0}]".format(modName))
-
-            return "".join(sequence_list)
+                return "".join(sequence_list)
 
         # mods = um.mass_to_ids(79.96, decimals=1)
 

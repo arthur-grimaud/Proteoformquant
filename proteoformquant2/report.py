@@ -16,6 +16,7 @@ from Utils import misc
 from Utils import constant
 import plotly.express as px
 import math
+import networkx as nx
 
 from scipy import stats
 from kneed import KneeLocator
@@ -27,7 +28,7 @@ import plotly.graph_objects as go
 #                                  Data import                                 #
 # ---------------------------------------------------------------------------- #
 
-with open("test_res_1.pkl", "rb") as inp:
+with open("save_res_2_1.pkl", "rb") as inp:
     exp = pickle.load(inp)
 
 print(exp.get_dataset_metrics())
@@ -37,9 +38,10 @@ print(exp.ident_fn)
 # ----------------------------------- test ----------------------------------- #
 
 
-# ----------------------------------- test ----------------------------------- #
+# # ----------------------------------- test ----------------------------------- #
 
-
+# for p in exp.proteoforms.keys():
+#     print(p)
 # ---------------------------------------------------------------------------- #
 #                                    Layout                                    #
 # ---------------------------------------------------------------------------- #
@@ -63,7 +65,13 @@ app.layout = html.Div(
                 ),
                 html.Label("Chromatogram of precursor and annotated fragments intensities"),
                 dcc.Graph(id="line_plot_global_intens"),
-                dcc.Graph(id="line_plot_itens_comp"),
+            ]
+        ),
+        html.Br(),
+        html.Div(
+            children=[
+                html.Label("Isobaric proteoform grouping"),
+                dcc.Graph(id="plot_network_isobaric"),
             ]
         ),
         html.Br(),
@@ -138,7 +146,7 @@ app.layout = html.Div(
     [Output("modal", "children"), Output("modal", "is_open")],
     [
         Input("line_plot_global_intens", "clickData"),
-        Input("line_plot_itens_comp", "clickData"),
+        Input("plot_network_isobaric", "clickData"),
         Input("plot_all_enveloppes", "clickData"),
         Input("plot_elution_profiles", "clickData"),
         Input("plot_all_enveloppes_3d", "clickData"),
@@ -223,11 +231,20 @@ def popup(v1, v2, v3, v4, v5, clicked, is_open, children):
         except (
             KeyError,
             TypeError,
+            AttributeError,
         ):  # In case click data is not acorresponding to a spectrum try to display proteoform info
             key = ctx.triggered[0]["value"]["points"][0]["customdata"]
             proteoform = exp.proteoforms[key]
-
+            print(proteoform)
             str_info = []
+            str_info.append(proteoform.get_modification_brno())
+            str_info.append(html.Br())
+            str_info.append(proteoform.get_sequence())
+            str_info.append(html.Br())
+            str_info.append(
+                f"This proteoform has been identified in {len(proteoform.get_linked_psm())} spectra"
+            )
+            str_info.append(html.Br())
             str_info.append("proteoform EP fit score")
             str_info.append(proteoform.get_fit_score())
             str_info.append(html.Br())
@@ -242,6 +259,11 @@ def popup(v1, v2, v3, v4, v5, clicked, is_open, children):
                 dbc.ModalBody(
                     html.Div(
                         [
+                            html.P(str_info, style={"fontFamily": "monospace"}),
+                            dcc.Graph(
+                                figure=plot_psms_rank_distribution(proteoform),
+                                id="plot_psms_rank_distribution",
+                            ),
                             html.P(str_info, style={"fontFamily": "monospace"}),
                             dcc.Graph(
                                 figure=ms2_chromatogram_plot(proteoform),
@@ -380,7 +402,25 @@ def spectrum_plot(spectrum):
     return fig
 
 
+def plot_psms_rank_distribution(proteoform, max_rank=exp.max_rank):
+
+    ranks = []
+    counts = []
+
+    for rank in range(1, max_rank):
+        ranks.append(rank)
+        counts.append(proteoform.get_number_linked_psm_Rx(rank))
+
+    fig = go.Figure()
+    fig.add_trace(go.Bar(x=ranks, y=counts, base=0, marker=dict(color=ranks, colorscale="Jet")))
+    return fig
+
+
 def ms2_chromatogram_plot(proteoform, top_n_frag=40):
+
+    # if no EP:
+    if proteoform.get_elution_profile() == None:
+        return go.Figure()
 
     # get most intense fragments at elution peak:
     mean_elution_profile_model = proteoform.get_elution_profile().get_x_at_max_y()  # get RT of elution peak
@@ -438,6 +478,10 @@ def ms2_chromatogram_plot(proteoform, top_n_frag=40):
 
 
 def fit_expect_predict(proteoform):
+
+    # if no EP:
+    if proteoform.get_elution_profile() == None:
+        return go.Figure()
 
     psms = proteoform.get_validated_linked_psm()
     data_x = np.array([psm.spectrum.get_rt() for psm in psms])
@@ -520,40 +564,94 @@ def plotAnnotMsmsAndPrecIntens(minMaxMz):
     return fig
 
 
-@app.callback(Output("line_plot_itens_comp", "figure"), Input("range_mz", "value"))
-def plotAnnotMsmsVsPrecIntens(minMaxMz):
-    minMz = minMaxMz[0]
-    maxMz = minMaxMz[1]
-    precIntens = [
-        spectrum.getPrecIntens()
-        for spectrum in exp.spectra.values()
-        if spectrum.getPrecMz() > minMz and spectrum.getPrecMz() < maxMz
-    ]
-    # annotIntens  = [spectrum.getSumIntensAnnotFrag() for spectrum in exp.spectra.values() if spectrum.getPrecMz() > minMz and spectrum.getPrecMz() < maxMz]
-    sumFragIntens = [
-        spectrum.getSumIntensFrag()
-        for spectrum in exp.spectra.values()
-        if spectrum.getPrecMz() > minMz and spectrum.getPrecMz() < maxMz
-    ]
-    spectrum_key = [
-        spectrum
-        for spectrum in exp.spectra.keys()
-        if exp.spectra[spectrum].getPrecMz() > minMz and exp.spectra[spectrum].getPrecMz() < maxMz
-    ]
-    fig = go.Figure()
-    # fig.add_scatter( x=np.log(annotIntens), y=np.log(precIntens), mode='markers', marker=dict(size=4, color="red"), name='Annotated Fragment Summed',customdata=spectrum_key )
-    fig.add_scatter(
-        x=np.log(sumFragIntens),
-        y=np.log(precIntens),
-        mode="markers",
-        marker=dict(size=4, color="red"),
-        name="Fragment Sum",
-        customdata=spectrum_key,
+@app.callback(Output("plot_network_isobaric", "figure"), Input("range_mz", "value"))
+def plot_network_isobaric_proteoforms(input):
+
+    G = exp.isobaric_proteform_graph
+    G_nodes_pos = nx.spring_layout(G)
+
+    edge_x = []
+    edge_y = []
+    for edge in G.edges():
+        x0, y0 = G_nodes_pos[edge[0]]
+        x1, y1 = G_nodes_pos[edge[1]]
+
+        edge_x.append(x0)
+        edge_x.append(x1)
+        edge_x.append(None)
+        edge_y.append(y0)
+        edge_y.append(y1)
+        edge_y.append(None)
+
+    edge_trace = go.Scatter(
+        x=edge_x, y=edge_y, line=dict(width=0.5, color="#888"), hoverinfo="none", mode="lines"
     )
-    fig.update_layout(template=template)
-    fig.update_xaxes(title_text="log(Fragments Summed Intensity)")
-    fig.update_yaxes(title_text="log(Precursor Intensity)")
+
+    node_x = []
+    node_y = []
+    proteoform_key = []
+    for node in G.nodes():
+        x, y = G_nodes_pos[node]
+        node_x.append(x)
+        node_y.append(y)
+        proteoform_key.append(node)
+
+    node_trace = go.Scatter(
+        x=node_x,
+        y=node_y,
+        customdata=proteoform_key,
+        mode="markers",
+        hoverinfo="text",
+        marker=dict(
+            showscale=True,
+            # colorscale options
+            #'Greys' | 'YlGnBu' | 'Greens' | 'YlOrRd' | 'Bluered' | 'RdBu' |
+            #'Reds' | 'Blues' | 'Picnic' | 'Rainbow' | 'Portland' | 'Jet' |
+            #'Hot' | 'Blackbody' | 'Earth' | 'Electric' | 'Viridis' |
+            colorscale="Portland",
+            color=[],
+            size=10,
+            colorbar=dict(thickness=15, title="Theoretical mass (DA)", xanchor="left", titleside="right"),
+            line_width=2,
+        ),
+    )
+
+    node_adjacencies = []
+    node_text = []
+
+    for node in G.nodes:
+        node_adjacencies.append(exp.proteoforms[node].getTheoPrecMz())
+        node_text.append(node)
+
+    node_trace.marker.color = node_adjacencies
+    node_trace.text = node_text
+
+    fig = go.Figure(
+        data=[edge_trace, node_trace],
+        layout=go.Layout(
+            title="",
+            titlefont_size=16,
+            showlegend=False,
+            hovermode="closest",
+            margin=dict(b=20, l=5, r=5, t=40),
+            annotations=[
+                dict(
+                    text="",
+                    showarrow=False,
+                    xref="paper",
+                    yref="paper",
+                    x=0.005,
+                    y=-0.002,
+                )
+            ],
+            xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+        ),
+    )
+
     return fig
+
+    pass
 
 
 # ---------------------------------------------------------------------------- #

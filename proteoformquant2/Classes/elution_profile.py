@@ -114,11 +114,12 @@ class ElutionProfile:
         else:
             print("Specify method (fitted or estimated) ")
 
-    def get_auc(self, x_a, x_b):
+    def get_auc(self):
 
         try:
-            return integrate.quad(lambda x: self.skewnormal(x, *self.param_fitted), x_a, x_b)[0]
+            return self.get_parameters_fitted()[2]
         except (TypeError):
+
             return 0
 
     def bounds_area_equation(self, x1x2, m, s, a, k):
@@ -350,8 +351,8 @@ class ElutionProfile:
             [min(data_x) - ((max(data_x) - min(data_x))), max(data_x) + ((max(data_x) - min(data_x))) + 1]
         )  # search bounds for m
         parameterBounds.append([0.1, stdev(data_x) * 1500 + 1])  # search bounds for s
-        parameterBounds.append([0, 10000])  # search bounds for a
-        parameterBounds.append([0, 10])  # search bounds for k
+        parameterBounds.append([0, 15000])  # search bounds for a
+        parameterBounds.append([0, 7.5])  # search bounds for k
 
         return parameterBounds
 

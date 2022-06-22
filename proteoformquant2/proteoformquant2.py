@@ -30,7 +30,7 @@ def main():
     resource.setrlimit(resource.RLIMIT_STACK, [0x100 * max_rec, resource.RLIM_INFINITY])
     sys.setrecursionlimit(max_rec)
 
-    progName = "ProteoformformQuant2"
+    progName = "ProteoformQuant2"
 
     ### Input ###
     args = input.doArgs(sys.argv[1:], progName)  # Parse arguments
@@ -42,7 +42,7 @@ def main():
     outputFn = args.outputFn
     dbse = args.dbse
 
-    print("Starting " + progName)
+    print("---===Starting " + progName + "===---")
 
     # --------------------------------- Debugging -------------------------------- #
 
@@ -60,32 +60,68 @@ def main():
     # sys.stdout = TracePrints()
     # --------------------------------- Analysis --------------------------------- #
 
+    file_save_name = "2_1"
+
     # ### Read Data ###
     # run = Msrun(run_id="1", dbse=dbse)
     # run.read_mzid(indentFn)
-    # # run.read_mgf(spectra_fn)
     # run.read_mgf(spectra_fn)
 
     # ### Prepare Data ###
-
     # run.fdr_filtering(decoy_tag="decoy_", score_name="Amanda:AmandaScore")
     # run.add_proteoforms()
-    # run.filter_proteform_low_count(min_n_psm=5)
+    # run.filter_proteform_low_count(min_n_psm=10)
     # run.match_fragments()
     # run.scale_precursor_intensities()
 
-    # # ## Export Fragment Annotation ###
-    # # outputFn = "out"
-    # # run.get_dataframe_fragment_annotation().to_csv(outputFn + ".csv")
-
-    # # with open("test_res_p.pkl", "wb") as outp:
-    # #     pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
-
-    # with open("test_save_1_2.pkl", "wb") as outp:
+    # # ### SAVE ###
+    # with open(f"save_{file_save_name}.pkl", "wb") as outp:
     #     pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
-
-    with open("test_save_1_1.pkl", "rb") as inp:
+    with open(f"save_{file_save_name}.pkl", "rb") as inp:
         run = pickle.load(inp)
+
+    run.update_proteoforms_elution_profile()
+    run.update_proteoform_intens()
+
+    # ### SAVE ###
+    with open(f"save_inter_{file_save_name}.pkl", "wb") as outp:
+        pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
+    with open(f"save_inter_{file_save_name}.pkl", "rb") as inp:
+        run = pickle.load(inp)
+
+    ### Optimize EP ###
+    # print(run.proteoforms)
+    run.set_proteoform_isobaric_groups()
+
+    ### SAVE ###
+    with open(f"save_res_{file_save_name}.pkl", "wb") as outp:
+        pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
+
+    run.optimize_proteoform_subsets()
+
+    ### SAVE ###
+    with open(f"save_res_{file_save_name}.pkl", "wb") as outp:
+        pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
+    # with open(f"save_res_{file_save_name}.pkl", "rb") as inp:
+    #     run = pickle.load(inp)
+
+    ### Update Quatification ###
+    # run.update_proteoforms_elution_profile()
+    run.update_proteoform_intens()
+
+    ### Print Quant results ###
+    for proteoform in run.proteoforms.values():
+        if proteoform.update_proteoform_total_intens(method="precursor") > 0:
+            print(
+                proteoform.get_modification_brno(),
+                ",",
+                proteoform.update_proteoform_total_intens(method="precursor"),
+                ",",
+                proteoform.update_proteoform_total_intens(method="AUC"),
+            )
+
+    # with open("test_res_1_2_fin.pkl", "wb") as outp:
+    #     pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
 
     # # # For testing purpose filter protroforms:
     # proteoform_to_keep = {
@@ -103,32 +139,32 @@ def main():
     #     "ARTKQTARKSTGGKAPRKQLATKAARKSAPATGGVKK[Trimethyl]PHRYRPGTVALRE",
     # }
 
-    # only correct
-    proteoform_to_keep = {
-        "ARTKQTARKSTGGKAPRKQLATK[Trimethyl]AARKSAPATGGVKKPHRYRPGTVALRE",
-        "ARTKQTARKSTGGKAPRKQLATKAARK[Trimethyl]SAPATGGVKKPHRYRPGTVALRE",
-        "ARTKQTARKSTGGKAPRKQLATKAARKSAPATGGVK[Acetyl]KPHRYRPGTVALRE",
-        "ARTKQTARKSTGGKAPRKQLATKAARK[Acetyl]SAPATGGVKKPHRYRPGTVALRE",
-    }
-
+    # # only correct
     # proteoform_to_keep = {
-    #     "ARTK[Methyl]QTARKSTGGKAPRKQLATKAARKSAPATGGVKKPHRYRPGTVALRE",
-    #     "ARTKQTARK[Methyl]STGGKAPRKQLATKAARKSAPATGGVKKPHRYRPGTVALRE",
+    #     "ARTKQTARKSTGGKAPRKQLATK[Trimethyl]AARKSAPATGGVKKPHRYRPGTVALRE",
+    #     "ARTKQTARKSTGGKAPRKQLATKAARK[Trimethyl]SAPATGGVKKPHRYRPGTVALRE",
+    #     "ARTKQTARKSTGGKAPRKQLATKAARKSAPATGGVK[Acetyl]KPHRYRPGTVALRE",
+    #     "ARTKQTARKSTGGKAPRKQLATKAARK[Acetyl]SAPATGGVKKPHRYRPGTVALRE",
     # }
 
-    p_del_list = []
-    for key in run.proteoforms.keys():
-        if key not in proteoform_to_keep:
-            p_del_list.append(key)
-            for psm in run.proteoforms[key].get_linked_psm():
-                psm.exclude()
+    # # proteoform_to_keep = {
+    # #     "ARTK[Methyl]QTARKSTGGKAPRKQLATKAARKSAPATGGVKKPHRYRPGTVALRE",
+    # #     "ARTKQTARK[Methyl]STGGKAPRKQLATKAARKSAPATGGVKKPHRYRPGTVALRE",
+    # # }
 
-    for key in p_del_list:
-        del run.proteoforms[key]
-    print("deleted proteo")
+    # p_del_list = []
+    # for key in run.proteoforms.keys():
+    #     if key not in proteoform_to_keep:
+    #         p_del_list.append(key)
+    #         for psm in run.proteoforms[key].get_linked_psm():
+    #             psm.exclude()
 
-    for spectrum in run.spectra.values():
-        spectrum.psms = [i for i in spectrum.get_psms() if i != 0]
+    # for key in p_del_list:
+    #     del run.proteoforms[key]
+    # print("deleted proteo")
+
+    # for spectrum in run.spectra.values():
+    #     spectrum.psms = [i for i in spectrum.get_psms() if i != 0]
 
     # ### Quantification groups ###
     # run.test_proteoform_subsets_scoring()
@@ -136,10 +172,7 @@ def main():
     # with open("test_res_best.pkl", "wb") as outp:
     #     pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
 
-    print(run.proteoforms)
-
-    run.set_proteoform_isobaric_groups()
-    run.optimize_proteoform_subsets()
+    # run.result_dataframe_pfq1_format().to_csv("pfq_out_obj_1_2.csv")
 
     # with open("test_res_1_1.pkl", "wb") as outp:
     #     pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
@@ -155,9 +188,7 @@ def main():
     # run.update_unassigned_spectra()
     # run.update_proteoform_intens()
 
-    with open("test_res_1_1.pkl", "wb") as outp:
-        pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
-    # run.result_dataframe_pfq1_format().to_csv("pfq_out_obj_1.csv")
+    #
 
 
 if __name__ == "__main__":
