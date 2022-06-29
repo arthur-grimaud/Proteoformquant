@@ -352,7 +352,7 @@ class ElutionProfile:
         )  # search bounds for m
         parameterBounds.append([0.1, stdev(data_x) * 1500 + 1])  # search bounds for s
         parameterBounds.append([0, 15000])  # search bounds for a
-        parameterBounds.append([0, 7.5])  # search bounds for k
+        parameterBounds.append([-7.5, 7.5])  # search bounds for k
 
         return parameterBounds
 

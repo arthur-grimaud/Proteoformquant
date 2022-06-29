@@ -294,6 +294,19 @@ class Proteoform:
 
         return min([left_sum, right_sum]) / (sum([left_sum, right_sum]) / 2)
 
+    def get_boundaries_of_ep(self):
+        """Return the max and min retention time that represent 99?% of the elution profile AUC"""
+
+        if self.get_elution_profile() != None:
+            EP = self.get_elution_profile()
+            if EP.is_parameters_fitted():
+
+                boundaries = EP.get_bounds_area()
+
+                return boundaries
+        else:
+            return 0
+
     def get_boundaries_area_ratio(self):
         """Area under EP for interval min_boud_rt max_bound rt vs total AUC"""
 
@@ -475,7 +488,7 @@ class Proteoform:
                 # print(self.get_elution_profile().get_auc())
                 self.totalIntens = self.get_elution_profile().get_auc()
                 return self.totalIntens
-            return None
+            return 0
 
         for psm in self.get_validated_linked_psm():
             if method == "precursor":

@@ -60,23 +60,24 @@ def main():
     # sys.stdout = TracePrints()
     # --------------------------------- Analysis --------------------------------- #
 
-    file_save_name = "2_1"
+    file_save_name = "wt_1_1_mascot_b"
 
-    # ### Read Data ###
-    # run = Msrun(run_id="1", dbse=dbse)
-    # run.read_mzid(indentFn)
-    # run.read_mgf(spectra_fn)
+    ### Read Data ###
+    run = Msrun(run_id="1", dbse=dbse)
+    run.read_mzid(indentFn)
+    run.read_mgf(spectra_fn)
 
-    # ### Prepare Data ###
-    # run.fdr_filtering(decoy_tag="decoy_", score_name="Amanda:AmandaScore")
-    # run.add_proteoforms()
-    # run.filter_proteform_low_count(min_n_psm=10)
-    # run.match_fragments()
-    # run.scale_precursor_intensities()
+    ### Prepare Data ###
+    run.fdr_filtering(decoy_tag="decoy_", score_name="Amanda:AmandaScore")
+    run.add_proteoforms()
+    run.filter_proteform_low_count(min_n_psm=10)
+    run.match_fragments()
+    run.scale_precursor_intensities()
+    run.retention_time_window_filtering(0, 5300)
 
-    # # ### SAVE ###
-    # with open(f"save_{file_save_name}.pkl", "wb") as outp:
-    #     pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
+    # ### SAVE ###
+    with open(f"save_{file_save_name}.pkl", "wb") as outp:
+        pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
     with open(f"save_{file_save_name}.pkl", "rb") as inp:
         run = pickle.load(inp)
 
@@ -88,6 +89,25 @@ def main():
         pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
     with open(f"save_inter_{file_save_name}.pkl", "rb") as inp:
         run = pickle.load(inp)
+
+    ### Print Quant results ###
+    run.update_proteoform_intens()
+    f = open(f"quant_initial_{file_save_name}.csv", "w")
+    for proteoform in run.proteoforms.values():
+        if proteoform.update_proteoform_total_intens(method="precursor") > 0:
+            f.write(
+                "".join(
+                    [
+                        str(proteoform.get_modification_brno()),
+                        ",",
+                        str(proteoform.update_proteoform_total_intens(method="precursor")),
+                        ",",
+                        str(proteoform.update_proteoform_total_intens(method="AUC")),
+                        "\n",
+                    ]
+                )
+            )
+    f.close()
 
     ### Optimize EP ###
     # print(run.proteoforms)
@@ -107,18 +127,26 @@ def main():
 
     ### Update Quatification ###
     # run.update_proteoforms_elution_profile()
-    run.update_proteoform_intens()
+    # run.update_proteoform_intens()
 
     ### Print Quant results ###
+    run.update_proteoform_intens()
+    f = open(f"quant_opti_{file_save_name}.csv", "w")
     for proteoform in run.proteoforms.values():
         if proteoform.update_proteoform_total_intens(method="precursor") > 0:
-            print(
-                proteoform.get_modification_brno(),
-                ",",
-                proteoform.update_proteoform_total_intens(method="precursor"),
-                ",",
-                proteoform.update_proteoform_total_intens(method="AUC"),
+            f.write(
+                "".join(
+                    [
+                        str(proteoform.get_modification_brno()),
+                        ",",
+                        str(proteoform.update_proteoform_total_intens(method="precursor")),
+                        ",",
+                        str(proteoform.update_proteoform_total_intens(method="AUC")),
+                        "\n",
+                    ]
+                )
             )
+    f.close()
 
     # with open("test_res_1_2_fin.pkl", "wb") as outp:
     #     pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)

@@ -19,20 +19,40 @@ class Spectrum:
 
         # print(identMzid)
 
-        try:
-            self.spectrum_title = identMzid["spectrum title"]
-        except (KeyError):
-            self.spectrum_title = None
+        # Add spectrum title (formatted to match mgf) TODO might not work in some cases:
+        spectrumID_raw = identMzid["spectrumID"].split("=")
 
-        try:
-            self.spectrum_title_alt = identMzid["spectrumID"]
-        except (KeyError):
-            self.spectrum_title_alt = None
+        if spectrumID_raw[0] == "index":
+            self.spectrum_title = str(int(spectrumID_raw[1]) + 1)
+        elif spectrumID_raw[0] == "scan":
+            self.spectrum_title = spectrumID_raw[1]
+        else:
+            print(spectrumID_raw[0])
+            print("Spectrum index/title not recognized")
 
-        try:
-            self.spectrum_title_alt_alt = identMzid["spectrumID"].split("=")[1]
-        except (KeyError):
-            self.spectrum_title_alt_alt = None
+        # Add spectrum experimental mz value from mzident file:
+
+        self.experimentalMassToCharge = identMzid["SpectrumIdentificationItem"][0]["experimentalMassToCharge"]
+
+        # try:
+        #     self.spectrum_title = identMzid["spectrum title"]
+        # except (KeyError):
+        #     self.spectrum_title = None
+
+        # try:
+        #     self.spectrum_title_alt = identMzid["spectrumID"]
+        # except (KeyError):
+        #     self.spectrum_title_alt = None
+
+        # try:
+        #     self.spectrum_title_alt_alt = identMzid["spectrumID"].split("=")[1]
+        # except (KeyError):
+        #     self.spectrum_title_alt_alt = None
+
+        # try:
+        #     self.spectrum_title_alt_alt_alt = str(int(identMzid["spectrumID"].split("=")[1]) + 1)
+        # except (KeyError):
+        #     self.spectrum_title_alt_alt_alt = None
 
         self.psms: list(Psm) = []  # list of PSM for that spectrum
 
