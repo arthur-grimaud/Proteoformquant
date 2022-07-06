@@ -60,20 +60,34 @@ def main():
     # sys.stdout = TracePrints()
     # --------------------------------- Analysis --------------------------------- #
 
-    file_save_name = "wt_1_1_mascot_b"
+    file_save_name = "wt_1_2_mascot"
 
     ### Read Data ###
     run = Msrun(run_id="1", dbse=dbse)
     run.read_mzid(indentFn)
     run.read_mgf(spectra_fn)
 
+    run.print_metrics()
+
     ### Prepare Data ###
     run.fdr_filtering(decoy_tag="decoy_", score_name="Amanda:AmandaScore")
     run.add_proteoforms()
-    run.filter_proteform_low_count(min_n_psm=10)
-    run.match_fragments()
-    run.scale_precursor_intensities()
+
+    run.print_metrics()
+
+    run.filter_proteform_low_count(min_n_psm=5)
+
+    run.print_metrics()
+
     run.retention_time_window_filtering(0, 5300)
+
+    run.print_metrics()
+
+    run.scale_precursor_intensities()
+
+    run.print_metrics()
+
+    run.match_fragments()
 
     # ### SAVE ###
     with open(f"save_{file_save_name}.pkl", "wb") as outp:

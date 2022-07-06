@@ -142,11 +142,11 @@ class Psm:
 
     def get_prec_intens_ratio(self):
         """given self.ratio return the corresponding precursor intensity fraction for that psm"""
-        return self.spectrum.getPrecIntens() * self.ratio
+        return self.spectrum.get_prec_intens() * self.ratio
 
     def getAnnotMsmsIntensRatio(self):
         """given self.ratio return the corresponding annotated fragment intensity sum fraction for that psm"""
-        return self.spectrum.getSumIntensAnnotFrag() * self.ratio
+        return self.spectrum.get_sum_intens_annot_frag() * self.ratio
 
     def get_fragments_at_range(self, bounds, direction):
         """Get a list of fragments names given a range of residue position (1-based) to be present in the fragments"""
@@ -225,8 +225,8 @@ class Psm:
 
         # get information to create a spectrum utils MsmsSpectrum object
         id = self.spectrum.get_id()
-        fragIntens = self.spectrum.getFragIntens()
-        fragMz = self.spectrum.getFragMz()
+        fragIntens = self.spectrum.get_frag_intens()
+        fragMz = self.spectrum.get_frag_mz()
 
         calculatedMassToCharge = self.getCalculatedMassToCharge()
         chargeState = self.getChargeState()
@@ -287,7 +287,7 @@ class Psm:
                         intensList.append(intensity)
                         posList.append(str(annotationList[0]) + ":" + str(annotationList[1]))
                         indexList.append(indexInPeakList)
-                        mzErrorList.append(self.spectrum.getFragMz()[indexInPeakList] - mz)
+                        mzErrorList.append(self.spectrum.get_frag_mz()[indexInPeakList] - mz)
                         nAnnotFrag += 1
 
                     indexInPeakList += 1

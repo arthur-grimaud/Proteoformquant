@@ -381,6 +381,14 @@ class ElutionProfile:
             print("Issue in spearmanR scoring, returning score of 0")
             return 0
 
+        if cor_results.correlation < -1 or cor_results.correlation > 1:
+            print("Issue in spearmanR scoring, returning score of 0")
+            return 0
+
+        if math.isnan(cor_results.correlation) or cor_results.correlation in ["nan", np.nan, math.nan]:
+            print("is nan")
+            return 0
+
         return cor_results.correlation
 
     def __pearson_test_log(self, model, parameters, data_x, data_y):  # !! NOT KS !! to be renamed

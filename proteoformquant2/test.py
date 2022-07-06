@@ -1,3 +1,4 @@
+from cmath import nan
 from re import A
 import dash
 from dash import html
@@ -18,7 +19,7 @@ import math
 from dash.exceptions import PreventUpdate
 from scipy import stats
 from kneed import KneeLocator
-from statistics import mean
+from statistics import mean, stdev
 import operator
 from itertools import compress
 import itertools
@@ -63,19 +64,38 @@ sys.setrecursionlimit(max_rec)
 # ----------------------------- DATA PREPARATION ----------------------------- #
 
 
-with open("save_res_wt_1_1_mascot.pkl", "rb") as inp:
+with open("save_res_wt_1_2_mascot.pkl", "rb") as inp:
     run = pickle.load(inp)
 
 run.set_proteoform_isobaric_groups()
 
+i = 0
 for group in run.proteoform_isobaric_group:
 
     group_as_list = list(group)
 
-    print(run.proteoforms[group_as_list[0]].get_modification_brno())
+    print(i, " ", run.proteoforms[group_as_list[0]].get_modification_brno())
+    i += 1
+
+group_number = 14
+group = run.proteoform_isobaric_group[group_number]
 
 
-group = run.proteoform_isobaric_group[3]
+print("-----------***--------------")
+
+avg_rank_scores = []
+for rank in range(10):
+    scrs = []
+    for spectrum in run.spectra.values():
+        try:
+            psm = spectrum.psms[rank]
+            scrs.append(psm.__dict__["Mascot:score"])
+        except (IndexError):
+            pass
+    avg_rank_scores.append(mean(scrs))
+
+avg_rank_scores = [x / max(avg_rank_scores) for x in avg_rank_scores]
+print(avg_rank_scores)
 
 print("-----------***--------------")
 # Variable TODO hard-coded!
@@ -102,24 +122,37 @@ for proforma in group:
 
 # TODO could be improved (generalize)
 # Sort proteoform in subset (based on psms rank count)
+
+weighted_rank = [
+    proteoform.get_weighted_number_linked_validated_psm(max_rank=10) for proteoform in run.proteoform_subset
+]
 n_rank_1 = [proteoform.get_number_linked_psm_Rx(rank=1) for proteoform in run.proteoform_subset]
 n_rank_2 = [proteoform.get_number_linked_psm_Rx(rank=2) for proteoform in run.proteoform_subset]
 n_rank_3 = [proteoform.get_number_linked_psm_Rx(rank=3) for proteoform in run.proteoform_subset]
 n_rank_4 = [proteoform.get_number_linked_psm_Rx(rank=4) for proteoform in run.proteoform_subset]
 n_rank_5 = [proteoform.get_number_linked_psm_Rx(rank=5) for proteoform in run.proteoform_subset]
-n_rank_6 = [proteoform.get_number_linked_psm_Rx(rank=5) for proteoform in run.proteoform_subset]
-n_rank_7 = [proteoform.get_number_linked_psm_Rx(rank=5) for proteoform in run.proteoform_subset]
+n_rank_6 = [proteoform.get_number_linked_psm_Rx(rank=6) for proteoform in run.proteoform_subset]
+n_rank_7 = [proteoform.get_number_linked_psm_Rx(rank=7) for proteoform in run.proteoform_subset]
 
 zipped_rank_proteo = zip(
-    n_rank_1, n_rank_2, n_rank_3, n_rank_4, n_rank_5, n_rank_6, n_rank_7, group, run.proteoform_subset
+    weighted_rank,
+    n_rank_1,
+    n_rank_2,
+    n_rank_3,
+    n_rank_4,
+    n_rank_5,
+    n_rank_6,
+    n_rank_7,
+    group,
+    run.proteoform_subset,
 )
 zipped_proteo = sorted(zipped_rank_proteo, reverse=True)
-run.proteoform_subset = [list(tuple)[-1] for tuple in zipped_proteo]
+run.proteoform_subset = [list(tuple)[-1] for tuple in zipped_proteo][:7]
 
 i = 0
 for proteoform in run.proteoform_subset:
-    print(zipped_proteo[i])
-    print(proteoform.get_modification_brno())
+    print(proteoform.get_modification_brno(), ",", zipped_proteo[i][:6])
+
     run.rt_boundaries.append([0, 0])
     i += 1
 
@@ -130,55 +163,169 @@ all_rts = sorted([spectrum.get_rt() for spectrum in run.spectra_subset])
 fig = run.plot_elution_profiles(run.proteoform_subset, rt_values=all_rts, count=1)
 fig.write_image("images/fig_" + "start_test" + ".png")
 
-import itertools
 
-combinations = list(itertools.product([0, 1], repeat=5))
+n_iterations = 20
+g = 0
+n_last_bounds = 10
+min_ep_score = 0.01
+score_ep_proteos = []
+all_scores = []
+all_bounds = []
+rd_loc = 4
+rd_scale = 1
+n_proteo_excluded = 0
+threshold_stop = 2
+
+print(run.rt_boundaries)
+print("ALL RETENTION TIMES IN GROUP:")
+print(all_rts)
+
+scores_proteos = np.zeros((n_iterations * 100, 10))
 
 
-for combination in combinations:
-    if sum(combination) == 4:
-        for i in range(len(combination)):
-            if combination[i] == 0:
-                run.rt_boundaries[i] = [0, 0]
-            if combination[i] == 1:
-                run.rt_boundaries[i] = [3000, 5000]
+for ps in range(len(run.proteoform_subset)):
+    if n_proteo_excluded < threshold_stop:
+        try:
+            run.rt_boundaries[ps] = run.proteoform_subset[ps].get_rt_range(rank=1)
+        except (ValueError):
+            try:
+                run.rt_boundaries[ps] = run.proteoform_subset[ps].get_rt_range(rank=2)
+            except (ValueError):
+                run.rt_boundaries[ps] = run.proteoform_subset[ps].get_rt_range(rank=3)
 
-        # Initial validation
+        print(f"Proteo: { run.proteoform_subset[ps].get_modification_brno()} range: {run.rt_boundaries[ps]}")
+        for i in range(n_iterations):
+            g += 1
+
+            print([proteo.get_modification_brno() for proteo in run.proteoform_subset[: ps + 1]])
+            for p in range(len(run.proteoform_subset[: ps + 1])):
+
+                if run.rt_boundaries[p][0] != 0 and run.rt_boundaries[p][1]:
+
+                    all_scores.append([])
+                    all_bounds.append([])
+                    all_scores[i].append(i)
+
+                    proteo_obj = run.proteoform_subset[p]
+
+                    # print(run.proteoform_subset[p])
+                    # Minimun boundarie mutation:
+                    min_spec_rt, min_ep_rt = proteo_obj.get_min_max_rt_range_shift(side="min")
+                    if min_spec_rt < min_ep_rt:  # if spectra lower than modeled ep
+                        modifier_min = int(np.round(np.random.normal(loc=rd_loc, scale=rd_scale, size=1)[0]))
+                    else:
+                        modifier_min = int(np.round(np.random.normal(loc=-rd_loc, scale=rd_scale, size=1)[0]))
+
+                    index_rt_min_start = all_rts.index(run.rt_boundaries[p][0])
+
+                    new_index_rt_min = index_rt_min_start + modifier_min
+                    if new_index_rt_min >= 0 and new_index_rt_min < len(all_rts):
+                        run.rt_boundaries[p][0] = all_rts[new_index_rt_min]
+
+                    # Maximum boundarie mutation:
+                    max_spec_rt, max_ep_rt = proteo_obj.get_min_max_rt_range_shift(side="max")
+                    if max_spec_rt > max_ep_rt:  # if spectra lower than modeled ep
+                        modifier_max = int(np.round(np.random.normal(loc=-rd_loc, scale=rd_scale, size=1)[0]))
+                    else:
+                        modifier_max = int(np.round(np.random.normal(loc=rd_loc, scale=rd_scale, size=1)[0]))
+
+                    index_rt_max_start = all_rts.index(run.rt_boundaries[p][1])
+                    new_index_rt_max = index_rt_max_start + modifier_max
+                    if new_index_rt_max >= 0 and new_index_rt_max < len(all_rts):
+                        run.rt_boundaries[p][1] = all_rts[new_index_rt_max]
+
+                    # Test score
+                    run.update_proteoform_subset_validation(run.proteoform_subset, run.rt_boundaries)
+                    run.update_psms_ratio_subset(run.spectra_subset)
+                    run.update_proteoforms_elution_profile_subset(run.proteoform_subset)
+
+                    scores_proteos[g][p] = proteo_obj.get_fit_score()
+
+            fig = run.plot_elution_profiles(run.proteoform_subset, rt_values=all_rts, count=g)
+            fig.write_image("images/fig_" + f"{group_number:03}" + "_" + f"{g:04}" + ".png")
+
+        # Check last proteoform added:
+        scores_last_proteo = scores_proteos[g - n_last_bounds : g, ps]
+        scores_last_proteo = list(scores_last_proteo)
+
+        print(scores_last_proteo)
+        print(scores_last_proteo)
+
+        print(stdev(scores_last_proteo))
+
+        if stdev(scores_last_proteo) > 0.25 or mean(scores_last_proteo) < 0.5:
+            run.rt_boundaries[p] = [0, 0]
+            print("proteoform has benn unvalidated ")
+            n_proteo_excluded += 1
+
         run.update_proteoform_subset_validation(run.proteoform_subset, run.rt_boundaries)
         run.update_psms_ratio_subset(run.spectra_subset)
         run.update_proteoforms_elution_profile_subset(run.proteoform_subset)
 
-        print(combination)
-        print(run.get_residuals_subset(run.spectra_subset))
-        print(run.get_ratio_validated_0(run.spectra_subset))
+        fig = run.plot_elution_profiles(run.proteoform_subset, rt_values=all_rts, count=g)
+        fig.write_image("images/fig_" + f"{group_number:03}" + "_" + f"{g:04}" + "_intermediate" + ".png")
 
-        all_rts = sorted([spectrum.get_rt() for spectrum in run.spectra_subset])
-        # print(all_rts)
+    else:
+        break
 
-        comb_str = "".join(str(combination))
-        fig = run.plot_elution_profiles(run.proteoform_subset, rt_values=all_rts, count=1)
-        fig.write_image("images/fig_" + f"{comb_str}" + ".png")
-        # print(run.get_coverage_score(run.proteoform_subset))
-
-
-run.rt_boundaries[0] = [2800, 3500]
-run.rt_boundaries[1] = [2800, 3500]
-run.rt_boundaries[2] = [2800, 3500]
-run.rt_boundaries[3] = [0, 0]
-run.rt_boundaries[4] = [0, 0]
-run.rt_boundaries[5] = [0, 0]
-run.rt_boundaries[5] = [0, 0]
-# Initial validation
-run.update_proteoform_subset_validation(run.proteoform_subset, run.rt_boundaries)
-run.update_psms_ratio_subset(run.spectra_subset)
-run.update_proteoforms_elution_profile_subset(run.proteoform_subset)
-
-comb_str = "".join(str(combination))
-fig = run.plot_elution_profiles(run.proteoform_subset, rt_values=all_rts, count=1)
-fig.write_image("images/fig_" + "fin_test" + "_final" + ".png")
+np.savetxt("scores_test.csv", scores_proteos, delimiter=",")
 
 with open("testings.pkl", "wb") as outp:
     pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
+
+# import itertools
+
+# combinations = list(itertools.product([0, 1], repeat=5))
+
+# start_rg = 3700
+# end_rg = 4200
+
+
+# for combination in combinations:
+#     if sum(combination) == 4:
+#         for i in range(len(combination)):
+#             if combination[i] == 0:
+#                 run.rt_boundaries[i] = [0, 0]
+#             if combination[i] == 1:
+#                 run.rt_boundaries[i] = [start_rg, end_rg]
+
+#         # Initial validation
+#         run.update_proteoform_subset_validation(run.proteoform_subset, run.rt_boundaries)
+#         run.update_psms_ratio_subset(run.spectra_subset)
+#         run.update_proteoforms_elution_profile_subset(run.proteoform_subset)
+
+#         print(combination)
+#         print(run.get_residuals_subset(run.spectra_subset))
+#         print(run.get_ratio_validated_0(run.spectra_subset))
+
+#         all_rts = sorted([spectrum.get_rt() for spectrum in run.spectra_subset])
+#         # print(all_rts)
+
+#         comb_str = "".join(str(combination))
+#         fig = run.plot_elution_profiles(run.proteoform_subset, rt_values=all_rts, count=1)
+#         fig.write_image("images/fig_" + f"{comb_str}" + ".png")
+#         # print(run.get_coverage_score(run.proteoform_subset))
+
+
+# run.rt_boundaries[0] = [start_rg, 4000]
+# run.rt_boundaries[1] = [3970, end_rg]
+# run.rt_boundaries[3] = [start_rg, 4000]
+# run.rt_boundaries[2] = [3970, end_rg]
+# run.rt_boundaries[4] = [start_rg, end_rg]
+# run.rt_boundaries[5] = [start_rg, end_rg]
+
+# run.rt_boundaries[6] = [start_rg, end_rg]
+# # Initial validation
+# run.update_proteoform_subset_validation(run.proteoform_subset, run.rt_boundaries)
+# run.update_psms_ratio_subset(run.spectra_subset)
+# run.update_proteoforms_elution_profile_subset(run.proteoform_subset)
+
+# comb_str = "".join(str(combination))
+# fig = run.plot_elution_profiles(run.proteoform_subset, rt_values=all_rts, count=1)
+# fig.write_image("images/fig_" + "fin_test" + "_final" + ".png")
+
+# with open("testings.pkl", "wb") as outp:
+#     pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
 
 #
 #

@@ -1,28 +1,44 @@
+### Obsolete Imports ###
+# import imp
+# from itertools import combinations
+# import plotly.express as px
+# from pymoo.core.evaluator import Evaluator
+# from pymoo.core.population import Population
+# from pymoo.factory import get_problem
+# from pymoo.algorithms.moo.nsga2 import NSGA2
+# from pymoo.visualization.scatter import Scatter
+# import pymoo
+# from pymoo.algorithms.soo.nonconvex.ga import GA
+# from pymoo.algorithms.soo.nonconvex.es import ES
+# from pymoo.factory import get_crossover, get_mutation, get_sampling
+# from pymoo.optimize import minimize
+# from pymoo.core.problem import Problem
+# from chart_studio.plotly import plot, iplot
+# from distutils.log import warn
+
 ### Import ###
-from distutils.log import warn
-import imp
-from pickle import TRUE
+
+# MS file parsers
 from pyteomics import mzid
 from pyteomics import mgf
 from pyteomics import mzml
-from chart_studio.plotly import plot, iplot
-import plotly.express as px
-import plotly.graph_objs as go
+
+# Data manipulations
+from pickle import TRUE
 import numpy as np
 import pandas as pd
-from statistics import mean
-from statistics import stdev
-from statistics import median
+
+# Parallelization and multiprocessing
+from pymoo.core.problem import starmap_parallelized_eval
+import multiprocessing as mp
+
+# Misc
+from statistics import mean, stdev, median
+
 from progress.bar import Bar
 from alive_progress import alive_bar
-import pandas as pd
 import networkx as nx
-from itertools import combinations
-import matplotlib.pyplot as plt
-import multiprocessing
-from pymoo.core.problem import starmap_parallelized_eval
 from warnings import warn
-import multiprocessing as mp
 
 # Custom classes
 from Classes.spectrum import Spectrum
@@ -31,27 +47,14 @@ from Classes.proteoform0 import Proteoform0
 from Classes.problem_wrapper import ProblemWrapper
 from Utils import constant
 
-from pymoo.core.evaluator import Evaluator
-from pymoo.core.population import Population
-from pymoo.factory import get_problem
-from pymoo.algorithms.moo.nsga2 import NSGA2
-from pymoo.visualization.scatter import Scatter
-
-# GA
-import pymoo
-from pymoo.algorithms.soo.nonconvex.ga import GA
-from pymoo.algorithms.soo.nonconvex.es import ES
-from pymoo.factory import get_crossover, get_mutation, get_sampling
-from pymoo.optimize import minimize
-from pymoo.core.problem import Problem
-
-# Helpers
+# Custom Helpers
 from Utils import misc
 from pprint import pprint
 
-# For visualization (TEMPORARY)
-# from report import plot_elution_profiles
+# Visualization (TEMPORARY)
 import plotly.graph_objects as go
+import plotly.graph_objs as go
+import matplotlib.pyplot as plt
 
 
 class Msrun:
@@ -83,12 +86,12 @@ class Msrun:
 
         # Filtering and thresholds:
         self.max_rank = 15  # Maximum rank to be considered (1-based)
-        self.fdr_threshold = 0.01
+        self.fdr_threshold = 0.05
         self.intensity_threshold = 100000
         self.elution_profile_score_threshold = None
 
         # Proteform groups:
-        self.min_connect = 5
+        self.min_connect = 1
 
         # Genetic Algorithm parameters:
         self.n_individuals = 5
@@ -129,8 +132,8 @@ class Msrun:
 
     def get_mz_range(self):
         """Returns the min and max mass to charge ratio for all spectra in self.spectra"""
-        mn = min([spectrum.getPrecMz() for spectrum in self.spectra.values()])
-        mx = max([spectrum.getPrecMz() for spectrum in self.spectra.values()])
+        mn = min([spectrum.get_prec_mz() for spectrum in self.spectra.values()])
+        mx = max([spectrum.get_prec_mz() for spectrum in self.spectra.values()])
         return (mn, mx)
 
     def get_dataset_metrics(self):
@@ -153,6 +156,14 @@ class Msrun:
             # "MedianEnvelopeA":   median([proteoform.get_elution_profile().param_fitted[2] for proteoform in self.proteoforms.values() if proteoform.get_elution_profile() != None ]),
             # "MedianEnvelopeK":   median([proteoform.get_elution_profile().param_fitted[3] for proteoform in self.proteoforms.values() if proteoform.get_elution_profile() != None ])
         }
+
+    def print_metrics(self):
+
+        n_spectra = len(self.spectra)
+        n_psms = sum([len(spectrum.psms) for spectrum in self.spectra.values()])
+        n_proteoforms = len(self.proteoforms)
+
+        print(f"Dataset consist of {n_spectra} spectra with {n_psms} psms for {n_proteoforms} proteoforms")
 
     # ----------------------------------- main ----------------------------------- #
 
@@ -312,7 +323,7 @@ class Msrun:
             psms_remove = [psms_obj[index] for index in idx_remove]
 
             for psm in psms_remove:
-                psm.exclude()
+                self.remove_psm(psm)
 
             if decoy_hits == 0:
                 print("No decoys hit were found")
@@ -378,7 +389,7 @@ class Msrun:
         with alive_bar(0) as bar:
             for spectrumID in self.spectra:
                 self.spectra[spectrumID].annotateFragPsm(frag_mz_tol=self.frag_mz_tol)
-                self.spectra[spectrumID].setSumIntensAnnotFrag()
+                self.spectra[spectrumID].set_sum_intens_annot_frag()
                 bar()
 
         pass
@@ -386,7 +397,7 @@ class Msrun:
     def scale_precursor_intensities(self, target_range=[0, 100]):
         print("---Scaling precursor intensities---")
         with alive_bar(0) as bar:
-            spectra_prec_intens = [spectrum.getPrecIntens() for spectrum in self.spectra.values()]
+            spectra_prec_intens = [spectrum.get_prec_intens() for spectrum in self.spectra.values()]
 
             # remove extreme values:
             highest_intens = mean(spectra_prec_intens) + 4 * stdev(spectra_prec_intens)
@@ -397,16 +408,16 @@ class Msrun:
 
             spectra_to_remove = []
             for spectrum in self.spectra.values():
-                if spectrum.getPrecIntens() > highest_intens or lowest_intens > spectrum.getPrecIntens():
+                if spectrum.get_prec_intens() > highest_intens or lowest_intens > spectrum.get_prec_intens():
                     print("removing spectrum")
                     spectra_to_remove.append(spectrum)
 
             for spectrum in spectra_to_remove:
-                self.remove_spectrum_object(spectrum)
+                self.remove_spectrum(spectrum)
 
             ###
 
-            spectra_prec_intens = [spectrum.getPrecIntens() for spectrum in self.spectra.values()]
+            spectra_prec_intens = [spectrum.get_prec_intens() for spectrum in self.spectra.values()]
 
             max_prec_intens = max(spectra_prec_intens)
             min_prec_intens = min(spectra_prec_intens)
@@ -428,23 +439,63 @@ class Msrun:
         print(f"Removed {len(spectra_to_remove)} spectra based on rentention time")
 
         for spectrum in spectra_to_remove:
-            self.remove_spectrum_object(spectrum)
+            self.remove_spectrum(spectrum)
 
-    def remove_spectrum_object(self, spectrum):
+    # ------------------------------ Remove Methods ------------------------------ #
+
+    """The following method are used for filtering steps of the analysis"""
+
+    def remove_proteoform(self, proteoform):
+        """Remove a given proteform object and its associated PSMs,
+        will also remove spectrum if this spectrum doesn't have any identification"""
+
+        psms_to_rm = proteoform.get_all_linked_psm()
+
+        for psm in psms_to_rm:  # remove psm in spectrum
+            psm.spectrum.psms.remove(psm)
+            if len(psm.spectrum.psms) == 0:  # remove spectra if no psms are left
+                self.spectra[psm.spectrum.get_id()]
+                del psm.spectrum
+
+        del self.proteoforms[proteoform.get_modification_proforma()]
+        del proteoform
+
+    def remove_psm(self, psm):
+        spectrum = psm.spectrum
+        proteoform = psm.proteoform
+
+        spectrum.psms.remove(psm)
+        if len(spectrum.psms) == 0:  # remove spectra if no psms are left
+            self.spectra[spectrum.get_id()]
+            del psm.spectrum
+
+        if isinstance(proteoform, Proteoform):
+            proteoform.linkedPsm.remove(psm)  # remove proteoform if no psms are left
+            if len(proteoform.linkedPsm) == 0:
+                self.proteoforms[proteoform.get_modification_proforma()]
+                del proteoform
+
+        del psm
+
+    def remove_spectrum(self, spectrum):
+
+        psm_to_rm = []
         for psm in spectrum.psms:
+            psm_to_rm.append(psm)
+
+        for psm in psm_to_rm:
             proteoform = psm.proteoform
-            psm.proteoform.linkedPsm.remove(psm)
+
+            if isinstance(proteoform, Proteoform):
+                proteoform.linkedPsm.remove(psm)  # remove proteoform if no psms are left
+                if len(proteoform.linkedPsm) == 0:
+                    self.proteoforms[proteoform.get_modification_proforma()]
+                    del proteoform
+
+            del psm
+
         del self.spectra[spectrum.get_id()]
         del spectrum
-
-        if len(proteoform.get_linked_psm()) == 0:
-
-            # print(proteoform.get_modification_proforma())
-            try:
-                del self.proteoforms[proteoform.get_modification_proforma()]
-            except (KeyError):
-                pass
-            del proteoform
 
     # ------------------------- METHODS FOR QUANTIFICATION ------------------------ #
 
@@ -497,19 +548,21 @@ class Msrun:
     def filter_proteform_low_count(self, min_n_psm):
         n_exclude = 0
         n_proteo = 0
+        proteoform_to_rm = []
         for proteoform in self.proteoforms.values():
             if len(proteoform.get_linked_psm()) < min_n_psm:
                 n_proteo += 1
-                for psm in proteoform.get_linked_psm():
-                    psm.exclude()
-                    n_exclude += 1
-        print(n_proteo, " proteoforms and ", n_exclude, " PSMs have been excluded based on count")
+                proteoform_to_rm.append(proteoform)
+
+        for proteoform in proteoform_to_rm:
+            self.remove_proteoform(proteoform)
+        print(n_proteo, " proteoforms have been excluded based on count")
 
     def update_chimeric_spectra(self, max_rank):
 
         """For every psm of rank < rank try to find a matching envelope, and assign to that proteoform it if it is the case"""
         for spectrum in self.spectra.values():
-            spectrumMz = spectrum.getPrecMz()
+            spectrumMz = spectrum.get_prec_mz()
             spectrumRt = spectrum.get_rt()
 
             for rank in range(1, max_rank):
@@ -662,9 +715,9 @@ class Msrun:
         i_explained = 0
 
         for spectrum in spectra_subset:
-            i_tot += spectrum.getSumIntensFrag()
-            # print(spectrum.getSumIntensFrag(), " ... ", spectrum.getSumIntensAnnotFrag())
-            i_explained += spectrum.getSumIntensAnnotFrag()
+            i_tot += spectrum.get_sum_intens_frag()
+            # print(spectrum.get_sum_intens_frag(), " ... ", spectrum.get_sum_intens_annot_frag())
+            i_explained += spectrum.get_sum_intens_annot_frag()
 
         return 1 - (i_explained / i_tot)
 
@@ -1044,132 +1097,132 @@ class Msrun:
                     score = mean([proteo.get_coverage_2(), proteo.get_fit_score()])
                     score_ep_proteos.append(score)
 
-                if sum([sum(i) for i in zip(*self.rt_boundaries)]) > 0:  # If any proteoform is validated
+                # if sum([sum(i) for i in zip(*self.rt_boundaries)]) > 0:  # If any proteoform is validated
 
-                    # Start optimizing
-                    for i in range(n_iterations):
-                        g += 1
-                        all_scores.append([])
-                        all_bounds.append([])
-                        all_scores[i].append(i)
+                # # Start optimizing
+                # for i in range(n_iterations):
+                #     g += 1
+                #     all_scores.append([])
+                #     all_bounds.append([])
+                #     all_scores[i].append(i)
 
-                        for p in range(len(self.proteoform_subset)):
-                            if self.rt_boundaries[p][0] != 0:
-                                proteo_obj = self.proteoform_subset[p]
-                                # print(proteoform_sorted[p])
-                                # Minimun boundarie mutation:
-                                min_spec_rt, min_ep_rt = proteo_obj.get_min_max_rt_range_shift(side="min")
-                                if min_spec_rt < min_ep_rt:  # if spectra lower than modeled ep
-                                    # modifier_min = np.random.choice([+3, +1, -1, -3], p=[0.3, 0.5, 0.15, 0.05])
-                                    modifier_min = int(
-                                        np.round(np.random.normal(loc=rd_loc, scale=rd_scale, size=1)[0])
-                                    )
-                                    # print("increase lower bound")
-                                else:
-                                    # modifier_min = np.random.choice([-3, -1, +1, +3], p=[0.3, 0.5, 0.15, 0.05])
-                                    modifier_min = int(
-                                        np.round(np.random.normal(loc=-rd_loc, scale=rd_scale, size=1)[0])
-                                    )
-                                    # print("decrease lower bound")
+                #     for p in range(len(self.proteoform_subset)):
+                #         if self.rt_boundaries[p][0] != 0:
+                #             proteo_obj = self.proteoform_subset[p]
+                #             # print(proteoform_sorted[p])
+                #             # Minimun boundarie mutation:
+                #             min_spec_rt, min_ep_rt = proteo_obj.get_min_max_rt_range_shift(side="min")
+                #             if min_spec_rt < min_ep_rt:  # if spectra lower than modeled ep
+                #                 # modifier_min = np.random.choice([+3, +1, -1, -3], p=[0.3, 0.5, 0.15, 0.05])
+                #                 modifier_min = int(
+                #                     np.round(np.random.normal(loc=rd_loc, scale=rd_scale, size=1)[0])
+                #                 )
+                #                 # print("increase lower bound")
+                #             else:
+                #                 # modifier_min = np.random.choice([-3, -1, +1, +3], p=[0.3, 0.5, 0.15, 0.05])
+                #                 modifier_min = int(
+                #                     np.round(np.random.normal(loc=-rd_loc, scale=rd_scale, size=1)[0])
+                #                 )
+                #                 # print("decrease lower bound")
 
-                                index_rt_min_start = all_rts.index(self.rt_boundaries[p][0])
-                                try:
-                                    # print("modifier_min:", modifier_min)
-                                    self.rt_boundaries[p][0] = all_rts[index_rt_min_start + modifier_min]
-                                except IndexError:
-                                    pass
+                #             index_rt_min_start = all_rts.index(self.rt_boundaries[p][0])
+                #             try:
+                #                 # print("modifier_min:", modifier_min)
+                #                 self.rt_boundaries[p][0] = all_rts[index_rt_min_start + modifier_min]
+                #             except IndexError:
+                #                 pass
 
-                                # Maximum boundarie mutation:
-                                max_spec_rt, max_ep_rt = proteo_obj.get_min_max_rt_range_shift(side="max")
-                                if max_spec_rt > max_ep_rt:  # if spectra lower than modeled ep
-                                    # print("decrease upper bound")
-                                    # modifier_max = np.random.choice([-3, -1, +1, +3], p=[0.3, 0.5, 0.15, 0.05])
-                                    modifier_max = int(
-                                        np.round(np.random.normal(loc=-rd_loc, scale=rd_scale, size=1)[0])
-                                    )
-                                else:
-                                    # print("increase upper bound")
-                                    # modifier_max = np.random.choice([+3, +1, -1, -3], p=[0.3, 0.5, 0.15, 0.05])
-                                    modifier_max = int(
-                                        np.round(np.random.normal(loc=rd_loc, scale=rd_scale, size=1)[0])
-                                    )
+                #             # Maximum boundarie mutation:
+                #             max_spec_rt, max_ep_rt = proteo_obj.get_min_max_rt_range_shift(side="max")
+                #             if max_spec_rt > max_ep_rt:  # if spectra lower than modeled ep
+                #                 # print("decrease upper bound")
+                #                 # modifier_max = np.random.choice([-3, -1, +1, +3], p=[0.3, 0.5, 0.15, 0.05])
+                #                 modifier_max = int(
+                #                     np.round(np.random.normal(loc=-rd_loc, scale=rd_scale, size=1)[0])
+                #                 )
+                #             else:
+                #                 # print("increase upper bound")
+                #                 # modifier_max = np.random.choice([+3, +1, -1, -3], p=[0.3, 0.5, 0.15, 0.05])
+                #                 modifier_max = int(
+                #                     np.round(np.random.normal(loc=rd_loc, scale=rd_scale, size=1)[0])
+                #                 )
 
-                                index_rt_max_start = all_rts.index(self.rt_boundaries[p][1])
-                                try:
-                                    self.rt_boundaries[p][1] = all_rts[index_rt_max_start + modifier_max]
-                                    # print("modifier_max:", modifier_max)
-                                except IndexError:
-                                    pass
+                #             index_rt_max_start = all_rts.index(self.rt_boundaries[p][1])
+                #             try:
+                #                 self.rt_boundaries[p][1] = all_rts[index_rt_max_start + modifier_max]
+                #                 # print("modifier_max:", modifier_max)
+                #             except IndexError:
+                #                 pass
 
-                                # TEst score
+                #             # TEst score
 
-                                self.update_proteoform_subset_validation(
-                                    self.proteoform_subset, self.rt_boundaries
-                                )
-                                self.update_psms_ratio_subset(self.spectra_subset)
-                                self.update_proteoforms_elution_profile_subset(self.proteoform_subset)
+                #             self.update_proteoform_subset_validation(
+                #                 self.proteoform_subset, self.rt_boundaries
+                #             )
+                #             self.update_psms_ratio_subset(self.spectra_subset)
+                #             self.update_proteoforms_elution_profile_subset(self.proteoform_subset)
 
-                                new_score = mean([proteo_obj.get_coverage_2(), proteo_obj.get_fit_score()])
-                                if new_score >= score_ep_proteos[p] - 0.15:  # keep if improve
-                                    score_ep_proteos[p] = new_score
+                #             new_score = mean([proteo_obj.get_coverage_2(), proteo_obj.get_fit_score()])
+                #             if new_score >= score_ep_proteos[p] - 0.15:  # keep if improve
+                #                 score_ep_proteos[p] = new_score
 
-                                else:  # undo if worse
+                #             else:  # undo if worse
 
-                                    self.rt_boundaries[p][0] = all_rts[index_rt_min_start]
-                                    self.rt_boundaries[p][1] = all_rts[index_rt_max_start]
+                #                 self.rt_boundaries[p][0] = all_rts[index_rt_min_start]
+                #                 self.rt_boundaries[p][1] = all_rts[index_rt_max_start]
 
-                                    self.update_proteoform_subset_validation(
-                                        self.proteoform_subset, self.rt_boundaries
-                                    )
-                                    self.update_psms_ratio_subset(self.spectra_subset)
-                                    self.update_proteoforms_elution_profile_subset(self.proteoform_subset)
+                #                 self.update_proteoform_subset_validation(
+                #                     self.proteoform_subset, self.rt_boundaries
+                #                 )
+                #                 self.update_psms_ratio_subset(self.spectra_subset)
+                #                 self.update_proteoforms_elution_profile_subset(self.proteoform_subset)
 
-                                all_scores[i].append(score_ep_proteos[p])
-                                all_scores[i].append(self.rt_boundaries[p][0])
-                                all_scores[i].append(self.rt_boundaries[p][1])
+                #             all_scores[i].append(score_ep_proteos[p])
+                #             all_scores[i].append(self.rt_boundaries[p][0])
+                #             all_scores[i].append(self.rt_boundaries[p][1])
 
-                                all_bounds[i].append((self.rt_boundaries[p][0], self.rt_boundaries[p][1]))
+                #             all_bounds[i].append((self.rt_boundaries[p][0], self.rt_boundaries[p][1]))
 
-                        fig = self.plot_elution_profiles(self.proteoform_subset, rt_values=all_rts, count=g)
-                        fig.write_image("images/fig_" + f"{group_number:03}" + "_" + f"{g:04}" + ".png")
+                #     fig = self.plot_elution_profiles(self.proteoform_subset, rt_values=all_rts, count=g)
+                #     fig.write_image("images/fig_" + f"{group_number:03}" + "_" + f"{g:04}" + ".png")
 
-                    # Set boundaries as mean bound after convergence #TODO hard-coded
-                    for p in range(len(self.proteoform_subset)):
-                        if self.rt_boundaries[p][0] != 0:
-                            self.rt_boundaries[p][0] = mean([b[p][0] for b in all_bounds[-n_last_bounds:]])
-                            self.rt_boundaries[p][1] = mean([b[p][1] for b in all_bounds[-n_last_bounds:]])
+                # # Set boundaries as mean bound after convergence #TODO hard-coded
+                # for p in range(len(self.proteoform_subset)):
+                #     if self.rt_boundaries[p][0] != 0:
+                #         self.rt_boundaries[p][0] = mean([b[p][0] for b in all_bounds[-n_last_bounds:]])
+                #         self.rt_boundaries[p][1] = mean([b[p][1] for b in all_bounds[-n_last_bounds:]])
 
-                            # print("BOUNDARIES MEAN ", self.rt_boundaries[p][0], self.rt_boundaries[p][1])
+                #         # print("BOUNDARIES MEAN ", self.rt_boundaries[p][0], self.rt_boundaries[p][1])
 
-                            # print(self.proteoform_subset[p].get_modification_brno())
-                            # print([b[p][0] for b in all_bounds])
-                            # print("lower ", mean([b[p][0] for b in all_bounds]))
-                            # print("higher ", mean([b[p][1] for b in all_bounds]))
+                #         # print(self.proteoform_subset[p].get_modification_brno())
+                #         # print([b[p][0] for b in all_bounds])
+                #         # print("lower ", mean([b[p][0] for b in all_bounds]))
+                #         # print("higher ", mean([b[p][1] for b in all_bounds]))
 
-                    self.update_proteoform_subset_validation(self.proteoform_subset, self.rt_boundaries)
-                    self.update_psms_ratio_subset(self.spectra_subset)
-                    self.update_proteoforms_elution_profile_subset(self.proteoform_subset)
+                # self.update_proteoform_subset_validation(self.proteoform_subset, self.rt_boundaries)
+                # self.update_psms_ratio_subset(self.spectra_subset)
+                # self.update_proteoforms_elution_profile_subset(self.proteoform_subset)
 
-                    # Update validation bound based on last computed EP:
-                    for p in range(len(self.proteoform_subset)):
-                        if self.rt_boundaries[p][0] != 0:
-                            # score threshold
-                            if (
-                                self.proteoform_subset[p].get_coverage_2() >= min_ep_score
-                                and self.proteoform_subset[p].get_fit_score() >= min_ep_score
-                            ):
-                                boundaries_from_ep = self.proteoform_subset[p].get_boundaries_of_ep()
-                                # print("BOUNDARIES OF EP ", boundaries_from_ep)
+                # Update validation bound based on last computed EP:
+                #     for p in range(len(self.proteoform_subset)):
+                #         if self.rt_boundaries[p][0] != 0:
+                #             # score threshold
+                #             if (
+                #                 self.proteoform_subset[p].get_coverage_2() >= min_ep_score
+                #                 and self.proteoform_subset[p].get_fit_score() >= min_ep_score
+                #             ):
+                #                 boundaries_from_ep = self.proteoform_subset[p].get_boundaries_of_ep()
+                #                 # print("BOUNDARIES OF EP ", boundaries_from_ep)
 
-                                self.rt_boundaries[p][0] = boundaries_from_ep[0]
-                                self.rt_boundaries[p][1] = boundaries_from_ep[1]
-                            else:
-                                self.rt_boundaries[p][0] = 0
-                                self.rt_boundaries[p][1] = 0
+                #                 self.rt_boundaries[p][0] = boundaries_from_ep[0]
+                #                 self.rt_boundaries[p][1] = boundaries_from_ep[1]
+                #             else:
+                #                 self.rt_boundaries[p][0] = 0
+                #                 self.rt_boundaries[p][1] = 0
 
-                self.update_proteoform_subset_validation(self.proteoform_subset, self.rt_boundaries)
-                self.update_psms_ratio_subset(self.spectra_subset)
-                self.update_proteoforms_elution_profile_subset(self.proteoform_subset)
+                # self.update_proteoform_subset_validation(self.proteoform_subset, self.rt_boundaries)
+                # self.update_psms_ratio_subset(self.spectra_subset)
+                # self.update_proteoforms_elution_profile_subset(self.proteoform_subset)
 
                 fig = self.plot_elution_profiles(self.proteoform_subset, rt_values=all_rts, count=g)
                 fig.write_image("images/fig_" + f"{group_number:03}" + "_final" + ".png")
@@ -1194,7 +1247,7 @@ class Msrun:
             if proteo.min_bound_rt != 0:
 
                 data_x_all = [psm.spectrum.get_rt() for psm in proteo.get_linked_psm()]
-                data_y_all = [psm.spectrum.getPrecIntens() for psm in proteo.get_linked_psm()]
+                data_y_all = [psm.spectrum.get_prec_intens() for psm in proteo.get_linked_psm()]
                 fig.add_scatter(
                     x=data_x_all,
                     y=data_y_all,
@@ -1205,7 +1258,9 @@ class Msrun:
                 )
 
                 data_y = [psm.spectrum.get_rt() for psm in proteo.get_validated_linked_psm()]
-                data_y_spectrum = [psm.spectrum.getPrecIntens() for psm in proteo.get_validated_linked_psm()]
+                data_y_spectrum = [
+                    psm.spectrum.get_prec_intens() for psm in proteo.get_validated_linked_psm()
+                ]
                 data_y_psm = [psm.get_prec_intens_ratio() for psm in proteo.get_validated_linked_psm()]
 
                 fig.add_scatter(
@@ -1384,10 +1439,10 @@ class Msrun:
                     "sequence": psm.proteoform.peptideSequence,
                     "brno": psm.get_modification_brno(),
                     "proforma": psm.proteoform.get_modification_proforma(),
-                    "prec_intens": psm.spectrum.getPrecIntens(),
-                    "sum_intens_frag": psm.spectrum.getSumIntensFrag(),
+                    "prec_intens": psm.spectrum.get_prec_intens(),
+                    "sum_intens_frag": psm.spectrum.get_sum_intens_frag(),
                     "prec_in_msms": psm.spectrum.get_sum_intens_frag_at_mz(
-                        [psm.spectrum.getPrecMz() - 20, psm.spectrum.getPrecMz() + 20]
+                        [psm.spectrum.get_prec_mz() - 20, psm.spectrum.get_prec_mz() + 20]
                     ),
                 }
 

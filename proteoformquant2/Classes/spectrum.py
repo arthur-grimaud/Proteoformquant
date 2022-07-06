@@ -79,22 +79,22 @@ class Spectrum:
     def get_id(self):
         return self.id
 
-    def getPrecMz(self):
+    def get_prec_mz(self):
         return self.precMz
 
-    def getPrecIntens(self):
+    def get_prec_intens(self):
         return self.precIntens
 
     def get_rt(self):
         return self.rt
 
-    def getFragIntens(self):
+    def get_frag_intens(self):
         return self.fragIntens
 
-    def getFragMz(self):
+    def get_frag_mz(self):
         return self.fragMz
 
-    def getSumIntensFrag(self):
+    def get_sum_intens_frag(self):
         return sum(self.fragIntens)
 
     def get_sum_intens_frag_at_mz(self, mz_range):
@@ -107,8 +107,8 @@ class Spectrum:
         ]
         return sum(intensities)
 
-    def getSumIntensAnnotFrag(self):
-        self.setSumIntensAnnotFrag()  # could be done one every update of ratios
+    def get_sum_intens_annot_frag(self):
+        self.set_sum_intens_annot_frag()  # could be done one every update of ratios
         return self.sumIntensAnnotFrag
 
     def get_psms(self):
@@ -161,7 +161,7 @@ class Spectrum:
         ]
         self.rt: float = spec_mzml["scanList"]["scan"][0]["scan start time"]
 
-    def setSumIntensAnnotFrag(self):
+    def set_sum_intens_annot_frag(self):
         """For proteoforms in self.psms where is_validated is true, set self.sumIntensAnnotFrag as the sum of annotated peaks"""
         self.sumIntensAnnotFrag = 0
         seenPeaks = []
@@ -471,11 +471,39 @@ class Spectrum:
         # print(W)
 
         W = np.append(W, np.max(W))
-
         W = W / np.max(W)
+
         variables.append(1)
         equations.append(np.ones(unique_matrix_t.shape[1]))
 
+        ### APPEND ADDITIONAL EQUATION FOR PROTEOFORM GROUPS WITH MISSING UNIQUE IONS ###
+
+        # print("equations")
+
+        # print(equations)
+        is_unique = np.full(unique_matrix_t.shape[1], False)
+        for row in equations:
+
+            row_unique_indexes = []
+            for x in row:
+                if list(row).count(x) == 1:
+                    row_unique_indexes.append(list(row).index(x))
+
+                for index in row_unique_indexes:
+                    is_unique[index] = True
+
+        for i in range(len(is_unique)):
+            if is_unique[i] == False:
+                add_eq = np.zeros(unique_matrix_t.shape[1])
+                add_eq[i] = 1
+                equations.append(add_eq)
+                variables.append(1 / unique_matrix_t.shape[1])
+                W = np.append(W, np.mean(W))
+        # print("equations after")
+
+        # print(equations)
+        # print(variables)
+        # print(W)
         return equations, variables, W
 
     # ------------------ quantification of two proteoforms only ------------------ #

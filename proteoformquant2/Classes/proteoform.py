@@ -67,7 +67,7 @@ class Proteoform:
     def get_rt_center(self):
         """returns rt "center" based on the weigthed average of psm's precursor mass"""
         rts = [psm.spectrum.get_rt() for psm in self.get_linked_psm()]
-        weights = [(psm.spectrum.getPrecIntens() + 1) / psm.get_rank() for psm in self.get_linked_psm()]
+        weights = [(psm.spectrum.get_prec_intens() + 1) / psm.get_rank() for psm in self.get_linked_psm()]
 
         numerator = sum([rts[i] * weights[i] for i in range(len(rts))])
         denominator = sum(weights) + 1
@@ -103,6 +103,10 @@ class Proteoform:
     def get_modification_proforma(self):
         return self.modificationProforma
 
+    def get_all_linked_psm(self):
+        """Return a list of linked PSMs even if excluded"""
+        return [psm for psm in self.linkedPsm]
+
     def get_linked_psm(self):
         """Return a list of linked PSMs that haven't been excluded"""
         return [psm for psm in self.linkedPsm if psm.is_included()]
@@ -127,9 +131,15 @@ class Proteoform:
 
     def get_weighted_number_linked_validated_psm(self, max_rank):
         """Returns the sum of linked PSM weigthed by their rank"""
-        weights = range(max_rank + 1, 1, -1)  # score for each psm rank
+        weights = range((max_rank + 1) * 2, 1, -2)  # score for each psm rank
 
-        return sum([weights[psm.get_rank() - 1] for psm in self.get_validated_linked_psm()])
+        weights = [2 ** (max_rank - 1)]
+        for i in range(max_rank):
+            weights.append(weights[-1] / 2)
+
+        print(weights)
+
+        return int(sum([weights[psm.get_rank() - 1] for psm in self.get_linked_psm()]))
 
     def get_proteoform_total_intens(self):
         return self.totalIntens
@@ -152,6 +162,9 @@ class Proteoform:
             return 0
 
         if self.get_elution_profile().is_parameters_fitted() == False:
+            return 0
+
+        if isinstance(self.get_elution_profile().score_fitted, float) == False:
             return 0
 
         return self.get_elution_profile().score_fitted

@@ -178,9 +178,9 @@ def popup(v1, v2, v3, v4, clicked, is_open, children):
             str_info = []
             str_info.append(spectrum.get_id())
             str_info.append(html.Br())
-            str_info.append(f"Precursor mz: {spectrum.getPrecMz()}")
+            str_info.append(f"Precursor mz: {spectrum.get_prec_mz()}")
             str_info.append(html.Br())
-            str_info.append(f"Precursor Intensity:spectrum.getPrecIntens()")
+            str_info.append(f"Precursor Intensity:spectrum.get_prec_intens()")
             str_info.append(html.Br())
             str_info.append("Residuals from multiple proteo quant")
             str_info.append(spectrum.quant_residuals)
@@ -526,24 +526,24 @@ def fit_expect_predict(proteoform):
 #     maxMz = minMaxMz[1]
 #     # print(minMz,maxMz)
 #     precIntens = [
-#         spectrum.getPrecIntens()
+#         spectrum.get_prec_intens()
 #         for spectrum in exp.spectra.values()
-#         if spectrum.getPrecMz() > minMz and spectrum.getPrecMz() < maxMz
+#         if spectrum.get_prec_mz() > minMz and spectrum.get_prec_mz() < maxMz
 #     ]
 #     annotIntens = [
-#         spectrum.getSumIntensAnnotFrag()
+#         spectrum.get_sum_intens_annot_frag()
 #         for spectrum in exp.spectra.values()
-#         if spectrum.getPrecMz() > minMz and spectrum.getPrecMz() < maxMz
+#         if spectrum.get_prec_mz() > minMz and spectrum.get_prec_mz() < maxMz
 #     ]
 #     spectrum_key = [
 #         spectrum
 #         for spectrum in exp.spectra.keys()
-#         if exp.spectra[spectrum].getPrecMz() > minMz and exp.spectra[spectrum].getPrecMz() < maxMz
+#         if exp.spectra[spectrum].get_prec_mz() > minMz and exp.spectra[spectrum].get_prec_mz() < maxMz
 #     ]
 #     rt = [
 #         spectrum.get_rt()
 #         for spectrum in exp.spectra.values()
-#         if spectrum.getPrecMz() > minMz and spectrum.getPrecMz() < maxMz
+#         if spectrum.get_prec_mz() > minMz and spectrum.get_prec_mz() < maxMz
 #     ]
 
 #     fig = go.Figure()
@@ -727,7 +727,7 @@ def plotAllEnvelopes(input):
                         customdata=proteoform_key,
                     )
 
-    precIntens = [spectrum.getPrecIntens() for spectrum in exp.spectra.values()]
+    precIntens = [spectrum.get_prec_intens() for spectrum in exp.spectra.values()]
     rt = [spectrum.get_rt() for spectrum in exp.spectra.values()]
     spectrum_key = [spectrum for spectrum in exp.spectra.keys()]
 
@@ -794,7 +794,7 @@ def plot_elution_profiles(proteoforms_input):
             x_min_max[0] = min(x_val)
         if max(x_val) + 100 > x_min_max[1]:
             x_min_max[1] = max(x_val)
-        y_val = [psm.spectrum.getPrecIntens() for psm in exp.proteoforms[proteo].get_linked_psm()]
+        y_val = [psm.spectrum.get_prec_intens() for psm in exp.proteoforms[proteo].get_linked_psm()]
         if min(y_val) < y_min_max[0]:
             y_min_max[0] = min(y_val)
         if max(y_val) > y_min_max[1]:
@@ -809,7 +809,7 @@ def plot_elution_profiles(proteoforms_input):
     for proteo in proteoforms_input:
         if len(exp.proteoforms[proteo].get_validated_linked_psm()) > 0:
             data_x_all = [psm.spectrum.get_rt() for psm in exp.proteoforms[proteo].get_linked_psm()]
-            data_y_all = [psm.spectrum.getPrecIntens() for psm in exp.proteoforms[proteo].get_linked_psm()]
+            data_y_all = [psm.spectrum.get_prec_intens() for psm in exp.proteoforms[proteo].get_linked_psm()]
             spectrum_key = [psm.spectrum.id for psm in exp.proteoforms[proteo].get_linked_psm()]
             fig.add_scatter(
                 x=data_x_all,
@@ -823,7 +823,7 @@ def plot_elution_profiles(proteoforms_input):
 
             data_y = [psm.spectrum.get_rt() for psm in exp.proteoforms[proteo].get_validated_linked_psm()]
             data_y_spectrum = [
-                psm.spectrum.getPrecIntens() for psm in exp.proteoforms[proteo].get_validated_linked_psm()
+                psm.spectrum.get_prec_intens() for psm in exp.proteoforms[proteo].get_validated_linked_psm()
             ]
             data_y_psm = [
                 psm.get_prec_intens_ratio() for psm in exp.proteoforms[proteo].get_validated_linked_psm()
@@ -931,12 +931,12 @@ def plotAllEnvelopes3d(minMaxMz, is_displayed):
     specFilt = [
         spectrum
         for spectrum in exp.spectra.values()
-        if spectrum.getPrecMz() > minMz and spectrum.getPrecMz() < maxMz
+        if spectrum.get_prec_mz() > minMz and spectrum.get_prec_mz() < maxMz
     ]
 
-    specFiltMz = [spectrum.getPrecMz() for spectrum in specFilt]
+    specFiltMz = [spectrum.get_prec_mz() for spectrum in specFilt]
     specFiltRt = [spectrum.get_rt() for spectrum in specFilt]
-    specFiltIntens = [spectrum.getPrecIntens() for spectrum in specFilt]
+    specFiltIntens = [spectrum.get_prec_intens() for spectrum in specFilt]
     specFiltKey = [spectrum.get_id() for spectrum in specFilt]
 
     fig.add_trace(
@@ -1000,9 +1000,9 @@ def plotAllEnvelopes3d(minMaxMz, is_displayed):
                 )
 
     for proteoform in [x for x in proteoFilt.values()]:
-        precIntens = [psm.spectrum.getPrecIntens() for psm in proteoform.get_validated_linked_psm()]
+        precIntens = [psm.spectrum.get_prec_intens() for psm in proteoform.get_validated_linked_psm()]
         rt = [psm.spectrum.get_rt() for psm in proteoform.get_validated_linked_psm()]
-        mz = [psm.spectrum.getPrecMz() for psm in proteoform.get_validated_linked_psm()]
+        mz = [psm.spectrum.get_prec_mz() for psm in proteoform.get_validated_linked_psm()]
         spectrum_key = [psm.spectrum.get_id() for psm in proteoform.get_validated_linked_psm()]
 
         fig.add_trace(
