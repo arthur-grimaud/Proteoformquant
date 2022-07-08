@@ -59,7 +59,11 @@ class Proteoform:
         return self.linkedPsm[0].getCalculatedMassToCharge()
 
     def getTheoPrecMz(self):
-        return self.linkedPsm[0].getCalculatedMassToCharge()
+        try:
+            return self.linkedPsm[0].getCalculatedMassToCharge()
+        except IndexError:
+            # TODO
+            return 0
 
     def getMzMean(self):
         pass
@@ -89,7 +93,39 @@ class Proteoform:
         """returns the RT range for linked psm of rank <= rank"""
         rts = [psm.spectrum.get_rt() for psm in self.get_linked_psm() if psm.rank <= rank]
 
+        while len(rts) < 2:
+            rank += 1
+            rts = [psm.spectrum.get_rt() for psm in self.get_linked_psm() if psm.rank <= rank]
+
         return [min(rts), max(rts)]
+
+    def get_rt_range_centered(self):
+        """returns the RT range for linked psm of rank <= rank"""
+        rank = 1
+        window_size_rt = 20
+
+        rts = [psm.spectrum.get_rt() for psm in self.get_linked_psm() if psm.rank <= rank]
+        weights = [
+            (psm.spectrum.get_prec_intens() + 1) / psm.get_rank()
+            for psm in self.get_linked_psm()
+            if psm.rank <= rank
+        ]
+
+        while len(rts) < 2:
+            rank += 1
+            rts = [psm.spectrum.get_rt() for psm in self.get_linked_psm() if psm.rank <= rank]
+            weights = [
+                (psm.spectrum.get_prec_intens() + 1) / psm.get_rank()
+                for psm in self.get_linked_psm()
+                if psm.rank <= rank
+            ]
+
+        numerator = sum([rts[i] * weights[i] for i in range(len(rts))])
+        denominator = sum(weights) + 1
+
+        center = round(numerator / denominator, 2)
+
+        return [center - window_size_rt, center + window_size_rt]
 
     def get_peptide_sequence(self):
         return self.peptideSequence

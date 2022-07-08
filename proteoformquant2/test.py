@@ -64,7 +64,7 @@ sys.setrecursionlimit(max_rec)
 # ----------------------------- DATA PREPARATION ----------------------------- #
 
 
-with open("save_res_wt_1_2_mascot.pkl", "rb") as inp:
+with open("save_res_wt_1_1_mascot.pkl", "rb") as inp:
     run = pickle.load(inp)
 
 run.set_proteoform_isobaric_groups()
@@ -77,7 +77,7 @@ for group in run.proteoform_isobaric_group:
     print(i, " ", run.proteoforms[group_as_list[0]].get_modification_brno())
     i += 1
 
-group_number = 14
+group_number = 28
 group = run.proteoform_isobaric_group[group_number]
 
 
@@ -147,7 +147,7 @@ zipped_rank_proteo = zip(
     run.proteoform_subset,
 )
 zipped_proteo = sorted(zipped_rank_proteo, reverse=True)
-run.proteoform_subset = [list(tuple)[-1] for tuple in zipped_proteo][:7]
+run.proteoform_subset = [list(tuple)[-1] for tuple in zipped_proteo]
 
 i = 0
 for proteoform in run.proteoform_subset:
@@ -156,6 +156,7 @@ for proteoform in run.proteoform_subset:
     run.rt_boundaries.append([0, 0])
     i += 1
 
+# run.update_proteoform_subset_validation(run.proteoform_subset, run.rt_boundaries)
 run.validate_psms_rank_1()
 run.update_psms_ratio_subset(run.spectra_subset)
 run.update_proteoforms_elution_profile_subset(run.proteoform_subset)
@@ -163,6 +164,8 @@ all_rts = sorted([spectrum.get_rt() for spectrum in run.spectra_subset])
 fig = run.plot_elution_profiles(run.proteoform_subset, rt_values=all_rts, count=1)
 fig.write_image("images/fig_" + "start_test" + ".png")
 
+run.unvalidate_all_psms()
+run.update_psms_ratio_subset(run.spectra_subset)
 
 n_iterations = 20
 g = 0
@@ -180,18 +183,21 @@ print(run.rt_boundaries)
 print("ALL RETENTION TIMES IN GROUP:")
 print(all_rts)
 
-scores_proteos = np.zeros((n_iterations * 100, 10))
-
+scores_proteos = np.zeros((n_iterations * 100, 15))
+quant_proteos = np.zeros((n_iterations * 100, 15))
 
 for ps in range(len(run.proteoform_subset)):
-    if n_proteo_excluded < threshold_stop:
+    print(ps)
+    if n_proteo_excluded < threshold_stop and ps <= 5:
         try:
-            run.rt_boundaries[ps] = run.proteoform_subset[ps].get_rt_range(rank=1)
+            rt_window = run.proteoform_subset[ps].get_rt_range_centered()
+            # get closest spectra rt
+
+            rt_window[0] = min(all_rts, key=lambda x: abs(x - rt_window[0]))
+            rt_window[1] = min(all_rts, key=lambda x: abs(x - rt_window[1]))
+            run.rt_boundaries[ps] = rt_window
         except (ValueError):
-            try:
-                run.rt_boundaries[ps] = run.proteoform_subset[ps].get_rt_range(rank=2)
-            except (ValueError):
-                run.rt_boundaries[ps] = run.proteoform_subset[ps].get_rt_range(rank=3)
+            print("Problem in range")
 
         print(f"Proteo: { run.proteoform_subset[ps].get_modification_brno()} range: {run.rt_boundaries[ps]}")
         for i in range(n_iterations):
@@ -239,8 +245,8 @@ for ps in range(len(run.proteoform_subset)):
                     run.update_psms_ratio_subset(run.spectra_subset)
                     run.update_proteoforms_elution_profile_subset(run.proteoform_subset)
 
-                    scores_proteos[g][p] = proteo_obj.get_fit_score()
-
+                    scores_proteos[g][p] = mean([proteo_obj.get_fit_score(), proteo_obj.get_coverage_2()])
+                    quant_proteos[g][p] = proteo_obj.update_proteoform_total_intens()
             fig = run.plot_elution_profiles(run.proteoform_subset, rt_values=all_rts, count=g)
             fig.write_image("images/fig_" + f"{group_number:03}" + "_" + f"{g:04}" + ".png")
 
@@ -248,7 +254,6 @@ for ps in range(len(run.proteoform_subset)):
         scores_last_proteo = scores_proteos[g - n_last_bounds : g, ps]
         scores_last_proteo = list(scores_last_proteo)
 
-        print(scores_last_proteo)
         print(scores_last_proteo)
 
         print(stdev(scores_last_proteo))
@@ -269,7 +274,7 @@ for ps in range(len(run.proteoform_subset)):
         break
 
 np.savetxt("scores_test.csv", scores_proteos, delimiter=",")
-
+np.savetxt("quant_test.csv", quant_proteos, delimiter=",")
 with open("testings.pkl", "wb") as outp:
     pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
 

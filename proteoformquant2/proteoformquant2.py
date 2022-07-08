@@ -60,7 +60,7 @@ def main():
     # sys.stdout = TracePrints()
     # --------------------------------- Analysis --------------------------------- #
 
-    file_save_name = "wt_1_2_mascot"
+    file_save_name = "wt_1_1_mascot"
 
     ### Read Data ###
     run = Msrun(run_id="1", dbse=dbse)

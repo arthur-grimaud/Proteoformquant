@@ -131,7 +131,7 @@ class ElutionProfile:
         # percentage area
         total_auc = a
         bound_auc = self.skewnorm_cdf(x2, m, s, a, k) - self.skewnorm_cdf(x1, m, s, a, k)
-        area_95 = total_auc * 0.99 - bound_auc
+        area_95 = total_auc * 0.95 - bound_auc
 
         # x1 x2 at same height
         fx1_fx2_equal = self.skewnormal(x1, *[m, s, a, k]) - self.skewnormal(x2, *[m, s, a, k])

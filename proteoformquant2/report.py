@@ -29,7 +29,7 @@ import plotly.graph_objects as go
 #                                  Data import                                 #
 # ---------------------------------------------------------------------------- #
 
-with open("testings.pkl", "rb") as inp:
+with open("save_res_wt_1_2_mascot.pkl", "rb") as inp:
     exp = pickle.load(inp)
 
 print(exp.get_dataset_metrics())
@@ -954,7 +954,7 @@ def plotAllEnvelopes3d(minMaxMz, is_displayed):
     proteoFilt = {
         proteoName: proteo
         for (proteoName, proteo) in exp.proteoforms.items()
-        if proteo.getMzFirstPsm() > minMz and proteo.getMzFirstPsm() < maxMz
+        if proteo.getTheoPrecMz() > minMz and proteo.getTheoPrecMz() < maxMz
     }
 
     rt_range = exp.get_rt_range()
