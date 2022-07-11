@@ -102,7 +102,7 @@ class Proteoform:
     def get_rt_range_centered(self):
         """returns the RT range for linked psm of rank <= rank"""
         rank = 1
-        window_size_rt = 20
+        window_size_rt = 30
 
         rts = [psm.spectrum.get_rt() for psm in self.get_linked_psm() if psm.rank <= rank]
         weights = [
@@ -172,8 +172,6 @@ class Proteoform:
         weights = [2 ** (max_rank - 1)]
         for i in range(max_rank):
             weights.append(weights[-1] / 2)
-
-        print(weights)
 
         return int(sum([weights[psm.get_rank() - 1] for psm in self.get_linked_psm()]))
 

@@ -29,7 +29,7 @@ import plotly.graph_objects as go
 #                                  Data import                                 #
 # ---------------------------------------------------------------------------- #
 
-with open("save_res_wt_1_2_mascot.pkl", "rb") as inp:
+with open("testings.pkl", "rb") as inp:
     exp = pickle.load(inp)
 
 print(exp.get_dataset_metrics())

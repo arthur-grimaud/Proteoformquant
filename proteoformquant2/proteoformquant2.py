@@ -60,7 +60,7 @@ def main():
     # sys.stdout = TracePrints()
     # --------------------------------- Analysis --------------------------------- #
 
-    file_save_name = "wt_1_1_mascot"
+    file_save_name = "1_1"
 
     ### Read Data ###
     run = Msrun(run_id="1", dbse=dbse)
@@ -105,7 +105,6 @@ def main():
         run = pickle.load(inp)
 
     ### Print Quant results ###
-    run.update_proteoform_intens()
     f = open(f"quant_initial_{file_save_name}.csv", "w")
     for proteoform in run.proteoforms.values():
         if proteoform.update_proteoform_total_intens(method="precursor") > 0:
