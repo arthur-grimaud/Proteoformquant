@@ -30,6 +30,8 @@ class Spectrum:
             print(spectrumID_raw[0])
             print("Spectrum index/title not recognized")
 
+        self.spectrum_title_name = identMzid["name"]
+
         # Add spectrum experimental mz value from mzident file:
 
         self.experimentalMassToCharge = identMzid["SpectrumIdentificationItem"][0]["experimentalMassToCharge"]

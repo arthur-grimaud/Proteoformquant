@@ -77,7 +77,7 @@ for group in run.proteoform_isobaric_group:
     print(i, " ", run.proteoforms[group_as_list[0]].get_modification_brno())
     i += 1
 
-group_number = 13
+group_number = 6
 group = run.proteoform_isobaric_group[group_number]
 
 

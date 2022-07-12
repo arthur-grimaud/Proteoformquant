@@ -40,7 +40,7 @@ from alive_progress import alive_bar
 import networkx as nx
 from warnings import warn
 
-from sqlalchemy import all_
+from sqlalchemy import all_, false
 
 # Custom classes
 from Classes.spectrum import Spectrum
@@ -196,11 +196,11 @@ class Msrun:
         """Add informations from mgf file to spectrum objects in self.spectra"""
 
         self.spectra_fn = spectra_fn  # Store File name that has been read
-        mgf_obj = mgf.read(spectra_fn)
+        mgf_obj = mgf.read(spectra_fn, use_index=false)
 
         # print(mgf_obj)
 
-        # pprint(mgf_obj.__dict__)
+        pprint(mgf_obj.__dict__)
 
         print("---Loading spectrum data from: {0}---".format(self.spectra_fn))
         with alive_bar(0) as bar:
@@ -221,12 +221,18 @@ class Msrun:
             #                 )
 
             for specID in self.spectra:
+                try:
+                    specMgf = mgf_obj.get_spectrum(self.spectra[specID].spectrum_title)
+                    if specMgf["params"]["pepmass"][0] != self.spectra[specID].experimentalMassToCharge:
+                        raise NameError("MismatchRT")
 
-                specMgf = mgf_obj.get_spectrum(self.spectra[specID].spectrum_title)
-                if specMgf["params"]["pepmass"][0] != self.spectra[specID].experimentalMassToCharge:
-                    print(
-                        "ERROR: mz value from mgf does not match the one in mzid (this is probably due an error of spectrum's title/index)"
-                    )
+                except (KeyError, NameError):
+                    specMgf = mgf_obj.get_spectrum(self.spectra[specID].spectrum_title_name)
+                    if specMgf["params"]["pepmass"][0] != self.spectra[specID].experimentalMassToCharge:
+                        print(
+                            "ERROR: mz value from mgf does not match the one in mzid (this is probably due an error of spectrum's title/index)"
+                        )
+                        raise NameError("MismatchRT")
 
                 self.spectra[specID].set_spec_data_mgf(specMgf)
                 bar()
@@ -1036,61 +1042,60 @@ class Msrun:
                         for i in range(n_iter):  # Opti of subset
                             g += 1
 
-                            for p in range(len(self.proteoform_subset[: ps + 1])):
+                            # for p in range(len(self.proteoform_subset[: ps + 1])):
+                            p = ps
 
-                                if self.rt_boundaries[p][0] != 0 and self.rt_boundaries[p][1]:
+                            if self.rt_boundaries[p][0] != 0 and self.rt_boundaries[p][1]:
 
-                                    proteo = self.proteoform_subset[p]
+                                proteo = self.proteoform_subset[p]
 
-                                    # Lower RT bound mutation:
-                                    min_spec_rt, min_ep_rt = proteo.get_min_max_rt_range_shift(
-                                        side="min"
-                                    )  # Determine if increase or decrease are most likely
-                                    if min_spec_rt < min_ep_rt:  # if spectra lower than modeled ep
-                                        modifier_min = int(
-                                            np.round(np.random.normal(loc=rd_loc, scale=rd_scale, size=1)[0])
-                                        )
-                                    else:
-                                        modifier_min = int(
-                                            np.round(np.random.normal(loc=-rd_loc, scale=rd_scale, size=1)[0])
-                                        )
-
-                                    # Apply mutation
-                                    index_rt_min_start = all_rts.index(self.rt_boundaries[p][0])
-                                    new_index_rt_min = index_rt_min_start + modifier_min
-                                    if new_index_rt_min >= 0 and new_index_rt_min < len(all_rts):
-                                        self.rt_boundaries[p][0] = all_rts[new_index_rt_min]
-
-                                    # Upper RT bound mutation:
-                                    max_spec_rt, max_ep_rt = proteo.get_min_max_rt_range_shift(
-                                        side="max"
-                                    )  # Determine if increase or decrease are most likely
-                                    if max_spec_rt > max_ep_rt:  # if spectra lower than modeled ep
-                                        modifier_max = int(
-                                            np.round(np.random.normal(loc=-rd_loc, scale=rd_scale, size=1)[0])
-                                        )
-                                    else:
-                                        modifier_max = int(
-                                            np.round(np.random.normal(loc=rd_loc, scale=rd_scale, size=1)[0])
-                                        )
-
-                                    # Apply mutation
-                                    index_rt_max_start = all_rts.index(self.rt_boundaries[p][1])
-                                    new_index_rt_max = index_rt_max_start + modifier_max
-                                    if new_index_rt_max >= 0 and new_index_rt_max < len(all_rts):
-                                        self.rt_boundaries[p][1] = all_rts[new_index_rt_max]
-
-                                    # Test score
-                                    self.update_proteoform_subset_validation(
-                                        self.proteoform_subset, self.rt_boundaries
+                                # Lower RT bound mutation:
+                                min_spec_rt, min_ep_rt = proteo.get_min_max_rt_range_shift(
+                                    side="min"
+                                )  # Determine if increase or decrease are most likely
+                                if min_spec_rt < min_ep_rt:  # if spectra lower than modeled ep
+                                    modifier_min = int(
+                                        np.round(np.random.normal(loc=rd_loc, scale=rd_scale, size=1)[0])
                                     )
-                                    self.update_psms_ratio_subset(self.spectra_subset)
-                                    self.update_proteoforms_elution_profile_subset(self.proteoform_subset)
-
-                                    scores_proteos[g][p] = mean(
-                                        [proteo.get_fit_score(), proteo.get_coverage_2()]
+                                else:
+                                    modifier_min = int(
+                                        np.round(np.random.normal(loc=-rd_loc, scale=rd_scale, size=1)[0])
                                     )
-                                    quant_proteos[g][p] = proteo.update_proteoform_total_intens()
+
+                                # Apply mutation
+                                index_rt_min_start = all_rts.index(self.rt_boundaries[p][0])
+                                new_index_rt_min = index_rt_min_start + modifier_min
+                                if new_index_rt_min >= 0 and new_index_rt_min < len(all_rts):
+                                    self.rt_boundaries[p][0] = all_rts[new_index_rt_min]
+
+                                # Upper RT bound mutation:
+                                max_spec_rt, max_ep_rt = proteo.get_min_max_rt_range_shift(
+                                    side="max"
+                                )  # Determine if increase or decrease are most likely
+                                if max_spec_rt > max_ep_rt:  # if spectra lower than modeled ep
+                                    modifier_max = int(
+                                        np.round(np.random.normal(loc=-rd_loc, scale=rd_scale, size=1)[0])
+                                    )
+                                else:
+                                    modifier_max = int(
+                                        np.round(np.random.normal(loc=rd_loc, scale=rd_scale, size=1)[0])
+                                    )
+
+                                # Apply mutation
+                                index_rt_max_start = all_rts.index(self.rt_boundaries[p][1])
+                                new_index_rt_max = index_rt_max_start + modifier_max
+                                if new_index_rt_max >= 0 and new_index_rt_max < len(all_rts):
+                                    self.rt_boundaries[p][1] = all_rts[new_index_rt_max]
+
+                                # Test score
+                                self.update_proteoform_subset_validation(
+                                    self.proteoform_subset, self.rt_boundaries
+                                )
+                                self.update_psms_ratio_subset(self.spectra_subset)
+                                self.update_proteoforms_elution_profile_subset(self.proteoform_subset)
+
+                                scores_proteos[g][p] = mean([proteo.get_fit_score(), proteo.get_coverage_2()])
+                                quant_proteos[g][p] = proteo.update_proteoform_total_intens()
 
                             fig = self.plot_elution_profiles(
                                 self.proteoform_subset, rt_values=all_rts, count=g
@@ -1108,6 +1113,24 @@ class Msrun:
                             self.rt_boundaries[p] = [0, 0]
                             print("proteoform has been unvalidated ")
                             n_proteo_excluded += 1
+
+                        self.update_proteoform_subset_validation(self.proteoform_subset, self.rt_boundaries)
+                        self.update_psms_ratio_subset(self.spectra_subset)
+                        self.update_proteoforms_elution_profile_subset(self.proteoform_subset)
+
+                        for p_inter in range(len(self.proteoform_subset[: ps + 1])):
+                            if self.rt_boundaries[p_inter][0] != 0 and self.rt_boundaries[p_inter][1]:
+                                proteo_obj = self.proteoform_subset[p_inter]
+                                if proteo_obj.get_elution_profile() != None:
+                                    rt_window = proteo_obj.get_elution_profile().get_bounds_area()
+                                    print(proteo_obj.get_modification_brno())
+                                    print(rt_window)
+                                    self.rt_boundaries[p_inter][0] = min(
+                                        all_rts, key=lambda x: abs(x - rt_window[0])
+                                    )
+                                    self.rt_boundaries[p_inter][1] = min(
+                                        all_rts, key=lambda x: abs(x - rt_window[1])
+                                    )
 
                         self.update_proteoform_subset_validation(self.proteoform_subset, self.rt_boundaries)
                         self.update_psms_ratio_subset(self.spectra_subset)

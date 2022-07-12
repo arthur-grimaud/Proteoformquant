@@ -40,7 +40,7 @@ def main():
     indentFn = args.indentFn
     spectra_fn = args.spectra_fn
     outputFn = args.outputFn
-    dbse = args.dbse
+    # dbse = args.dbse
 
     print("---===Starting " + progName + "===---")
 
@@ -60,10 +60,10 @@ def main():
     # sys.stdout = TracePrints()
     # --------------------------------- Analysis --------------------------------- #
 
-    file_save_name = "1_1"
+    file_save_name = "2_1_msa"
 
     ### Read Data ###
-    run = Msrun(run_id="1", dbse=dbse)
+    run = Msrun(run_id="1")
     run.read_mzid(indentFn)
     run.read_mgf(spectra_fn)
 
@@ -141,6 +141,8 @@ def main():
     ### Update Quatification ###
     # run.update_proteoforms_elution_profile()
     # run.update_proteoform_intens()
+
+    run.update_proteoform_intens()
 
     ### Print Quant results ###
     run.update_proteoform_intens()
