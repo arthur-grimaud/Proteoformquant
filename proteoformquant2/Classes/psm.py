@@ -128,8 +128,23 @@ class Psm:
     def get_annotation(self):
         return self.annotation
 
+    def get_fragment_coverage(self):
+
+        tot_frag_count = 0
+        frag_count = 0
+        for dir in ["n-term", "c-term"]:
+
+            fragments_in_direction = [
+                self.get_intensity_at_pos(pos, dir) for pos in range(1, len(self.proteoform.peptideSequence))
+            ]
+
+            frag_count += sum(x is not None for x in fragments_in_direction)
+            tot_frag_count += len(fragments_in_direction)
+
+        return frag_count / tot_frag_count
+
     def get_annotation_pair_format(self, first_var, second_var):
-        "return annotated fragments in the following format: {(fragcode,intensity), ... }" ""
+        "return annotated fragments in the following format: [(fragcode,intensity), ... ]" ""
 
         frag_code_list = []
         intens_list = []

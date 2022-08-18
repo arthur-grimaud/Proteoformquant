@@ -80,15 +80,6 @@ class Proteoform:
 
         return round(numerator / denominator, 2)
 
-        # if len(rts) == 0:
-        #     return (
-        #         self.get_linked_psm()[0].spectrum.get_rt(),
-        #         self.get_linked_psm()[-1].spectrum.get_rt(),
-        #     )
-
-        # rt_range = (min(rts), max(rts))
-        # return rt_range
-
     def get_rt_range(self, rank=1):
         """returns the RT range for linked psm of rank <= rank"""
         rts = [psm.spectrum.get_rt() for psm in self.get_linked_psm() if psm.rank <= rank]
@@ -99,26 +90,13 @@ class Proteoform:
 
         return [min(rts), max(rts)]
 
-    def get_rt_range_centered(self):
+    def get_rt_range_centered(self, window_size_rt):
         """returns the RT range for linked psm of rank <= rank"""
-        rank = 1
-        window_size_rt = 30
 
-        rts = [psm.spectrum.get_rt() for psm in self.get_linked_psm() if psm.rank <= rank]
+        rts = [psm.spectrum.get_rt() for psm in self.get_linked_psm()]
         weights = [
-            (psm.spectrum.get_prec_intens() + 1) / psm.get_rank()
-            for psm in self.get_linked_psm()
-            if psm.rank <= rank
+            (psm.spectrum.get_prec_intens() + 1) / (psm.get_rank() ** 2) for psm in self.get_linked_psm()
         ]
-
-        while len(rts) < 2:
-            rank += 1
-            rts = [psm.spectrum.get_rt() for psm in self.get_linked_psm() if psm.rank <= rank]
-            weights = [
-                (psm.spectrum.get_prec_intens() + 1) / psm.get_rank()
-                for psm in self.get_linked_psm()
-                if psm.rank <= rank
-            ]
 
         numerator = sum([rts[i] * weights[i] for i in range(len(rts))])
         denominator = sum(weights) + 1
@@ -167,11 +145,15 @@ class Proteoform:
 
     def get_weighted_number_linked_validated_psm(self, max_rank):
         """Returns the sum of linked PSM weigthed by their rank"""
-        weights = range((max_rank + 1) * 2, 1, -2)  # score for each psm rank
+        # weights = range((max_rank + 1) * 2, 1, -2)  # score for each psm rank
 
-        weights = [2 ** (max_rank - 1)]
-        for i in range(max_rank):
-            weights.append(weights[-1] / 2)
+        weights = [1]
+        for i in range(max_rank - 1):
+            weights.insert(0, weights[0] * 5)
+
+        # print(weights)
+
+        # print([psm.get_rank() for psm in self.get_linked_psm()])
 
         return int(sum([weights[psm.get_rank() - 1] for psm in self.get_linked_psm()]))
 

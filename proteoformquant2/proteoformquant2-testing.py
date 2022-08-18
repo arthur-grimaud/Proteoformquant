@@ -36,9 +36,9 @@ def main():
     args = input.checkArgs(args)  # Verify arguments
 
     verbose = args.verbose
-    indentFn = args.indentFn
-    spectra_fn = args.spectra_fn
-    outputFn = args.outputFn
+    indent_file = args.indent_file
+    spectra_file = args.spectra_file
+    output_dir = args.output_dir
     dbse = args.dbse
 
     print("Starting " + progName)
@@ -47,16 +47,16 @@ def main():
 
     ### Read Data ###
     run = Msrun(run_id="1", dbse=dbse)
-    run.read_mzid(indentFn)
-    # run.read_mgf(spectra_fn)
-    run.read_mgf(spectra_fn)
+    run.read_mzid(indent_file)
+    # run.read_mgf(spectra_file)
+    run.read_mgf(spectra_file)
 
     ### Prepare Data ###
     run.add_proteoforms()
     run.match_fragments()
 
     ### Export Fragment Annotation ###
-    # run.get_dataframe_fragment_annotation().to_csv(outputFn + ".csv")
+    # run.get_dataframe_fragment_annotation().to_csv(output_dir + ".csv")
 
     with open("test_save_1_1.pkl", "wb") as outp:
         pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)

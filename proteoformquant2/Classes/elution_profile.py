@@ -122,7 +122,7 @@ class ElutionProfile:
 
             return 0
 
-    def bounds_area_equation(self, x1x2, m, s, a, k):
+    def bounds_area_equation(self, x1x2, m, s, a, k, area_percent):
         # print("params of bounds area equation")
         # print(x1x2, m, s, a, k)
 
@@ -131,7 +131,7 @@ class ElutionProfile:
         # percentage area
         total_auc = a
         bound_auc = self.skewnorm_cdf(x2, m, s, a, k) - self.skewnorm_cdf(x1, m, s, a, k)
-        area_95 = total_auc * 0.95 - bound_auc
+        area_95 = total_auc * area_percent - bound_auc
 
         # x1 x2 at same height
         fx1_fx2_equal = self.skewnormal(x1, *[m, s, a, k]) - self.skewnormal(x2, *[m, s, a, k])
@@ -141,7 +141,7 @@ class ElutionProfile:
 
         return (area_95, fx1_fx2_equal)
 
-    def get_bounds_area(self):
+    def get_bounds_area(self, area_percent=0.95):
 
         m, s, a, k = self.get_parameters_fitted()
 
@@ -150,7 +150,7 @@ class ElutionProfile:
         res = fsolve(
             self.bounds_area_equation,
             [m, m],
-            args=(m, s, a, k),
+            args=(m, s, a, k, area_percent),
             factor=0.01,  # TODO factor probably increase time maybe mplemented consecutive search with lower factor only if minima isn't reached
         )
 

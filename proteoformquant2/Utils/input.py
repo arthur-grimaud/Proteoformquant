@@ -11,14 +11,20 @@ def doArgs(argList, name):
         "-v", "--verbose", action="store_true", help="Enable verbose debugging", default=False
     )
     parser.add_argument(
-        "-i", "--indent", action="store", dest="indentFn", type=str, help="Input file name", required=True
+        "-i", "--indent", action="store", dest="indent_file", type=str, help="Input file name", required=True
     )
     parser.add_argument(
-        "-s", "--spectra", action="store", dest="spectra_fn", type=str, help="Input file name", required=True
+        "-s",
+        "--spectra",
+        action="store",
+        dest="spectra_file",
+        type=str,
+        help="Input file name",
+        required=True,
     )
     # parser.add_argument("-d", "--dbse", action="store", dest="dbse", type=str, help="DBSE", required=True)
     parser.add_argument(
-        "-o", "--output", action="store", dest="outputFn", type=str, help="Output file name", required=False
+        "-o", "--output", action="store", dest="output_dir", type=str, help="Output file name", required=False
     )
 
     return parser.parse_args(argList)
@@ -27,17 +33,17 @@ def doArgs(argList, name):
 def checkArgs(args):
 
     """Verifies if inputs files and output folder exists, wreate output folder if necessary"""
-    if not os.path.isfile(args.indentFn):
-        warning("Input file: " + args.indentFn + ", doesn't exist")
+    if not os.path.isfile(args.indent_file):
+        warning("Input file: " + args.indent_file + ", doesn't exist")
         return
-    if not os.path.isfile(args.spectra_fn):
-        warning("Input file: " + args.spectra_fn + ", doesn't exist")
+    if not os.path.isfile(args.spectra_file):
+        warning("Input file: " + args.spectra_file + ", doesn't exist")
         return
     # if args.dbse not in ("mascot", "comet"):
     #     warning("DBSE name: " + args.dbse + ", is not valid")
     #     return
 
-    # outputBase = os.path.dirname(outputFn)
+    # outputBase = os.path.dirname(output_dir)
     # if outputBase != '' and not os.path.exists(outputBase):
     #     print "Output directory doesn't exist, making output dirs: %s" % (outputBase)
     #     os.makedirs(outputBase)
