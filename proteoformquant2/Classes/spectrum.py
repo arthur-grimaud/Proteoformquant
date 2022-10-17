@@ -76,6 +76,9 @@ class Spectrum:
         self.proteforms_multiquant = None
         self.intervals = None
 
+        # Missing determining ions:
+        self.miss_determining_ions = False
+
         pass
 
     # Getters:
@@ -112,7 +115,7 @@ class Spectrum:
         return sum(intensities)
 
     def get_sum_intens_annot_frag(self):
-        self.set_sum_intens_annot_frag()  # could be done one every update of ratios
+        self.set_sum_intens_annot_frag()  # could be done one time every update of ratios
         return self.sumIntensAnnotFrag
 
     def get_psms(self):
@@ -496,8 +499,12 @@ class Spectrum:
                 for index in row_unique_indexes:
                     is_unique[index] = True
 
+        # var to check whether ratio had to be added because
+        # self.miss_determining_ions = False
+
         for i in range(len(is_unique)):
             if is_unique[i] == False:
+
                 add_eq = np.zeros(unique_matrix_t.shape[1])
                 add_eq[i] = 1
                 equations.append(add_eq)
@@ -508,6 +515,8 @@ class Spectrum:
                 file_object = open("sample.txt", "a")
                 file_object.write("A\n")
                 file_object.close()
+
+                self.miss_determining_ions = True
 
         # print("equations after")
 

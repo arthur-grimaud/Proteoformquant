@@ -47,6 +47,9 @@ class Proteoform:
         self.min_bound_rt = None
         self.max_bound_rt = None
 
+        # Scores
+        self.gap_score = 0
+
     # Getters
 
     def get_sequence(self):
@@ -75,8 +78,6 @@ class Proteoform:
 
         numerator = sum([rts[i] * weights[i] for i in range(len(rts))])
         denominator = sum(weights) + 1
-
-        print(round(numerator / denominator, 2))
 
         return round(numerator / denominator, 2)
 
@@ -277,6 +278,25 @@ class Proteoform:
 
         return len([i for i in intervals_count if i > 0]) / n_quantiles
 
+    def get_gap_in_validated_spectra(self, rts):
+
+        v_proteo = self.get_number_validated_linked_psm()
+
+        v_subset = 0
+
+        # # print("n linked psms: ", len(proteoform.get_linked_psm()))
+        # for psm in self.get_linked_psm():
+        #     if psm.spectrum.get_rt() > self.min_bound_rt and psm.spectrum.get_rt() < self.max_bound_rt:
+        #         v_proteo += 1
+        for rt in rts:
+            if rt > self.min_bound_rt and rt < self.max_bound_rt:
+                v_subset += 1
+
+        if v_subset != 0:
+            return v_proteo / v_subset
+        else:
+            return 0
+
     def get_min_max_rt_range_shift(self, side):
         if (
             self.get_number_validated_linked_psm() == 0
@@ -334,7 +354,7 @@ class Proteoform:
 
                 return boundaries
         else:
-            return 0
+            return [0, 0]
 
     def get_boundaries_area_ratio(self):
         """Area under EP for interval min_boud_rt max_bound rt vs total AUC"""
@@ -345,7 +365,7 @@ class Proteoform:
 
                 auc_inter = EP.get_auc(self.min_bound_rt, self.max_bound_rt)
                 auc_tot = EP.get_auc(
-                    self.min_bound_rt - 500, self.max_bound_rt + 500
+                    self.min_bound_rt - 1000, self.max_bound_rt + 1000
                 )  # TODO hardcoded, change this
 
                 if auc_tot != 0:
@@ -355,6 +375,20 @@ class Proteoform:
 
         else:
             return 0
+
+    def is_ambiguous(self, ratio_miss=0.5):
+        """if more than ratio_miss of the spectrum assigned to that proteoform contanins missing distinguishing ions, return true"""
+        n_ambig = 0
+        n_tot = 0
+        for psm in self.get_validated_linked_psm():
+            n_tot += 1
+            if psm.spectrum.miss_determining_ions == True:
+                n_ambig += 1
+
+        if n_ambig / n_tot > ratio_miss:
+            return True
+        else:
+            return False
 
     # Setters
 
@@ -485,7 +519,7 @@ class Proteoform:
 
         return frag_masses
 
-    def model_elution_profile(self, elution_profile_score_threshold):
+    def model_elution_profile(self, elution_profile_score_threshold=None):
         """instanciate an envelope object by providing the list of psm associated to that proteoform"""
         # reset elution profile:
         self.envelope = None

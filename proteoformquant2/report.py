@@ -29,7 +29,7 @@ import plotly.graph_objects as go
 #                                  Data import                                 #
 # ---------------------------------------------------------------------------- #
 
-with open("save_inter_mix3_rep2_r.pkl", "rb") as inp:
+with open("save_res_mix3_rep2_r.pkl", "rb") as inp:
     exp = pickle.load(inp)
 
 print(exp.get_dataset_metrics())
@@ -113,7 +113,7 @@ app.layout = html.Div(
         html.Div(
             children=[
                 html.Label("Additional Plot"),
-                dcc.Graph(id="misc_plot", style={"display": "inline-block"}),
+                dcc.Graph(id="plot_envelopes_parameters", style={"display": "inline-block"}),
                 dcc.Graph(id="misc_plot2", style={"display": "inline-block"}),
             ]
         ),
@@ -147,11 +147,12 @@ app.layout = html.Div(
         Input("plot_all_enveloppes", "clickData"),
         Input("plot_elution_profiles", "clickData"),
         Input("plot_all_enveloppes_3d", "clickData"),
+        Input("plot_envelopes_parameters", "clickData"),
         Input("close", "n_clicks"),
     ],
     [State("modal", "is_open"), State("modal", "children")],
 )
-def popup(v1, v2, v3, v4, clicked, is_open, children):
+def popup(v1, v2, v3, v4, v5, clicked, is_open, children):
     ctx = dash.callback_context
 
     # print( ctx.triggered[0]["value"])
@@ -184,6 +185,9 @@ def popup(v1, v2, v3, v4, clicked, is_open, children):
             str_info.append(html.Br())
             str_info.append("Residuals from multiple proteo quant")
             str_info.append(spectrum.quant_residuals)
+            str_info.append(html.Br())
+            str_info.append("Missing determining framgent ions")
+            str_info.append(str(spectrum.miss_determining_ions))
             str_info.append(html.Br())
 
             for psm in spectrum.get_psms():
@@ -254,6 +258,9 @@ def popup(v1, v2, v3, v4, clicked, is_open, children):
             str_info.append(html.Br())
             str_info.append("proteoform EP balance")
             str_info.append(proteoform.get_ratio_left_right())
+            str_info.append("proteoform gap")
+            str_info.append(html.Br())
+            str_info.append(proteoform.gap_score)
 
             return [
                 dbc.ModalHeader("Proteoform"),
@@ -1038,6 +1045,8 @@ def plotRelativeAbundanceProteo(input):
     proteoformsIntens_auc = [
         proteo.update_proteoform_total_intens(method="AUC") for proteo in exp.proteoforms.values()
     ]
+    print(proteoformsIntens_prec)
+    print(proteoformsIntens_auc)
 
     # proteoformsBrno.append("proteoform0")
     # exp.proteoform0.update_proteoform_total_intens()
@@ -1073,11 +1082,11 @@ def plotRelativeAbundanceProteo(input):
 
 
 @app.callback(
-    Output("misc_plot", "figure"),
-    Input("mainDiv", "id")
+    Output("plot_envelopes_parameters", "figure"),
+    [Input("mainDiv", "id")]
     # Input('input_max_mz', "value")
 )
-def plot_envelopes_parameters(minMaxMz):
+def envelopes_parameters(minMaxMz):
 
     env_s = [
         proteoform.get_elution_profile().get_parameters_fitted()[1]
@@ -1103,6 +1112,12 @@ def plot_envelopes_parameters(minMaxMz):
         if proteoform.get_elution_profile() != None
         and proteoform.get_elution_profile().is_parameters_fitted()
     ]
+    proteoform_key = [
+        proteoform.get_modification_proforma()
+        for proteoform in exp.proteoforms.values()
+        if proteoform.get_elution_profile() != None
+        and proteoform.get_elution_profile().is_parameters_fitted()
+    ]
 
     fig = go.Figure()
     fig.add_scatter(
@@ -1111,6 +1126,7 @@ def plot_envelopes_parameters(minMaxMz):
         mode="markers",
         marker=dict(size=10, color="red"),
         name="S",
+        customdata=proteoform_key,
     )
     fig.add_scatter(
         x=env_m,
@@ -1118,6 +1134,7 @@ def plot_envelopes_parameters(minMaxMz):
         mode="markers",
         marker=dict(size=10, color="blue"),
         name="K",
+        customdata=proteoform_key,
     )
     fig.add_scatter(
         x=env_m,
@@ -1125,6 +1142,7 @@ def plot_envelopes_parameters(minMaxMz):
         mode="markers",
         marker=dict(size=10, color="green"),
         name="A",
+        customdata=proteoform_key,
     )
 
     fig.update_layout(template=template, height=500, width=500)

@@ -78,6 +78,8 @@ def main():
                         str(proteoform.update_proteoform_total_intens(method="precursor")),
                         ",",
                         str(proteoform.update_proteoform_total_intens(method="AUC")),
+                        ",",
+                        str(proteoform.is_ambiguous()),
                         "\n",
                     ]
                 )
@@ -85,7 +87,7 @@ def main():
     f.close()
 
     run.fdr_filtering(decoy_tag="decoy_", score_name="Amanda:AmandaScore")
-    run.filter_proteform_low_count(min_n_psm=5)
+    run.filter_proteform_low_count(min_n_psm=2)
     # run.retention_time_window_filtering(0, 5300)
     run.scale_precursor_intensities()
     run.match_fragments()
@@ -120,6 +122,8 @@ def main():
                         str(proteoform.update_proteoform_total_intens(method="precursor")),
                         ",",
                         str(proteoform.update_proteoform_total_intens(method="AUC")),
+                        ",",
+                        str(proteoform.is_ambiguous()),
                         "\n",
                     ]
                 )
@@ -136,7 +140,7 @@ def main():
     with open(f"save_res_{output_prefix}.pkl", "rb") as inp:
         run = pickle.load(inp)
 
-    run.optimize_proteoform_subsets()
+    run.optimize_proteoform_subsets_2()
 
     # ### SAVE ###
     # with open(f"save_res_{output_prefix}.pkl", "wb") as outp:
@@ -147,8 +151,6 @@ def main():
     ### Update Quatification ###
     # run.update_proteoforms_elution_profile()
     # run.update_proteoform_intens()
-
-    run.update_proteoform_intens()
 
     ### Print Quant results ###
     run.update_proteoform_intens()
@@ -165,17 +167,17 @@ def main():
                         str(proteoform.update_proteoform_total_intens(method="precursor")),
                         ",",
                         str(proteoform.update_proteoform_total_intens(method="AUC")),
+                        ",",
+                        str(proteoform.is_ambiguous()),
                         "\n",
                     ]
                 )
             )
     f.close()
 
-    pd.DataFrame(run.log).to_csv(f"log_{output_prefix}.csv", "w")
+    pd.DataFrame(run.log).to_csv(f"log_{output_prefix}.csv", ",")
 
     run.validate_first_rank_no_id()
-
-    run.update_proteoform_intens()
 
     ### Print Quant results ###
     run.update_proteoform_intens()
@@ -192,6 +194,8 @@ def main():
                         str(proteoform.update_proteoform_total_intens(method="precursor")),
                         ",",
                         str(proteoform.update_proteoform_total_intens(method="AUC")),
+                        ",",
+                        str(proteoform.is_ambiguous()),
                         "\n",
                     ]
                 )
