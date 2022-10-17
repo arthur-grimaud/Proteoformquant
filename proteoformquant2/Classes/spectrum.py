@@ -182,9 +182,6 @@ class Spectrum:
                         if type["index"][i] not in seenPeaks:
                             seenPeaks.append(type["index"][i])
                             self.sumIntensAnnotFrag += type["intens"][i]
-        # print("sum intensities annotated: " + str(self.sumIntensAnnotFrag))
-
-    # other methods:
 
     def annotateFragPsm(self, frag_mz_tol):
         for psm in self.get_psms():
@@ -216,8 +213,6 @@ class Spectrum:
             self.__ratios_multiple(psms, verbose)
         else:
             pass
-            # print("No valid PSM")
-        # self.__ratios_pair(get_validated_psm())
 
     def __ratios_multiple(self, psms, verbose):
 
@@ -564,44 +559,6 @@ class Spectrum:
 
                 validatedPsms[p].ratio = A / (A + B)
                 validatedPsms[p + 1].ratio = B / (A + B)
-
-    # def update_psms_ratio(self):
-
-    #     validatedPsms = self.get_validated_psm()
-
-    #     uniquePairwise = [] # list of list of unique ions names formatted as such [[List Unique validatedPsms[0 and 1]], [List Unique validatedPsms[1 and 2]], .... ]
-    #     ratioPairwise = []
-
-    #     if len(validatedPsms) == 1: #Only one validated proteoform
-    #         validatedPsms[0].ratio = 1.0
-
-    #     elif len(validatedPsms) == 2: #Pair of validated proteoform
-    #         uniques = self.__get_unique_fragments(validatedPsms[0], validatedPsms[1])
-    #         A = self.get_sum_intens_fragment_list(validatedPsms[0],uniques)
-    #         B = self.get_sum_intens_fragment_list(validatedPsms[1],uniques)
-    #         validatedPsms[0].ratio = A/(A+B)
-    #         validatedPsms[1].ratio = B/(A+B)
-
-    #     else: #More than 2 validated proteoforms
-
-    #         for p_A in range(0, len(validatedPsms)):
-    #             p_B = (p_A + 1) % len(validatedPsms)
-
-    #             uniques = self.__get_unique_fragments(validatedPsms[p_A], validatedPsms[p_B])
-
-    #             A = self.get_sum_intens_fragment_list(validatedPsms[p_A],uniques)
-    #             B = self.get_sum_intens_fragment_list(validatedPsms[p_B],uniques)
-
-    #             self.__get_unique_fragments()
-    #             uniquePairwise.append(uniqueFragments)
-
-    #         for p in range(0, len(validatedPsms)-1):
-
-    #             A = self.get_sum_intens_fragment_list(validatedPsms[p],uniquePairwise[p])
-    #             B = self.get_sum_intens_fragment_list(validatedPsms[p+1],uniquePairwise[p])
-
-    #             validatedPsms[p].ratio = A/(A+B)
-    #             validatedPsms[p+1].ratio = B/(A+B)
 
     def __get_unique_fragments(self, proteo_a, proteo_b):
         "from two proteoform object get the list of unique fragments (frag with mass shift)"

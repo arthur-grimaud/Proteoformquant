@@ -5,7 +5,6 @@ import numpy as np
 import math
 import warnings
 from sklearn.linear_model import LinearRegression
-from kneed import KneeLocator
 from scipy.integrate import trapz, simps
 from statistics import mean, median, stdev
 from scipy.optimize import least_squares
@@ -68,7 +67,7 @@ class ElutionProfile:
         else:
             return [None], [None]
 
-    def get_y(self, x):  # , method="best"):
+    def get_y(self, x):
         """
         for x return the estimated y value given the fitted function
         uses estimated parameters if fitted parameters are not determined
@@ -98,7 +97,7 @@ class ElutionProfile:
         else:
             print("Specify method (fitted or estimated)")
 
-    def get_elution_profile_std(self, method):  # might be incorrect
+    def get_elution_profile_std(self, method):
         if method == "estimated":
             return self.param_estimated[1]
         elif method == "fitted":
@@ -236,13 +235,6 @@ class ElutionProfile:
             self.score_fitted,
         ) = self.fit_skew_normal(self.data_x, self.data_y)
 
-        # # Fit model with outliers removal if below score threshold
-        # if self.score_fitted < self.score_threshold:
-        #     self.param_estimated, self.param_fitted, self.score_estimated, self.score_fitted, self.psms_outliers, self.psms_included = self.exclude_outliers_mean_method()
-
-        # Add to outliers:
-        # self.psms_outliers, self.psms_included = self.exclude_outlier_non_significant(0.5)
-
     def fit_skew_normal(self, data_x, data_y, param_init=[None], param_bounds=[None]):
         """startPrevFit"""
 
@@ -300,13 +292,6 @@ class ElutionProfile:
         return param_estimated, param_fitted, score_estimated, score_fitted
 
     # ----------------------------- Model's function ----------------------------- #
-
-    # def skewnormal(self, x, m, s, a, k):
-    #     return a * np.exp(k * (x - m) / s - np.sqrt((x - m) / s * (x - m) / s + 1))
-
-    # def __skewnormal_residuals(self, par, x, y):
-    # m, s, a, k = par
-    # return (a * np.exp(k * (x - m) / s - np.sqrt((x - m) / s * (x - m) / s + 1))) - y
 
     def skewnormal(self, x, m, s, a, k):
         u = (x - m) / s
@@ -367,9 +352,6 @@ class ElutionProfile:
 
     # -------------------------------- Scoring Fit ------------------------------- #
 
-    # def __KSTest(self, parameters, data_x, data_y):
-    # return stats.kstest(data_x, lambda x: self.__skewnormal_cdf(x, *parameters, min(data_x), max(data_x)))
-
     def __pearson_test(self, model, parameters, data_x, data_y):  # !! NOT KS !! to be renamed
         x = np.array(data_y).reshape((-1, 1))
         y = np.array([model(x, *parameters) for x in data_x])
@@ -390,21 +372,6 @@ class ElutionProfile:
             return 0
 
         return cor_results.correlation
-
-    def __pearson_test_log(self, model, parameters, data_x, data_y):  # !! NOT KS !! to be renamed
-        x = np.array(data_y).reshape((-1, 1))
-        x = np.log2(x, out=np.zeros_like(x), where=(x != 0))
-        y = np.array([model(x, *parameters) for x in data_x])
-        y = np.log2(y, out=np.zeros_like(y), where=(y != 0))
-        model = LinearRegression().fit(x, y)
-        return model.score(x, y)
-
-    def __MSPD(self, model, parameters, data_x, data_y):
-
-        y_expect = np.array(data_y).reshape((-1, 1))
-        y_pred = np.array([model(x, *parameters) for x in data_x])
-
-        return 100 * math.sqrt((1 / (len(y_expect) - 4)) * np.sum(((y_expect - y_pred) / y_expect) ** 2))
 
     def scoring_return(self, model, parameters, data_x, data_y):  # for testing purpose return pred vs expect
         x = np.array(data_y)
