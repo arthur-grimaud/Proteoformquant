@@ -208,7 +208,7 @@ class Msrun:
                 [spectrum for spectrum in self.spectra.values() if spectrum.get_number_validated_psm() > 0]
             ),
             "AssignedSpectra(method2)": 0,
-            "UnassignedSpectra": len([spectrum for spectrum in self.proteoform0.linkedSpectra]),
+            # "UnassignedSpectra": len([spectrum for spectrum in self.proteoform0.linkedSpectra]),
             "ChimericSpectra": len(
                 [spectrum for spectrum in self.spectra.values() if spectrum.get_number_validated_psm() > 1]
             ),
@@ -720,11 +720,11 @@ class Msrun:
                 self.proteoforms[proteoID].update_proteoform_psm_validation()
         pass
 
-    def update_unassigned_spectra(self):
-        """Adds spectra without any validated psm to "proteoform0" in self.proteoforms"""
-        for spectrumID in self.spectra:
-            if self.spectra[spectrumID].get_number_validated_psm() == 0:
-                self.proteoform0.linkSpectrum(self.spectra[spectrumID])
+    # def update_unassigned_spectra(self):
+    #     """Adds spectra without any validated psm to "proteoform0" in self.proteoforms"""
+    #     for spectrumID in self.spectra:
+    #         if self.spectra[spectrumID].get_number_validated_psm() == 0:
+    #             self.proteoform0.linkSpectrum(self.spectra[spectrumID])
 
     def validate_all_psms(self):
         """Updates psm.is_validated to TRUE in each PSM in self.Proteoform"""
