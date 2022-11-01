@@ -19,6 +19,8 @@
 ### Import ###
 
 # MS file parsers
+from argparse import ArgumentError
+from logging import warning
 from pyteomics import mzid
 from pyteomics import mgf
 from pyteomics import mzml
@@ -64,7 +66,7 @@ class Msrun:
     This class contains all the main methods called by the main script "proteoformquant.py".
     """
 
-    def __init__(self, run_id: str = "Default run ID", dbse: str = "comet", params=""):
+    def __init__(self, run_id: str = "Default run ID", dbse: str = "comet", params={}, params_over={}):
 
         self.run_id = run_id
         self.dbse = dbse
@@ -77,39 +79,6 @@ class Msrun:
         self.proteoform_isobaric_group = []
 
         self.mod_mass_to_name = {}  # store mass to name to limit queries to unimod DB
-
-        # ### PARAMETERS (should ultimately be in a separated file) ###
-        # self.prec_mz_tol = 1.05  # in Da
-        # self.frag_mz_tol = 0.01  # in Da
-
-        # # Filtering and thresholds:
-        # self.max_rank = 5  # Maximum rank to be considered (1-based)
-        # self.fdr_threshold = 0.05
-        # self.intensity_threshold = 100000
-        # self.elution_profile_score_threshold = None
-
-        # # Optimization
-        # self.n_iter = 40  # number of iteration for each peptidoform optimization
-        # self.n_iter_valid = 20  # number of iteration to be considered for peptidoform validation
-        # # Starting range
-        # self.window_size_rt = 50
-        # # Param of the normal distribution used for random mutation of the rt_validation_ranges
-        # self.rd_loc = 2  # deviation of the mean from zero
-        # self.rd_scale = 2  # spread of the distribution
-        # # Param for peptidoform validation:
-        # self.min_ep_score_corelation = 0.75  # minimal score for validation
-        # self.min_ep_score_coverage = 0.60  # minimal score for validation
-        # self.max_ep_score_std = 0.2  # maximal standard deviation of score for "self.n_iter_valid"
-        # self.max_rejected_proteo = 2  # number of peptidoform rejected before stopping optimization
-        # # Proteform groups:
-        # self.min_connect = 1
-        # # Fragments to be considered (see options in "Utils")
-        # self.fragments_types = [
-        #     "c",
-        #     "zdot",
-        #     "z+1",
-        #     "z+2",
-        # ]
 
         # log
         self.n_scans_in_mgf = 0
@@ -130,7 +99,20 @@ class Msrun:
         # Load parameters
         for key, value in params.items():
             setattr(self, key, value)
+
         # Parameters overide
+
+        for key, value in params_over.items():
+            if key in self.__dict__.keys():
+                try:  # convert to float if possible
+                    value = float(value)
+                    if value - int(value) == 0:  # convert to int decimal is zero
+                        value = int(value)
+                except ValueError:
+                    pass
+                setattr(self, key, value)
+            else:
+                warning(f"The argument {key} is not a valid parameter")
 
     def __getstate__(self):
 
@@ -1129,14 +1111,14 @@ class Msrun:
 
     def optimize_proteoform_subsets_2(self):
 
-        # Param for peptidoform validation:
-        self.min_ep_fit = 0.75  # minimal curve fitting score for validation
-        self.min_ep_cov = 0.5  # minimal coverage of elution profile for validation
-        self.min_ep_gap = 0.6  # PROBLEM WITH THIS METRIC (GETS SUPERIOR TO 1)
+        # # Param for peptidoform validation:
+        # self.min_ep_fit = 0.75  # minimal curve fitting score for validation
+        # self.min_ep_cov = 0.5  # minimal coverage of elution profile for validation
+        # self.min_ep_gap = 0.6  # PROBLEM WITH THIS METRIC (GETS SUPERIOR TO 1)
         # Params
-        self.max_rejected_proteo = 3
-        with alive_bar(len(self.proteoform_isobaric_group)) as bar:
+        # self.max_rejected_proteo = 3
 
+        with alive_bar(len(self.proteoform_isobaric_group)) as bar:
             grp = 0
             for group in self.proteoform_isobaric_group:
 
@@ -1323,45 +1305,45 @@ class Msrun:
                 bar()
 
         # TESTS
-        file = open(f"score_param_ep.csv", "w")
-        for proteo in self.proteoforms.values():
-            if proteo.get_elution_profile() != None:
-                ep = proteo.get_elution_profile()
-                file.write(
-                    ",".join(
-                        [
-                            str(proteo.peptideSequence),
-                            str(proteo.modificationBrno),
-                            str(proteo.get_fit_score()),
-                            str(proteo.get_coverage_2()),
-                            str(proteo.gap_score),
-                            str(ep.param_fitted[1]),
-                            str(ep.param_fitted[2]),
-                            str(ep.param_fitted[3]),
-                        ]
-                    )
-                )
-                file.write("\n")
-        file.close()
+        # file = open(f"score_param_ep.csv", "w")
+        # for proteo in self.proteoforms.values():
+        #     if proteo.get_elution_profile() != None:
+        #         ep = proteo.get_elution_profile()
+        #         file.write(
+        #             ",".join(
+        #                 [
+        #                     str(proteo.peptideSequence),
+        #                     str(proteo.modificationBrno),
+        #                     str(proteo.get_fit_score()),
+        #                     str(proteo.get_coverage_2()),
+        #                     str(proteo.gap_score),
+        #                     str(ep.param_fitted[1]),
+        #                     str(ep.param_fitted[2]),
+        #                     str(ep.param_fitted[3]),
+        #                 ]
+        #             )
+        #         )
+        #         file.write("\n")
+        # file.close()
 
     def validate_first_rank_no_id(self):
         """validate the first rank psm of all spectra without any id"""
-        file = open(f"scores_psms_all.csv", "w")
+        # file = open(f"scores_psms_all.csv", "w")
         coverage_valid = []
         for spectrum in self.spectra.values():
             for psm in spectrum.psms:
                 coverage = psm.get_fragment_coverage()
                 rank = psm.get_rank()
                 validated = psm.is_validated
-                file.write(",".join([str(validated), str(rank), str(coverage)]))
-                file.write("\n")
+                # file.write(",".join([str(validated), str(rank), str(coverage)]))
+                # file.write("\n")
 
                 if validated:
                     coverage_valid.append(coverage)
 
         min_coverage = mean(coverage_valid) - stdev(coverage_valid)
 
-        file.close()
+        # file.close()
 
         for spectrum in self.spectra.values():
             if spectrum.get_number_validated_psm() == 0 and len(spectrum.get_psms()):

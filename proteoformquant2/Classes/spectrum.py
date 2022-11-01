@@ -506,24 +506,6 @@ class Spectrum:
                 variables.append(1 / unique_matrix_t.shape[1])
                 W = np.append(W, np.mean(W))
 
-                # for testing purposes
-                file_object = open("sample.txt", "a")
-                file_object.write("A\n")
-                file_object.close()
-
-                self.miss_determining_ions = True
-
-        # print("equations after")
-
-        # print(equations)
-        # print(variables)
-        # print(W)
-
-        # for testing purposes
-        file_object = open("sample.txt", "a")
-        file_object.write("E\n")
-        file_object.close()
-
         return equations, variables, W
 
     # ------------------ quantification of two proteoforms only ------------------ #

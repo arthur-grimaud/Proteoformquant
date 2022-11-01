@@ -27,7 +27,7 @@ def main():
 
     # --------------------------------- Inputs -------------------------------- #
 
-    args = input.doArgs(sys.argv[1:], progName)  # Parse arguments
+    args, unknwownargs = input.doArgs(sys.argv[1:], progName)  # Parse arguments
     args = input.checkArgs(args)  # Verify arguments
 
     verbose = args.verbose
@@ -35,14 +35,17 @@ def main():
     spectra_file = args.spectra_file
     param_file = args.param_file
     output_dir = args.output_dir
-
-    # Read additional Parameters:
+    output_file = args.output_file
+    # Read Parameters File:
     params = JsoncParser.parse_file(param_file)
-    print(params)
-
+    # read parameter overwited in cmd line arguments:
+    params_over = {unknwownargs[i][1:]: unknwownargs[i + 1] for i in range(0, len(unknwownargs), 2)}
     # Name of output prefix from input identification filename
-    output_prefix = indent_file.split(".")[0].split("/")[1]
-    print(output_prefix)
+    if output_file != False:
+        output_prefix = output_file
+
+    else:
+        output_prefix = indent_file.split(".")[0].split("/")[1]
 
     # --------------------------------- Debugging -------------------------------- #
 
@@ -51,7 +54,7 @@ def main():
     print("---===Starting " + progName + "===---")
 
     ### Read Data ###
-    run = Msrun(run_id="1", params=params)
+    run = Msrun(run_id="1", params=params, params_over=params_over)
     run.read_mzid(indent_file)
     run.read_mgf(spectra_file)
 

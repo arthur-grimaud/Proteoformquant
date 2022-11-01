@@ -26,7 +26,23 @@ def doArgs(argList, name):
     )
 
     parser.add_argument(
-        "-o", "--output", action="store", dest="output_dir", type=str, help="Output file name", required=False
+        "-d",
+        "--output_dir",
+        action="store",
+        dest="output_dir",
+        type=str,
+        help="Output directory path",
+        required=False,
+    )
+
+    parser.add_argument(
+        "-o",
+        "--output_file",
+        action="store",
+        dest="output_file",
+        type=str,
+        help="Output file name",
+        required=False,
     )
 
     parser.add_argument(
@@ -39,8 +55,9 @@ def doArgs(argList, name):
         required=False,
         default="params.jsonc",
     )
+    args, unknownargs = parser.parse_known_args(argList)
 
-    return parser.parse_args(argList)
+    return args, unknownargs
 
 
 def checkArgs(args):

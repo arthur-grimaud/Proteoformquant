@@ -1,0 +1,31 @@
+name: pfq-env
+channels:
+  - defaults
+dependencies:
+  - python==3.8.10
+  - pip
+  - pip:
+      - alive_progress
+      - dash==2.6.2
+      - dash_bootstrap_components==1.0.2
+      - dash_daq==0.5.0
+      - fnnls==1.0.0
+      - jsonc_parser==1.1.5
+      - kneed==0.7.0
+      - matplotlib==3.5.1
+      - mpmath==1.2.1
+      - networkx
+      - numpy==1.17.4
+      - pandas
+      - plotly==5.5.0
+      - progress==1.6
+      - pymoo==0.5.0
+      - pyteomics
+      - PyYAML==6.0
+      - scikit_learn
+      - scipy
+      - spectrum_utils==0.3.5
+      - SQLAlchemy==1.3.12
+      - sympy==1.9
+      - unimod_mapper==0.6.4
+      - lxml

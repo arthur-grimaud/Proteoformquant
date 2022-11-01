@@ -7,10 +7,13 @@ import pprint
 import spectrum_utils.spectrum as sus
 from Utils.constant import ion_direction
 import warnings
+from importlib.metadata import version
 
 
 class Psm:
     def __init__(self, rank, spectrum, identificationItem):
+
+        version("unimod_mapper")
 
         self.Modification = []
 
@@ -109,11 +112,13 @@ class Psm:
 
                     modMass = mod["monoisotopicMassDelta"]
 
+
                     if mod_mass_to_name is None:  # if called without mod to mass dict
                         modName = um.id_to_name(um.mass_to_ids(modMass, decimals=2)[0])[0]
                     elif (
                         modMass not in mod_mass_to_name
-                    ):  # if called with mod to mass dict but mass not added yet
+                    ):  # if called with mod to mass dict but mass not added
+
                         modName = um.id_to_name(um.mass_to_ids(modMass, decimals=2)[0])[0]
                         mod_mass_to_name[modMass] = modName  # mass found in mass
                     else:

@@ -283,14 +283,14 @@ for ps in range(len(run.proteoform_subset)):
         run.update_psms_ratio_subset(run.spectra_subset)
         run.update_proteoforms_elution_profile_subset(run.proteoform_subset)
 
-        fig = run.plot_elution_profiles(run.proteoform_subset, rt_values=all_rts, count=g)
-        fig.write_image("images/fig_" + f"{group_number:03}" + "_" + f"{g:04}" + "_intermediate" + ".png")
+        # fig = run.plot_elution_profiles(run.proteoform_subset, rt_values=all_rts, count=g)
+        # fig.write_image("images/fig_" + f"{group_number:03}" + "_" + f"{g:04}" + "_intermediate" + ".png")
 
     else:
         break
 
-np.savetxt("scores_test.csv", scores_proteos, delimiter=",")
-np.savetxt("quant_test.csv", quant_proteos, delimiter=",")
+# np.savetxt("scores_test.csv", scores_proteos, delimiter=",")
+# np.savetxt("quant_test.csv", quant_proteos, delimiter=",")
 with open("testings.pkl", "wb") as outp:
     pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
 
