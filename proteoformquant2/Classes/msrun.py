@@ -64,7 +64,7 @@ class Msrun:
     This class contains all the main methods called by the main script "proteoformquant.py".
     """
 
-    def __init__(self, run_id: str = "Default run ID", dbse: str = "comet"):
+    def __init__(self, run_id: str = "Default run ID", dbse: str = "comet", params=""):
 
         self.run_id = run_id
         self.dbse = dbse
@@ -78,37 +78,38 @@ class Msrun:
 
         self.mod_mass_to_name = {}  # store mass to name to limit queries to unimod DB
 
-        ### PARAMETERS (should ultimately be in a separated file) ###
-        self.prec_mz_tol = 1.05  # in Da
-        self.frag_mz_tol = 0.01  # in Da
+        # ### PARAMETERS (should ultimately be in a separated file) ###
+        # self.prec_mz_tol = 1.05  # in Da
+        # self.frag_mz_tol = 0.01  # in Da
 
-        # Filtering and thresholds:
-        self.max_rank = 5  # Maximum rank to be considered (1-based)
-        self.fdr_threshold = 0.05
-        self.intensity_threshold = 100000
-        self.elution_profile_score_threshold = None
+        # # Filtering and thresholds:
+        # self.max_rank = 5  # Maximum rank to be considered (1-based)
+        # self.fdr_threshold = 0.05
+        # self.intensity_threshold = 100000
+        # self.elution_profile_score_threshold = None
 
-        # Optimization
-        self.n_iter = 40  # number of iteration for each peptidoform optimization
-        self.n_iter_valid = 20  # number of iteration to be considered for peptidoform validation
-        # Starting range
-        self.window_size_rt = 50
-        # Param of the normal distribution used for random mutation of the rt_validation_ranges
-        self.rd_loc = 2  # deviation of the mean from zero
-        self.rd_scale = 2  # spread of the distribution
-        # Param for peptidoform validation:
-        self.min_ep_score_corelation = 0.75  # minimal score for validation
-        self.min_ep_score_coverage = 0.60  # minimal score for validation
-        self.max_ep_score_std = 0.2  # maximal standard deviation of score for "self.n_iter_valid"
-        self.max_rejected_proteo = 2  # number of peptidoform rejected before stopping optimization
-
-        # Fragments to be considered (see options in "Utils")
-        self.fragments_types = [
-            "c",
-            "zdot",
-            "z+1",
-            "z+2",
-        ]
+        # # Optimization
+        # self.n_iter = 40  # number of iteration for each peptidoform optimization
+        # self.n_iter_valid = 20  # number of iteration to be considered for peptidoform validation
+        # # Starting range
+        # self.window_size_rt = 50
+        # # Param of the normal distribution used for random mutation of the rt_validation_ranges
+        # self.rd_loc = 2  # deviation of the mean from zero
+        # self.rd_scale = 2  # spread of the distribution
+        # # Param for peptidoform validation:
+        # self.min_ep_score_corelation = 0.75  # minimal score for validation
+        # self.min_ep_score_coverage = 0.60  # minimal score for validation
+        # self.max_ep_score_std = 0.2  # maximal standard deviation of score for "self.n_iter_valid"
+        # self.max_rejected_proteo = 2  # number of peptidoform rejected before stopping optimization
+        # # Proteform groups:
+        # self.min_connect = 1
+        # # Fragments to be considered (see options in "Utils")
+        # self.fragments_types = [
+        #     "c",
+        #     "zdot",
+        #     "z+1",
+        #     "z+2",
+        # ]
 
         # log
         self.n_scans_in_mgf = 0
@@ -126,12 +127,10 @@ class Msrun:
             ]
         ]
 
-        # Proteform groups:
-        self.min_connect = 1
-
-        # multiprocessing
-
-        # self.fragments_types = ["a","x","b","y","c","zdot","z+1","z+2","c-zdot", "c-z+1", "cdot-zdot", "c-z+1", "a-x", "n-n", "b-y"]
+        # Load parameters
+        for key, value in params.items():
+            setattr(self, key, value)
+        # Parameters overide
 
     def __getstate__(self):
 
@@ -720,12 +719,6 @@ class Msrun:
                 self.proteoforms[proteoID].update_proteoform_psm_validation()
         pass
 
-    # def update_unassigned_spectra(self):
-    #     """Adds spectra without any validated psm to "proteoform0" in self.proteoforms"""
-    #     for spectrumID in self.spectra:
-    #         if self.spectra[spectrumID].get_number_validated_psm() == 0:
-    #             self.proteoform0.linkSpectrum(self.spectra[spectrumID])
-
     def validate_all_psms(self):
         """Updates psm.is_validated to TRUE in each PSM in self.Proteoform"""
         for spectrum in self.spectra.values():
@@ -1193,9 +1186,9 @@ class Msrun:
                 self.update_proteoforms_elution_profile_subset(self.proteoform_subset)
 
                 # ---------
-                self.plot_elution_profiles(
-                    self.proteoform_subset, rt_values=self.all_rts, count=grp, plot_all=True
-                ).write_image("images/fig_" + f"{grp:03}" + "_00_0000A" + ".png")
+                # self.plot_elution_profiles(
+                #     self.proteoform_subset, rt_values=self.all_rts, count=grp, plot_all=True
+                # ).write_image("images/fig_" + f"{grp:03}" + "_00_0000A" + ".png")
                 # --------
 
                 ###Stops here if not enough Spectra###
@@ -1259,9 +1252,9 @@ class Msrun:
                     # self.update_proteoforms_elution_profile_subset(self.proteoform_subset)
 
                     # ---------
-                    self.plot_elution_profiles(
-                        self.proteoform_subset, rt_values=self.all_rts, count=grp
-                    ).write_image("images/fig_" + f"{grp:03}" + "_00_0000D" + ".png")
+                    # self.plot_elution_profiles(
+                    #     self.proteoform_subset, rt_values=self.all_rts, count=grp
+                    # ).write_image("images/fig_" + f"{grp:03}" + "_00_0000D" + ".png")
                     # ---------
 
                     # look for proteoform "hidden in higher ranks"
@@ -1632,7 +1625,7 @@ class Msrun:
             # get Elution profile max peak rt
             if proteo.get_elution_profile() != None:
                 rt_peak = proteo.get_elution_profile().get_x_at_max_y()
-                auc = proteo.get_elution_profile().get_auc(rt_peak - 1000, rt_peak + 1000)  # TODO hard coded
+                auc = proteo.get_elution_profile().get_auc()  # TODO hard coded
             else:
                 rt_peak = "NA"
                 auc = "NA"

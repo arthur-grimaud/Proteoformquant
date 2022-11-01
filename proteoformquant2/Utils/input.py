@@ -10,9 +10,11 @@ def doArgs(argList, name):
     parser.add_argument(
         "-v", "--verbose", action="store_true", help="Enable verbose debugging", default=False
     )
+
     parser.add_argument(
         "-i", "--indent", action="store", dest="indent_file", type=str, help="Input file name", required=True
     )
+
     parser.add_argument(
         "-s",
         "--spectra",
@@ -22,9 +24,20 @@ def doArgs(argList, name):
         help="Input file name",
         required=True,
     )
-    # parser.add_argument("-d", "--dbse", action="store", dest="dbse", type=str, help="DBSE", required=True)
+
     parser.add_argument(
         "-o", "--output", action="store", dest="output_dir", type=str, help="Output file name", required=False
+    )
+
+    parser.add_argument(
+        "-p",
+        "--param",
+        action="store",
+        dest="param_file",
+        type=str,
+        help="Json parameter file",
+        required=False,
+        default="params.jsonc",
     )
 
     return parser.parse_args(argList)
@@ -39,6 +52,7 @@ def checkArgs(args):
     if not os.path.isfile(args.spectra_file):
         warning("Input file: " + args.spectra_file + ", doesn't exist")
         return
+
     # if args.dbse not in ("mascot", "comet"):
     #     warning("DBSE name: " + args.dbse + ", is not valid")
     #     return

@@ -4,10 +4,7 @@
 ### Import ###
 # Modules
 import sys
-from pyteomics import mzid
-from objbrowser import browse  # dev
 import pickle
-import csv
 
 # Custom Modules
 from Utils import input
@@ -16,33 +13,34 @@ from Utils import input
 from Classes.msrun import Msrun
 import resource
 import pandas as pd
+import sys
+from jsonc_parser.parser import JsoncParser
 
 
 def main():
+    progName = "ProteoformQuant2"
 
-    import sys
-
-    # print(resource.getrlimit(resource.RLIMIT_STACK))
-    # print(sys.getrecursionlimit())
-
+    # May segfault without these lines.
     max_rec = 0x100000
-
-    # May segfault without this line. 0x100 is a guess at the size of each stack frame.
     resource.setrlimit(resource.RLIMIT_STACK, [0x100 * max_rec, resource.RLIM_INFINITY])
     sys.setrecursionlimit(max_rec)
 
-    progName = "ProteoformQuant2"
+    # --------------------------------- Inputs -------------------------------- #
 
-    ### Input ###
     args = input.doArgs(sys.argv[1:], progName)  # Parse arguments
     args = input.checkArgs(args)  # Verify arguments
 
     verbose = args.verbose
     indent_file = args.indent_file
     spectra_file = args.spectra_file
+    param_file = args.param_file
     output_dir = args.output_dir
 
-    # Name of output files from input identification filename
+    # Read additional Parameters:
+    params = JsoncParser.parse_file(param_file)
+    print(params)
+
+    # Name of output prefix from input identification filename
     output_prefix = indent_file.split(".")[0].split("/")[1]
     print(output_prefix)
 
@@ -53,7 +51,7 @@ def main():
     print("---===Starting " + progName + "===---")
 
     ### Read Data ###
-    run = Msrun(run_id="1")
+    run = Msrun(run_id="1", params=params)
     run.read_mzid(indent_file)
     run.read_mgf(spectra_file)
 
@@ -61,152 +59,32 @@ def main():
 
     ### Prepare Data ###
     run.add_proteoforms()
-
-    # run.update_proteoforms_elution_profile()
     run.update_proteoform_intens()
-    ### Print Quant results ###
-    f = open(f"quant_raw_{output_prefix}.csv", "w")
-    for proteoform in run.proteoforms.values():
-        if proteoform.update_proteoform_total_intens(method="precursor") > 0:
-            f.write(
-                "".join(
-                    [
-                        str(proteoform.get_modification_brno()),
-                        ",",
-                        str(proteoform.get_peptide_sequence()),
-                        ",",
-                        str(proteoform.update_proteoform_total_intens(method="precursor")),
-                        ",",
-                        str(proteoform.update_proteoform_total_intens(method="AUC")),
-                        ",",
-                        str(proteoform.is_ambiguous()),
-                        "\n",
-                    ]
-                )
-            )
-    f.close()
 
+    ### Filtering Data ###
     run.fdr_filtering(decoy_tag="decoy_", score_name="Amanda:AmandaScore")
     run.filter_proteform_low_count(min_n_psm=2)
-    # run.retention_time_window_filtering(0, 5300)
+
+    ### Prepare Data ###
     run.scale_precursor_intensities()
     run.match_fragments()
 
-    #### SAVE ###
-    with open(f"save_{output_prefix}.pkl", "wb") as outp:
-        pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
-    with open(f"save_{output_prefix}.pkl", "rb") as inp:
-        run = pickle.load(inp)
-
+    ### First Rank Quantification ###
     run.update_proteoforms_elution_profile()
     run.update_proteoform_intens()
     run.add_metrics_to_log(processing_step="First_rank_quantification")
 
-    # ### SAVE ###
-    with open(f"save_inter_{output_prefix}.pkl", "wb") as outp:
-        pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
-    with open(f"save_inter_{output_prefix}.pkl", "rb") as inp:
-        run = pickle.load(inp)
-
-    ### Print Quant results ###
-    f = open(f"quant_initial_{output_prefix}.csv", "w")
-    for proteoform in run.proteoforms.values():
-        if proteoform.update_proteoform_total_intens(method="precursor") > 0:
-            f.write(
-                "".join(
-                    [
-                        str(proteoform.get_modification_brno()),
-                        ",",
-                        str(proteoform.get_peptide_sequence()),
-                        ",",
-                        str(proteoform.update_proteoform_total_intens(method="precursor")),
-                        ",",
-                        str(proteoform.update_proteoform_total_intens(method="AUC")),
-                        ",",
-                        str(proteoform.is_ambiguous()),
-                        "\n",
-                    ]
-                )
-            )
-    f.close()
-
-    ### Optimize EP ###
-    # print(run.proteoforms)
+    ### Chimeric Spectra Quantification ###
     run.set_proteoform_isobaric_groups()
-
-    # ### SAVE ###
-    with open(f"save_res_{output_prefix}.pkl", "wb") as outp:
-        pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
-    with open(f"save_res_{output_prefix}.pkl", "rb") as inp:
-        run = pickle.load(inp)
-
     run.optimize_proteoform_subsets_2()
-
-    # ### SAVE ###
-    # with open(f"save_res_{output_prefix}.pkl", "wb") as outp:
-    #     pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
-    # with open(f"save_res_{output_prefix}.pkl", "rb") as inp:
-    #     run = pickle.load(inp)
-
-    ### Update Quatification ###
-    # run.update_proteoforms_elution_profile()
-    # run.update_proteoform_intens()
-
-    ### Print Quant results ###
-    run.update_proteoform_intens()
-    f = open(f"quant_opti_{output_prefix}.csv", "w")
-    for proteoform in run.proteoforms.values():
-        if proteoform.update_proteoform_total_intens(method="precursor") > 0:
-            f.write(
-                "".join(
-                    [
-                        str(proteoform.get_modification_brno()),
-                        ",",
-                        str(proteoform.get_peptide_sequence()),
-                        ",",
-                        str(proteoform.update_proteoform_total_intens(method="precursor")),
-                        ",",
-                        str(proteoform.update_proteoform_total_intens(method="AUC")),
-                        ",",
-                        str(proteoform.is_ambiguous()),
-                        "\n",
-                    ]
-                )
-            )
-    f.close()
-
-    pd.DataFrame(run.log).to_csv(f"log_{output_prefix}.csv", ",")
-
     run.validate_first_rank_no_id()
-
-    ### Print Quant results ###
     run.update_proteoform_intens()
-    f = open(f"quant_opti2_{output_prefix}.csv", "w")
-    for proteoform in run.proteoforms.values():
-        if proteoform.update_proteoform_total_intens(method="precursor") > 0:
-            f.write(
-                "".join(
-                    [
-                        str(proteoform.get_modification_brno()),
-                        ",",
-                        str(proteoform.get_peptide_sequence()),
-                        ",",
-                        str(proteoform.update_proteoform_total_intens(method="precursor")),
-                        ",",
-                        str(proteoform.update_proteoform_total_intens(method="AUC")),
-                        ",",
-                        str(proteoform.is_ambiguous()),
-                        "\n",
-                    ]
-                )
-            )
-    f.close()
 
-    ### SAVE ###
+    ### OUTPUT ###
     with open(f"save_res_{output_prefix}.pkl", "wb") as outp:
         pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
-    # with open(f"save_res_{output_prefix}.pkl", "rb") as inp:
-    #     run = pickle.load(inp)
+    run.result_dataframe_pfq1_format().to_csv(f"quant_{output_prefix}.csv")
+    pd.DataFrame(run.log).to_csv(f"log_{output_prefix}.csv", ",")
 
 
 if __name__ == "__main__":

@@ -1026,7 +1026,6 @@ def plotAllEnvelopes3d(minMaxMz, is_displayed):
 
     fig.update_layout(template=template, height=1000, scene=dict(zaxis=dict(range=[minMz, maxMz])))
 
-    # print(fig)
     return fig
 
 

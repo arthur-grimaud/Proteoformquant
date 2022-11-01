@@ -147,6 +147,9 @@ app.layout = html.Div(
                         ),
                     ],
                 ),
+                html.P(
+                    "Once submitting valid files should appear below. The table can be modified by clicking on a cell, this allow to difine replicate and condition per file, these are required for some of the vizualization found below. "
+                ),
                 html.Div(
                     id="upload_table_div",
                     style={"verticalAlign": "top"},

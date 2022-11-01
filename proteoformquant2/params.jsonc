@@ -1,0 +1,38 @@
+{
+// Tolerances
+"prec_mz_tol" : 1.05,  // in Da
+"frag_mz_tol" : 0.01 , // in Da
+
+// Filtering and thresholds:
+"max_rank" : 5 , // Maximum rank to be considered (1-based)
+"fdr_threshold" : 0.05 , // False-Discovery rate
+"intensity_threshold" : 100000,
+"elution_profile_score_threshold" : "None",
+
+// Optimization
+"n_iter" : 40,  // number of iteration for each peptidoform optimization
+"n_iter_valid" : 20,  // number of iteration to be considered for peptidoform validation
+
+// Starting range
+"window_size_rt" : 50,
+
+// Param of the normal distribution used for random mutation of the rt_validation_ranges
+"rd_loc" : 2 , // deviation of the mean from zero
+"rd_scale" : 2,  // spread of the distribution
+
+// Param for peptidoform validation:
+"min_ep_score_corelation" : 0.75 , // minimal score for validation
+"min_ep_score_coverage" : 0.60 , // minimal score for validation
+"max_ep_score_std" : 0.2,  // maximal standard deviation of score for "n_iter_valid"
+"max_rejected_proteo" : 2 , // number of peptidoform rejected before stopping optimization
+
+// Fragments to be considered (see options in "Utils")
+"fragments_types" : [
+    "c",
+    "zdot",
+    "z+1",
+    "z+2"
+],
+// Proteform groups:
+"min_connect" : 1
+}

@@ -112,3 +112,26 @@
 
     #     result = differential_evolution(self.__MSPD, self.__get_parameter_bounds_skewnormal(data_x, data_y), args =(model, data_x, data_y), seed=1)
     #     return result.x
+
+
+    
+f = open(f"quant_initial_{output_prefix}.csv", "w")
+    for proteoform in run.proteoforms.values():
+        if proteoform.update_proteoform_total_intens(method="precursor") > 0:
+            f.write(
+                "".join(
+                    [
+                        str(proteoform.get_modification_brno()),
+                        ",",
+                        str(proteoform.get_peptide_sequence()),
+                        ",",
+                        str(proteoform.update_proteoform_total_intens(method="precursor")),
+                        ",",
+                        str(proteoform.update_proteoform_total_intens(method="AUC")),
+                        ",",
+                        str(proteoform.is_ambiguous()),
+                        "\n",
+                    ]
+                )
+            )
+    f.close()
