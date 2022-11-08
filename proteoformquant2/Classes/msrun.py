@@ -1358,11 +1358,11 @@ class Msrun:
         modify the boundaries in self.rt_boundaries for the current subset of proteoform in self.proteoform_subset,
         proteo_to_mutate: if "all", mutate all boundaries for proteoform whose rt_boundaries are not (0,0), else specify the index of the roteoform to mutate
         """
-        # Optimization
-        self.n_iter = 20  # number of iteration for each peptidoform optimization
-        self.n_iter_valid = 10  # number of iteration to be considered for peptidoform validation
-        # Starting range
-        self.window_size_rt = 20
+        # # Optimization
+        # self.n_iter = 20  # number of iteration for each peptidoform optimization
+        # self.n_iter_valid = 10  # number of iteration to be considered for peptidoform validation
+        # # Starting range
+        # self.window_size_rt = 20
 
         if proteo_to_mutate == "all":
             proteo_indexes = list(range(len(self.proteoform_subset)))

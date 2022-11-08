@@ -10,8 +10,8 @@
 "elution_profile_score_threshold" : 0,
 
 // Optimization
-"n_iter" : 20,  // number of iteration for each peptidoform optimization
-"n_iter_valid" : 10,  // number of iteration to be considered for peptidoform validation
+"n_iter" : 40,  // number of iteration for each peptidoform optimization
+"n_iter_valid" : 20,  // number of iteration to be considered for peptidoform validation
 
 // Starting range
 "window_size_rt" : 50,
@@ -21,8 +21,8 @@
 "rd_scale" : 2,  // spread of the distribution
 
 // Param for peptidoform validation:
-"min_ep_fit" : 0.75 , // minimal score for validation
-"min_ep_cov" : 0.5 , // minimal score for validation
+"min_ep_fit" : 0.80 , // minimal score for validation
+"min_ep_cov" : 0.6 , // minimal score for validation
 "min_ep_gap" : 0.6,  // maximal standard deviation of score for "n_iter_valid"
 "max_rejected_proteo" : 2 , // number of peptidoform rejected before stopping optimization
 
