@@ -41,7 +41,7 @@ def main():
     # read parameter overwited in cmd line arguments:
     params_over = {unknwownargs[i][1:]: unknwownargs[i + 1] for i in range(0, len(unknwownargs), 2)}
     # Name of output prefix from input identification filename
-    if output_file != False:
+    if output_file != None:
         output_prefix = output_file
 
     else:

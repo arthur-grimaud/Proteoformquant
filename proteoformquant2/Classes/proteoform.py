@@ -158,6 +158,33 @@ class Proteoform:
 
         return int(sum([weights[psm.get_rank() - 1] for psm in self.get_linked_psm()]))
 
+    def get_proteoform_total_intens_r1(self, method="precursor"):
+        """Return rank 1 quantification of that proteoform"""
+
+        totalIntens = 0
+
+        for psm in self.get_validated_linked_psm():
+            if psm.rank == 1:
+                if method == "precursor":
+                    totalIntens += psm.spectrum.get_prec_intens()
+                if method == "annotated":
+                    totalIntens += psm.spectrum.get_frag_intens()
+
+        return totalIntens
+
+    def get_proteoform_total_intens_rplus(self, method="precursor"):
+        """Return rank 1 quantification of that proteoform"""
+
+        totalIntens = 0
+
+        for psm in self.get_validated_linked_psm():
+            if method == "precursor":
+                totalIntens += psm.get_prec_intens_ratio()
+            if method == "annotated":
+                totalIntens += psm.getAnnotMsmsIntensRatio()
+
+        return totalIntens
+
     def get_proteoform_total_intens(self):
         return self.totalIntens
 
