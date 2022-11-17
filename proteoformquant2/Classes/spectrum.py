@@ -34,8 +34,8 @@ class Spectrum:
             self.spectrum_title_name = identMzid["name"]
         except KeyError:
             self.spectrum_title_name = None
-        # Add spectrum experimental mz value from mzident file:
 
+        # Add spectrum experimental mz value from mzident file:
         self.experimentalMassToCharge = identMzid["SpectrumIdentificationItem"][0]["experimentalMassToCharge"]
 
         # try:

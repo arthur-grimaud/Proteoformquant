@@ -329,6 +329,35 @@ app.layout = html.Div(
             size="xl",
             id="modal",
         ),
+        # =========================================================================================================================
+        html.Div(
+            id="page_5",
+            style={
+                "width": "21cm",
+                "min-height": "29.7cm",
+                "padding": "1cm",
+                "margin": "1cm auto",
+                "border": "1px",
+                "border-radius": "5px",
+                "background": "white",
+                "box-shadow": "0 0 5px rgba(0, 0, 0, 0.1)",
+            },
+            children=[
+                html.Div(
+                    children=[
+                        html.H6("Elution map", style={"textAlign": "center"}),
+                        html.Button(
+                            "Generate",
+                            id="gen_plot_page5_btn",
+                            className="btn btn-outline-dark",
+                            n_clicks=0,
+                            style={},
+                        ),
+                        dcc.Graph(id="plot_elution_map"),
+                    ]
+                ),
+            ],
+        ),
     ],
 )
 
@@ -728,7 +757,6 @@ def popup(v1, v2, v3, clicked, is_open, children):
                                 figure=plot_psms_rank_distribution(proteoform, msruns[run_i].max_rank),
                                 id="plot_psms_rank_distribution",
                             ),
-                            html.P(str_info, style={"fontFamily": "monospace"}),
                             dcc.Graph(
                                 figure=ms2_chromatogram_plot(proteoform),
                                 id="plot_spectrum",
@@ -1141,6 +1169,39 @@ def plot_elution_profiles(proteoforms_input):
         )
     )
     fig.update_layout(template="plotly_white", height=1000)
+
+    return fig
+
+
+@app.callback(Output("plot_elution_map", "figure"), [Input("gen_plot_page2_btn", "n_clicks")])
+def plot_elution_map():
+    # avoid initial callback
+    # print(proteoforms_input)
+
+    exp = msruns[run_i]
+
+    # Instanciate figure
+    fig = go.Figure()
+    cols = constant.colors
+    cols_n = 0
+
+    fig.update_layout(
+        title=go.layout.Title(
+            font=dict(
+                family="Courier New, monospace",
+                size=10,
+            )
+        )
+    )
+    fig.update_layout(template="plotly_white", height=1000)
+
+    number_bins = 200
+
+    rt_range = exp.get_rt_range()
+    rt_step = (rt_range[1] - rt_range[0]) / number_bins
+    rt_subdiv = range(rt_range[0], rt_range[1], step=rt_step)
+
+    elution_map_df = pd.DataFrame(columns=rt_subdiv)
 
     return fig
 

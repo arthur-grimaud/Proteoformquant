@@ -55,6 +55,9 @@ def main():
 
     ### Read Data ###
     run = Msrun(run_id="1", params=params, params_over=params_over)
+    ###
+    print(run.min_spectra_subset)
+    ###
     run.read_mzid(indent_file)
     run.read_mgf(spectra_file)
 
@@ -77,11 +80,12 @@ def main():
     run.update_proteoform_intens()
     run.add_metrics_to_log(processing_step="First_rank_quantification")
 
-    ### Chimeric Spectra Quantification ###
-    run.set_proteoform_isobaric_groups()
-    run.optimize_proteoform_subsets_2()
-    run.validate_first_rank_no_id()
-    run.update_proteoform_intens()
+    if run.only_r1 == "False":
+        ### Chimeric Spectra Quantification ###
+        run.set_proteoform_isobaric_groups()
+        run.optimize_proteoform_subsets_2()
+        run.validate_first_rank_no_id()
+        run.update_proteoform_intens()
 
     ### OUTPUT ###
     with open(f"save_res_{output_prefix}.pkl", "wb") as outp:

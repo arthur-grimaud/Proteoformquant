@@ -282,11 +282,14 @@ class Msrun:
         print("---Loading identification data from: {0}---".format(self.ident_fn))
         with alive_bar(0) as bar:
             # Iterate over identificationresults in mzid and create Spectrum objects for each
+            print(mzidObj)
+
             for identMzid in mzidObj:
                 self.spectra[identMzid["spectrumID"]] = Spectrum(
                     spectrumID=identMzid["spectrumID"], identMzid=identMzid, max_rank=self.max_rank
                 )
                 bar()
+
         pass
 
     def read_mgf(self, spectra_file):
@@ -1128,7 +1131,7 @@ class Msrun:
                 self.spectra_subset = []  # Spectra objects in the subset
                 self.rt_boundaries = []  # retention time validation range for the proteoforms in the subset
 
-                # Define proteoform subset and spectra subset, and list of RTs:
+                # Define proteoform subset, spectra subset, and list of RTs:
                 for proforma in group:
                     proteoform = self.proteoforms[proforma]
                     self.proteoform_subset.append(proteoform)
@@ -1168,13 +1171,13 @@ class Msrun:
                 self.update_proteoforms_elution_profile_subset(self.proteoform_subset)
 
                 # ---------
-                # self.plot_elution_profiles(
-                #     self.proteoform_subset, rt_values=self.all_rts, count=grp, plot_all=True
-                # ).write_image("images/fig_" + f"{grp:03}" + "_00_0000A" + ".png")
+                self.plot_elution_profiles(
+                    self.proteoform_subset, rt_values=self.all_rts, count=grp, plot_all=True
+                ).write_image("images/fig_" + f"{grp:03}" + "_00_0000A" + ".png")
                 # --------
 
                 ###Stops here if not enough Spectra###
-                if len(self.spectra_subset) > 5:
+                if len(self.spectra_subset) > self.min_spectra_subset:
 
                     # Initialize retention time boundaries from first rank EPs
                     for p in range(len(self.proteoform_subset)):
@@ -1187,9 +1190,9 @@ class Msrun:
                     self.update_proteoforms_elution_profile_subset(self.proteoform_subset)
 
                     # ---------
-                    # self.plot_elution_profiles(
-                    #     self.proteoform_subset, rt_values=self.all_rts, count=grp
-                    # ).write_image("images/fig_" + f"{grp:03}" + "_00_0000B" + ".png")
+                    self.plot_elution_profiles(
+                        self.proteoform_subset, rt_values=self.all_rts, count=grp
+                    ).write_image("images/fig_" + f"{grp:03}" + "_00_0000B" + ".png")
                     # ---------
 
                     # Update retention time boundaries
@@ -1202,9 +1205,9 @@ class Msrun:
                     self.update_proteoforms_elution_profile_subset(self.proteoform_subset)
 
                     # ---------
-                    # self.plot_elution_profiles(
-                    #     self.proteoform_subset, rt_values=self.all_rts, count=grp
-                    # ).write_image("images/fig_" + f"{grp:03}" + "_00_0000C" + ".png")
+                    self.plot_elution_profiles(
+                        self.proteoform_subset, rt_values=self.all_rts, count=grp
+                    ).write_image("images/fig_" + f"{grp:03}" + "_00_0000C" + ".png")
                     # ---------
 
                     # for testing:
@@ -1231,12 +1234,13 @@ class Msrun:
                     # Update validation from elution ranges
                     self.update_proteoform_subset_validation(self.proteoform_subset, self.rt_boundaries)
                     self.update_psms_ratio_subset(self.spectra_subset)
+
                     # self.update_proteoforms_elution_profile_subset(self.proteoform_subset)
 
                     # ---------
-                    # self.plot_elution_profiles(
-                    #     self.proteoform_subset, rt_values=self.all_rts, count=grp
-                    # ).write_image("images/fig_" + f"{grp:03}" + "_00_0000D" + ".png")
+                    self.plot_elution_profiles(
+                        self.proteoform_subset, rt_values=self.all_rts, count=grp
+                    ).write_image("images/fig_" + f"{grp:03}" + "_00_0000D" + ".png")
                     # ---------
 
                     # look for proteoform "hidden in higher ranks"
@@ -1251,6 +1255,8 @@ class Msrun:
                                 rt_window[0] = min(self.all_rts, key=lambda x: abs(x - rt_window[0]))
                                 rt_window[1] = min(self.all_rts, key=lambda x: abs(x - rt_window[1]))
                                 self.rt_boundaries[p] = rt_window
+
+                                # optimization
                                 self.mutate_rt_boundaries(
                                     proteo_to_mutate=p, grp=grp, iter_try=n_proteo_excluded
                                 )
@@ -1296,11 +1302,10 @@ class Msrun:
                                         break
 
                     # ---------
-                    # self.plot_elution_profiles(
-                    #     self.proteoform_subset, rt_values=self.all_rts, count=grp
-                    # ).write_image("images/fig_" + f"{grp:03}" + "_99_999" + ".png")
-
-                # # ---------
+                    self.plot_elution_profiles(
+                        self.proteoform_subset, rt_values=self.all_rts, count=grp
+                    ).write_image("images/fig_" + f"{grp:03}" + "_99_999" + ".png")
+                    # ---------
                 grp += 1
                 bar()
 
@@ -1394,6 +1399,7 @@ class Msrun:
                     index_rt_min_start = min(
                         enumerate(self.all_rts), key=lambda x: abs(x[1] - self.rt_boundaries[p][0])
                     )[0]
+
                     # index_rt_min_start = self.all_rts.index(self.rt_boundaries[p][0])
                     new_index_rt_min = index_rt_min_start + modifier_min
                     if new_index_rt_min >= 0 and new_index_rt_min < len(self.all_rts):
@@ -1403,10 +1409,12 @@ class Msrun:
                     max_spec_rt, max_ep_rt = proteo.get_min_max_rt_range_shift(
                         side="max"
                     )  # Determine if increase or decrease are most likely
+
                     if max_spec_rt > max_ep_rt:  # if spectra lower than modeled ep
                         modifier_max = int(
                             np.round(np.random.normal(loc=-self.rd_loc, scale=self.rd_scale, size=1)[0])
                         )
+
                     else:
                         modifier_max = int(
                             np.round(np.random.normal(loc=self.rd_loc, scale=self.rd_scale, size=1)[0])
@@ -1425,12 +1433,12 @@ class Msrun:
                     self.update_psms_ratio_subset(self.spectra_subset)
                     self.update_proteoforms_elution_profile_subset(self.proteoform_subset)
 
-                    # fig = self.plot_elution_profiles(
-                    #     self.proteoform_subset, rt_values=self.all_rts, count=iter
-                    # )
-                    # fig.write_image(
-                    #     "images/fig_" + f"{grp:03}" + "_" + f"{iter_try:03}" + "_" + f"{iter+1:03}" + ".png"
-                    # )
+                    fig = self.plot_elution_profiles(
+                        self.proteoform_subset, rt_values=self.all_rts, count=iter
+                    )
+                    fig.write_image(
+                        "images/fig_" + f"{grp:03}" + "_" + f"{iter_try:03}" + "_" + f"{iter+1:03}" + ".png"
+                    )
                     x += 1
 
     # ------------------------------- TEMP VIZ FUNC ------------------------------ #

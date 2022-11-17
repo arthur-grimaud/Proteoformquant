@@ -140,7 +140,7 @@ class ElutionProfile:
 
         return (area_95, fx1_fx2_equal)
 
-    def get_bounds_area(self, area_percent=0.95):
+    def get_bounds_area(self, area_percent=0.90):
 
         m, s, a, k = self.get_parameters_fitted()
 
@@ -150,7 +150,7 @@ class ElutionProfile:
             self.bounds_area_equation,
             [m, m],
             args=(m, s, a, k, area_percent),
-            factor=0.01,  # TODO factor probably increase time maybe mplemented consecutive search with lower factor only if minima isn't reached
+            factor=0.2,  # TODO factor probably increase time maybe implement consecutive search with lower factor only if minima isn't reached
         )
 
         # print("m, s, a, k ", m, s, a, k)
