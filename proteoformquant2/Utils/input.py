@@ -76,7 +76,7 @@ def checkArgs(args):
     print(args)
     print("arg output: ", args.output_dir)
 
-    if args.output_dir != "":
+    if args.output_dir != "" and args.output_dir != None:
         if not os.path.exists(args.output_dir):
             os.makedirs(args.output_dir)
 

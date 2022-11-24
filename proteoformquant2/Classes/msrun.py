@@ -1176,9 +1176,9 @@ class Msrun:
                 self.update_proteoforms_elution_profile_subset(self.proteoform_subset)
 
                 # ---------
-                self.plot_elution_profiles(
-                    self.proteoform_subset, rt_values=self.all_rts, count=grp, plot_all=True
-                ).write_image("images/fig_" + f"{grp:03}" + "_00_0000A" + ".png")
+                # self.plot_elution_profiles(
+                #     self.proteoform_subset, rt_values=self.all_rts, count=grp, plot_all=True
+                # ).write_image("images/fig_" + f"{grp:03}" + "_00_0000A" + ".png")
                 # --------
 
                 # Initialize retention time boundaries from first rank EPs
@@ -1192,9 +1192,9 @@ class Msrun:
                 self.update_proteoforms_elution_profile_subset(self.proteoform_subset)
 
                 # ---------
-                self.plot_elution_profiles(
-                    self.proteoform_subset, rt_values=self.all_rts, count=grp
-                ).write_image("images/fig_" + f"{grp:03}" + "_00_0000B" + ".png")
+                # self.plot_elution_profiles(
+                #     self.proteoform_subset, rt_values=self.all_rts, count=grp
+                # ).write_image("images/fig_" + f"{grp:03}" + "_00_0000B" + ".png")
                 # ---------
 
                 # Update retention time boundaries
@@ -1207,9 +1207,9 @@ class Msrun:
                 self.update_proteoforms_elution_profile_subset(self.proteoform_subset)
 
                 # ---------
-                self.plot_elution_profiles(
-                    self.proteoform_subset, rt_values=self.all_rts, count=grp
-                ).write_image("images/fig_" + f"{grp:03}" + "_00_0000C" + ".png")
+                # self.plot_elution_profiles(
+                #     self.proteoform_subset, rt_values=self.all_rts, count=grp
+                # ).write_image("images/fig_" + f"{grp:03}" + "_00_0000C" + ".png")
                 # ---------
 
                 # for testing:
@@ -1239,9 +1239,9 @@ class Msrun:
                 # self.update_proteoforms_elution_profile_subset(self.proteoform_subset)
 
                 # ---------
-                self.plot_elution_profiles(
-                    self.proteoform_subset, rt_values=self.all_rts, count=grp
-                ).write_image("images/fig_" + f"{grp:03}" + "_00_0000D" + ".png")
+                # self.plot_elution_profiles(
+                #     self.proteoform_subset, rt_values=self.all_rts, count=grp
+                # ).write_image("images/fig_" + f"{grp:03}" + "_00_0000D" + ".png")
                 # ---------
 
                 ##Stops here if not enough Spectra###
@@ -1329,9 +1329,9 @@ class Msrun:
                         self.proteoform_subset[p].envelope = None
 
                 # ---------
-                self.plot_elution_profiles(
-                    self.proteoform_subset, rt_values=self.all_rts, count=grp
-                ).write_image("images/fig_" + f"{grp:03}" + "_99_999" + ".png")
+                # self.plot_elution_profiles(
+                #     self.proteoform_subset, rt_values=self.all_rts, count=grp
+                # ).write_image("images/fig_" + f"{grp:03}" + "_99_999" + ".png")
                 # ---------
                 grp += 1
                 bar()
@@ -1460,12 +1460,12 @@ class Msrun:
                     self.update_psms_ratio_subset(self.spectra_subset)
                     self.update_proteoforms_elution_profile_subset(self.proteoform_subset)
 
-                    fig = self.plot_elution_profiles(
-                        self.proteoform_subset, rt_values=self.all_rts, count=iter
-                    )
-                    fig.write_image(
-                        "images/fig_" + f"{grp:03}" + "_" + f"{iter_try:03}" + "_" + f"{iter+1:03}" + ".png"
-                    )
+                    # fig = self.plot_elution_profiles(
+                    #     self.proteoform_subset, rt_values=self.all_rts, count=iter
+                    # )
+                    # fig.write_image(
+                    #     "images/fig_" + f"{grp:03}" + "_" + f"{iter_try:03}" + "_" + f"{iter+1:03}" + ".png"
+                    # )
                     x += 1
 
     # ------------------------------- TEMP VIZ FUNC ------------------------------ #
