@@ -56,8 +56,6 @@ def main():
     ### Read Data ###
     run = Msrun(run_id="1", params=params, params_over=params_over)
     ###
-    print(run.min_spectra_subset)
-    ###
     run.read_mzid(indent_file)
     run.read_mgf(spectra_file)
 
@@ -69,7 +67,7 @@ def main():
 
     ### Filtering Data ###
     run.fdr_filtering(decoy_tag="decoy_", score_name="Amanda:AmandaScore")
-    run.filter_proteform_low_count(min_n_psm=2)
+    run.filter_proteform_low_count()
 
     ### Prepare Data ###
     run.scale_precursor_intensities()
@@ -83,15 +81,15 @@ def main():
     if run.only_r1 == "False":
         ### Chimeric Spectra Quantification ###
         run.set_proteoform_isobaric_groups()
-        run.optimize_proteoform_subsets_2()
+        run.optimize_proteoform_subsets()
         run.validate_first_rank_no_id()
         run.update_proteoform_intens()
 
     ### OUTPUT ###
-    with open(f"save_res_{output_prefix}.pkl", "wb") as outp:
+    with open(f"{output_dir}/save_res_{output_prefix}.pkl", "wb") as outp:
         pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
-    run.result_dataframe_pfq1_format().to_csv(f"quant_{output_prefix}.csv")
-    pd.DataFrame(run.log).to_csv(f"log_{output_prefix}.csv", ",")
+    run.result_dataframe_pfq1_format().to_csv(f"{output_dir}/quant_{output_prefix}.csv")
+    pd.DataFrame(run.log).to_csv(f"{output_dir}/log_{output_prefix}.csv", ",")
 
 
 if __name__ == "__main__":

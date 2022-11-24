@@ -748,7 +748,7 @@ class Msrun:
                 if psm.get_rank() != 1:
                     psm.is_validated = False
 
-    def filter_proteform_low_count(self, min_n_psm):
+    def filter_proteform_low_count(self):
 
         """Removes Proteoform object if the number of associated PSM is inferioir to min_n_psm
 
@@ -762,7 +762,7 @@ class Msrun:
         n_proteo = 0
         proteoform_to_rm = []
         for proteoform in self.proteoforms.values():
-            if len(proteoform.get_linked_psm()) < min_n_psm:
+            if len(proteoform.get_linked_psm()) < self.min_n_psm:
                 n_proteo += 1
                 proteoform_to_rm.append(proteoform)
 
@@ -984,7 +984,7 @@ class Msrun:
 
     def get_coverage_score(self, proteoform_subset):
 
-        coverage = [proteoform.get_coverage_2() for proteoform in proteoform_subset]
+        coverage = [proteoform.get_coverage() for proteoform in proteoform_subset]
         # print(coverage)
         coverage = [i for i in coverage if i]  # remove None values
         if len(coverage) == 0:
@@ -1112,7 +1112,7 @@ class Msrun:
                         psm.is_validated = False
                         uv += 1
 
-    def optimize_proteoform_subsets_2(self):
+    def optimize_proteoform_subsets(self):
 
         # # Param for peptidoform validation:
         # self.min_ep_fit = 0.75  # minimal curve fitting score for validation
@@ -1150,7 +1150,7 @@ class Msrun:
                 self.proteoform_subset = [list(tuple)[-1] for tuple in zipped_proteo]
 
                 # --------------
-                print("Processing group:")
+                print("-------Processing group-----")
                 for p_n in range(len(self.proteoform_subset)):
                     print(
                         self.proteoform_subset[p_n].get_modification_brno(),
@@ -1162,7 +1162,12 @@ class Msrun:
                         self.proteoform_subset[p_n].get_number_linked_psm_Rx(rank=2),
                         " ",
                         self.proteoform_subset[p_n].get_number_linked_psm_Rx(rank=3),
+                        " ",
+                        self.proteoform_subset[p_n].get_number_linked_psm_Rx(rank=4),
+                        " ",
+                        self.proteoform_subset[p_n].get_number_linked_psm_Rx(rank=5),
                     )
+
                 # ---------------
 
                 # Validate first rank:
@@ -1176,72 +1181,71 @@ class Msrun:
                 ).write_image("images/fig_" + f"{grp:03}" + "_00_0000A" + ".png")
                 # --------
 
-                ###Stops here if not enough Spectra###
+                # Initialize retention time boundaries from first rank EPs
+                for p in range(len(self.proteoform_subset)):
+                    self.rt_boundaries.append([0, 0])
+                    self.rt_boundaries[p] = self.proteoform_subset[p].get_boundaries_of_ep()
+
+                # Update validation from elution ranges
+                self.update_proteoform_subset_validation(self.proteoform_subset, self.rt_boundaries)
+                self.update_psms_ratio_subset(self.spectra_subset)
+                self.update_proteoforms_elution_profile_subset(self.proteoform_subset)
+
+                # ---------
+                self.plot_elution_profiles(
+                    self.proteoform_subset, rt_values=self.all_rts, count=grp
+                ).write_image("images/fig_" + f"{grp:03}" + "_00_0000B" + ".png")
+                # ---------
+
+                # Update retention time boundaries
+                for p in range(len(self.proteoform_subset)):
+                    self.rt_boundaries[p] = self.proteoform_subset[p].get_boundaries_of_ep()
+
+                # Update validation from elution ranges
+                self.update_proteoform_subset_validation(self.proteoform_subset, self.rt_boundaries)
+                self.update_psms_ratio_subset(self.spectra_subset)
+                self.update_proteoforms_elution_profile_subset(self.proteoform_subset)
+
+                # ---------
+                self.plot_elution_profiles(
+                    self.proteoform_subset, rt_values=self.all_rts, count=grp
+                ).write_image("images/fig_" + f"{grp:03}" + "_00_0000C" + ".png")
+                # ---------
+
+                # for testing:
+                # for proteo in self.proteoform_subset:
+                #     if proteo.get_elution_profile() != None:
+                #         proteo.gap_score = proteo.get_gap_in_validated_spectra(rts=self.all_rts)
+
+                # Unvalidate proteoform with poor elution profile scores
+                for p in range(len(self.proteoform_subset)):
+                    proteo = self.proteoform_subset[p]
+                    conditions = [
+                        proteo.get_fit_score() > self.min_ep_fit,
+                        proteo.get_coverage() > self.min_ep_cov,
+                        # proteo.get_gap_in_validated_spectra(rts=self.all_rts) > self.min_ep_gap,
+                    ]
+                    if (
+                        sum(conditions) < 2
+                        or proteo.get_elution_profile() == None
+                        or proteo.get_elution_profile().is_modeled() == False
+                    ):
+                        self.rt_boundaries[p] = [0, 0]
+                        self.proteoform_subset[p].envelope = None
+
+                # Update validation from elution ranges
+                self.update_proteoform_subset_validation(self.proteoform_subset, self.rt_boundaries)
+                self.update_psms_ratio_subset(self.spectra_subset)
+                # self.update_proteoforms_elution_profile_subset(self.proteoform_subset)
+
+                # ---------
+                self.plot_elution_profiles(
+                    self.proteoform_subset, rt_values=self.all_rts, count=grp
+                ).write_image("images/fig_" + f"{grp:03}" + "_00_0000D" + ".png")
+                # ---------
+
+                ##Stops here if not enough Spectra###
                 if len(self.spectra_subset) > self.min_spectra_subset:
-
-                    # Initialize retention time boundaries from first rank EPs
-                    for p in range(len(self.proteoform_subset)):
-                        self.rt_boundaries.append([0, 0])
-                        self.rt_boundaries[p] = self.proteoform_subset[p].get_boundaries_of_ep()
-
-                    # Update validation from elution ranges
-                    self.update_proteoform_subset_validation(self.proteoform_subset, self.rt_boundaries)
-                    self.update_psms_ratio_subset(self.spectra_subset)
-                    self.update_proteoforms_elution_profile_subset(self.proteoform_subset)
-
-                    # ---------
-                    self.plot_elution_profiles(
-                        self.proteoform_subset, rt_values=self.all_rts, count=grp
-                    ).write_image("images/fig_" + f"{grp:03}" + "_00_0000B" + ".png")
-                    # ---------
-
-                    # Update retention time boundaries
-                    for p in range(len(self.proteoform_subset)):
-                        self.rt_boundaries[p] = self.proteoform_subset[p].get_boundaries_of_ep()
-
-                    # Update validation from elution ranges
-                    self.update_proteoform_subset_validation(self.proteoform_subset, self.rt_boundaries)
-                    self.update_psms_ratio_subset(self.spectra_subset)
-                    self.update_proteoforms_elution_profile_subset(self.proteoform_subset)
-
-                    # ---------
-                    self.plot_elution_profiles(
-                        self.proteoform_subset, rt_values=self.all_rts, count=grp
-                    ).write_image("images/fig_" + f"{grp:03}" + "_00_0000C" + ".png")
-                    # ---------
-
-                    # for testing:
-                    for proteo in self.proteoform_subset:
-                        if proteo.get_elution_profile() != None:
-                            proteo.gap_score = proteo.get_gap_in_validated_spectra(rts=self.all_rts)
-
-                    # Unvalidate proteoform with poor elution profile scores
-                    for p in range(len(self.proteoform_subset)):
-                        proteo = self.proteoform_subset[p]
-                        conditions = [
-                            proteo.get_fit_score() > self.min_ep_fit,
-                            proteo.get_coverage_2() > self.min_ep_cov,
-                            proteo.get_gap_in_validated_spectra(rts=self.all_rts) > self.min_ep_gap,
-                        ]
-                        if (
-                            sum(conditions) < 2
-                            or proteo.get_elution_profile() == None
-                            or proteo.get_elution_profile().is_modeled() == False
-                        ):
-                            self.rt_boundaries[p] = [0, 0]
-                            self.proteoform_subset[p].envelope = None
-
-                    # Update validation from elution ranges
-                    self.update_proteoform_subset_validation(self.proteoform_subset, self.rt_boundaries)
-                    self.update_psms_ratio_subset(self.spectra_subset)
-
-                    # self.update_proteoforms_elution_profile_subset(self.proteoform_subset)
-
-                    # ---------
-                    self.plot_elution_profiles(
-                        self.proteoform_subset, rt_values=self.all_rts, count=grp
-                    ).write_image("images/fig_" + f"{grp:03}" + "_00_0000D" + ".png")
-                    # ---------
 
                     # look for proteoform "hidden in higher ranks"
                     n_proteo_excluded = 0
@@ -1269,25 +1273,25 @@ class Msrun:
 
                                     conditions = [
                                         proteo.get_fit_score() > self.min_ep_fit,
-                                        proteo.get_coverage_2() > self.min_ep_cov,
-                                        proteo.get_gap_in_validated_spectra(rts=self.all_rts)
-                                        > self.min_ep_gap,
+                                        proteo.get_coverage() > self.min_ep_cov,
+                                        # proteo.get_gap_in_validated_spectra(rts=self.all_rts)
+                                        # > self.min_ep_gap,
                                     ]
 
                                     print(
                                         proteo.modificationBrno,
                                         proteo.get_fit_score(),
-                                        proteo.get_coverage_2(),
+                                        proteo.get_coverage(),
                                         proteo.get_gap_in_validated_spectra(rts=self.all_rts),
                                     )
 
                                     if (  # if score of one proteo drops below thresholds the newly added proteoform is unvalidated
-                                        sum(conditions) < 3
+                                        sum(conditions) < 2
                                         or proteo.get_elution_profile() == None
                                         or proteo.get_elution_profile().is_modeled() == False
                                     ):
                                         print(
-                                            f"proteoform {self.proteoform_subset[p].get_modification_brno()} unvalidated, cor:{self.proteoform_subset[p].get_fit_score()}, cov:{ self.proteoform_subset[p].get_coverage_2()}"
+                                            f"proteoform {self.proteoform_subset[p].get_modification_brno()} unvalidated, cor:{self.proteoform_subset[p].get_fit_score()}, cov:{ self.proteoform_subset[p].get_coverage()}"
                                         )
                                         self.rt_boundaries[p] = [0, 0]
                                         self.proteoform_subset[p].envelope = None
@@ -1301,35 +1305,58 @@ class Msrun:
 
                                         break
 
-                    # ---------
-                    self.plot_elution_profiles(
-                        self.proteoform_subset, rt_values=self.all_rts, count=grp
-                    ).write_image("images/fig_" + f"{grp:03}" + "_99_999" + ".png")
-                    # ---------
+                # Unvalidate proteoform with poor elution profile scores
+                for p in range(len(self.proteoform_subset)):
+                    proteo = self.proteoform_subset[p]
+                    conditions = [
+                        proteo.get_fit_score() > self.min_ep_fit,
+                        proteo.get_coverage() > self.min_ep_cov,
+                        # proteo.get_gap_in_validated_spectra(rts=self.all_rts) > self.min_ep_gap,
+                    ]
+                    if (
+                        sum(conditions) < 2
+                        or proteo.get_elution_profile() == None
+                        or proteo.get_elution_profile().is_modeled() == False
+                    ):
+                        print("final unvalidated proteo")
+                        print(
+                            proteo.modificationBrno,
+                            proteo.get_fit_score(),
+                            proteo.get_coverage(),
+                            proteo.get_gap_in_validated_spectra(rts=self.all_rts),
+                        )
+                        self.rt_boundaries[p] = [0, 0]
+                        self.proteoform_subset[p].envelope = None
+
+                # ---------
+                self.plot_elution_profiles(
+                    self.proteoform_subset, rt_values=self.all_rts, count=grp
+                ).write_image("images/fig_" + f"{grp:03}" + "_99_999" + ".png")
+                # ---------
                 grp += 1
                 bar()
 
         # TESTS
-        # file = open(f"score_param_ep.csv", "w")
-        # for proteo in self.proteoforms.values():
-        #     if proteo.get_elution_profile() != None:
-        #         ep = proteo.get_elution_profile()
-        #         file.write(
-        #             ",".join(
-        #                 [
-        #                     str(proteo.peptideSequence),
-        #                     str(proteo.modificationBrno),
-        #                     str(proteo.get_fit_score()),
-        #                     str(proteo.get_coverage_2()),
-        #                     str(proteo.gap_score),
-        #                     str(ep.param_fitted[1]),
-        #                     str(ep.param_fitted[2]),
-        #                     str(ep.param_fitted[3]),
-        #                 ]
-        #             )
-        #         )
-        #         file.write("\n")
-        # file.close()
+        file = open(f"score_param_ep.csv", "w")
+        for proteo in self.proteoforms.values():
+            if proteo.get_elution_profile() != None:
+                ep = proteo.get_elution_profile()
+                file.write(
+                    ",".join(
+                        [
+                            str(proteo.peptideSequence),
+                            str(proteo.modificationBrno),
+                            str(proteo.get_fit_score()),
+                            str(proteo.get_coverage()),
+                            # str(proteo.gap_score),
+                            str(ep.param_fitted[1]),
+                            str(ep.param_fitted[2]),
+                            str(ep.param_fitted[3]),
+                        ]
+                    )
+                )
+                file.write("\n")
+        file.close()
 
     def validate_first_rank_no_id(self):
         """validate the first rank psm of all spectra without any id"""
@@ -1513,7 +1540,15 @@ class Msrun:
                     go.Scatter(
                         x=[min_bound_rt],
                         y=[0 - (cols_n + 1) * 2],
-                        text=[proteo.get_modification_brno()],
+                        text=[
+                            proteo.get_modification_brno()
+                            + " "
+                            + str(round(proteo.get_fit_score(), 2))
+                            + " "
+                            + str(round(proteo.get_coverage(), 2))
+                            + " "
+                            + str(round(proteo.score_gap, 2))
+                        ],
                         mode="text",
                         textfont_size=25,
                     )

@@ -161,7 +161,7 @@ class ElutionProfile:
         return self.get_auc(-10000, 20000)
 
     def get_x_at_max_y(self):
-        """Returns the x value for the peak of the elution profile  COULD EXIST A MATHEMATICAL SOLUTION"""
+        """Returns the x value for the peak of the elution profile COULD EXIST A MATHEMATICAL SOLUTION"""
         m = self.get_elution_profile_param_m("fitted")
         k = self.get_elution_profile_param_k("fitted")
 
@@ -368,7 +368,6 @@ class ElutionProfile:
             return 0
 
         if math.isnan(cor_results.correlation) or cor_results.correlation in ["nan", np.nan, math.nan]:
-            print("is nan")
             return 0
 
         return cor_results.correlation

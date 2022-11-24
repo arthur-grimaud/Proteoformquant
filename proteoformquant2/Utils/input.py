@@ -73,10 +73,15 @@ def checkArgs(args):
     # if args.dbse not in ("mascot", "comet"):
     #     warning("DBSE name: " + args.dbse + ", is not valid")
     #     return
+    print(args)
+    print("arg output: ", args.output_dir)
 
-    # outputBase = os.path.dirname(output_dir)
-    # if outputBase != '' and not os.path.exists(outputBase):
-    #     print "Output directory doesn't exist, making output dirs: %s" % (outputBase)
-    #     os.makedirs(outputBase)
+    if args.output_dir != "":
+        if not os.path.exists(args.output_dir):
+            os.makedirs(args.output_dir)
+
+        args.output_dir = os.path.abspath(args.output_dir)
+
+    print("arg output: ", args.output_dir)
 
     return args

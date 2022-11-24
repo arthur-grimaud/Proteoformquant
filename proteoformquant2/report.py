@@ -254,7 +254,7 @@ def popup(v1, v2, v3, v4, v5, clicked, is_open, children):
             str_info.append(proteoform.get_fit_score())
             str_info.append(html.Br())
             str_info.append("proteoform EP coverage")
-            str_info.append(proteoform.get_coverage_2())
+            str_info.append(proteoform.get_coverage())
             str_info.append(html.Br())
             str_info.append("proteoform EP balance")
             str_info.append(proteoform.get_ratio_left_right())

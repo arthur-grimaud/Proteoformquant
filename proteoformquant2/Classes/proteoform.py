@@ -1,11 +1,13 @@
-from pickle import TRUE
-from pyteomics import mass
 from logging import warning
+from pickle import TRUE
+from statistics import mean
+
+import numpy as np
 import plotly.graph_objs as go
 from Classes.elution_profile import ElutionProfile
+from pyteomics import mass
 from Utils import constant
-from statistics import mean
-import numpy as np
+import math
 
 
 class Proteoform:
@@ -47,8 +49,8 @@ class Proteoform:
         self.min_bound_rt = None
         self.max_bound_rt = None
 
-        # Scores
-        self.gap_score = 0
+        #
+        self.score_gap = 0
 
     # Getters
 
@@ -213,60 +215,120 @@ class Proteoform:
 
         return self.get_elution_profile().score_fitted
 
-    def get_coverage_2(self):
+    # def get_coverage(self):
 
-        if (
-            self.get_number_validated_linked_psm() == 0
-        ):  # If there is no validated PSM do not return the score
-            return 0
+    #     if self.get_elution_profile() == None or self.get_elution_profile().is_parameters_fitted() == False:
+    #         return 0  # If no fit is found return worst score
 
-        if self.get_number_validated_linked_psm() < 3:  # Not enough PSM return worst score
-            return 0
+    #     range_rt = self.get_elution_profile().get_bounds_area()
+    #     psms_rt = [psm.spectrum.get_rt() for psm in self.get_validated_linked_psm()]
+    #     psms_rt = [rt for rt in psms_rt if range_rt[0] < rt and rt < range_rt[1]]
+    #     # n_quantiles = math.ceil(len(psms_rt) / 2)
+    #     n_quantiles = 10
 
-        if self.get_elution_profile() == None:
+    #     if len(psms_rt) < 3:  # Not enough PSM return worst score
+    #         return 0
+
+    #     if range_rt[0] == range_rt[1]:
+    #         return 0
+
+    #     intervals_rt = np.linspace(range_rt[0], range_rt[1], n_quantiles + 1)
+
+    #     intervals_count = [0] * n_quantiles
+
+    #     for i in range(len(intervals_rt) - 1):
+
+    #         n_psm_in_interval = len(
+    #             [rt for rt in psms_rt if intervals_rt[i] <= rt and rt < intervals_rt[i + 1]]
+    #         )
+
+    #         intervals_count[i] = n_psm_in_interval
+
+    #     return len([i for i in intervals_count if i > 0]) / n_quantiles
+
+    def get_coverage(self):
+
+        print(self.modificationBrno)
+        if self.get_elution_profile() == None or self.get_elution_profile().is_parameters_fitted() == False:
             return 0  # If no fit is found return worst score
 
-        if self.get_elution_profile().is_parameters_fitted() == False:
-            return 0  # If no fit is found return worst score
-
-        psms_rt = [psm.spectrum.get_rt() for psm in self.get_validated_linked_psm()]
         range_rt = self.get_elution_profile().get_bounds_area()
-        n_quantiles = len(psms_rt) - 1
+        psms_rt = [psm.spectrum.get_rt() for psm in self.get_validated_linked_psm()]
+        psms_rt = [rt for rt in psms_rt if range_rt[0] < rt and rt < range_rt[1]]
+        psms_rt = sorted(psms_rt)
 
-        if range_rt[0] == range_rt[1]:
+        if len(psms_rt) < 3:  # Not enough PSM return worst score
+            return 0
+        if range_rt[1] - range_rt[0] <= 0:
             return 0
 
-        intervals_rt = np.linspace(range_rt[0], range_rt[1], n_quantiles + 1)
+        seg_size = (range_rt[1] - range_rt[0]) / len(psms_rt)
+        segments = [(x - (seg_size / 2), x + (seg_size / 2)) for x in psms_rt]
 
-        intervals_count = [0] * n_quantiles
+        print(range_rt, segments)
 
-        for i in range(len(intervals_rt) - 1):
+        totalInterval = 0
 
-            n_psm_in_interval = len(
-                [rt for rt in psms_rt if intervals_rt[i] <= rt and rt < intervals_rt[i + 1]]
-            )
+        for i in range(len(psms_rt)):
+            currentIntrval = segments[i][1] - segments[i][0]
 
-            intervals_count[i] = n_psm_in_interval
+            if i == 0:
+                if segments[i][0] < range_rt[0]:
+                    differnceFromPrevious = range_rt[0] - segments[i][0]
+                else:
+                    differnceFromPrevious = 0
 
-        return len([i for i in intervals_count if i > 0]) / n_quantiles
+            else:
+                if segments[i][0] < segments[i - 1][1]:
+                    differnceFromPrevious = segments[i - 1][1] - segments[i][0]
+                else:
+                    differnceFromPrevious = 0
+
+            totalInterval += currentIntrval - differnceFromPrevious
+
+            print(differnceFromPrevious, end="  ")
+
+            if i == len(psms_rt):
+                if range_rt[1] < segments[i][1]:
+                    differnceFromPrevious = segments[i][1] - range_rt[1]
+                    totalInterval += currentIntrval - differnceFromPrevious
+
+                    print(differnceFromPrevious)
+
+        print(totalInterval / (range_rt[1] - range_rt[0]))
+        return totalInterval / (range_rt[1] - range_rt[0])
 
     def get_gap_in_validated_spectra(self, rts):
+        """Returns the "gap score" which indicates the proportion of spectra within the elution range of the proteoform
+        that are not assigned to that proteoform when they would be expected to be"""
+
+        if self.get_elution_profile() == None or self.get_elution_profile().is_parameters_fitted() == False:
+            return 0
+
+        range_rt = self.get_elution_profile().get_bounds_area()
+
+        psms_rt = [psm.spectrum.get_rt() for psm in self.get_validated_linked_psm()]
+        psms_rt = [rt for rt in psms_rt if range_rt[0] < rt and rt < range_rt[1]]
 
         v_proteo = self.get_number_validated_linked_psm()
-
         v_subset = 0
 
-        # # print("n linked psms: ", len(proteoform.get_linked_psm()))
-        # for psm in self.get_linked_psm():
-        #     if psm.spectrum.get_rt() > self.min_bound_rt and psm.spectrum.get_rt() < self.max_bound_rt:
-        #         v_proteo += 1
+        if self.get_elution_profile() != None:
+            range_rt = self.get_elution_profile().get_bounds_area()
+        else:
+            self.score_gap = 0
+            return 0
+
         for rt in rts:
-            if rt > self.min_bound_rt and rt < self.max_bound_rt:
+            if range_rt[0] < rt and rt < range_rt[1]:
                 v_subset += 1
 
         if v_subset != 0:
+            self.score_gap = v_proteo / v_subset
             return v_proteo / v_subset
         else:
+            print("vsubset zero length")
+            self.score_gap = 0
             return 0
 
     def get_min_max_rt_range_shift(self, side):

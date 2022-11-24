@@ -735,17 +735,15 @@ def popup(v1, v2, v3, clicked, is_open, children):
                 f"This proteoform has been identified in {len(proteoform.get_linked_psm())} spectra"
             )
             str_info.append(html.Br())
-            str_info.append("proteoform EP fit score")
+            str_info.append("proteoform EP fit score:  ")
             str_info.append(proteoform.get_fit_score())
             str_info.append(html.Br())
-            str_info.append("proteoform EP coverage")
-            str_info.append(proteoform.get_coverage_2())
+            str_info.append("proteoform EP coverage:  ")
+            str_info.append(proteoform.get_coverage())
             str_info.append(html.Br())
-            str_info.append("proteoform EP balance")
-            str_info.append(proteoform.get_ratio_left_right())
-            str_info.append("proteoform gap")
+            str_info.append("proteoform gap:  ")
+            str_info.append(proteoform.score_gap)
             str_info.append(html.Br())
-            str_info.append(proteoform.gap_score)
 
             return [
                 dbc.ModalHeader("Proteoform"),
