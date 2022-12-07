@@ -140,9 +140,9 @@ class ElutionProfile:
 
         return (area_95, fx1_fx2_equal)
 
-    def get_bounds_area(self, area_percent=0.90):
+    def get_bounds_area(self, area_percent=0.95):
 
-        m, s, a, k = self.get_parameters_fitted()
+        m, s, a, k = self.param_fitted
 
         # print(m, s, a, k)
 

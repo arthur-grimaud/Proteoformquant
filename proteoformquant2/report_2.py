@@ -7,6 +7,8 @@ from dash import dash_table
 import dash_daq as daq
 from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
+import numpy as np
+from sklearn.decomposition import PCA
 
 # Import other modules
 import base64
@@ -228,6 +230,19 @@ app.layout = html.Div(
                         ),
                     ],
                 ),
+                html.Div(
+                    id="pca_div",
+                    style={"verticalAlign": "top"},
+                    className="card border-primary mb-3",
+                    children=[
+                        html.Div(
+                            "PCA on peptidoforms ??features?? ",
+                            className="card-header",
+                            style={"height": "50px"},
+                        ),
+                        dcc.Graph(id="pca_plot"),
+                    ],
+                ),
             ],
         ),
         # =========================================================================================================================
@@ -298,8 +313,8 @@ app.layout = html.Div(
         html.Div(
             id="page_4",
             style={
-                "width": "21cm",
-                "min-height": "29.7cm",
+                "width": "29.7cm",
+                "min-height": "21cm",
                 "padding": "1cm",
                 "margin": "1cm auto",
                 "border": "1px",
@@ -410,10 +425,52 @@ def sample_table(x):
 
 
 @app.callback(
-    Output("table_dataset_metrics", "data"),
+    Output("pca_plot", "figure"),
     Input("gen_plot_page2_btn", "n_clicks"),
 )
 def dataset_metrics_table(x):
+
+    for j in range(len(msruns)):
+        proteo_proforma = [proteo.get_modification_proforma() for proteo in msruns[j].proteoforms.values()]
+        proteo_intens_prec = [
+            proteo.update_proteoform_total_intens(method="precursor")
+            for proteo in msruns[j].proteoforms.values()
+        ]
+        proteo_intens_prec = [x / sum(proteo_intens_prec) for x in proteo_intens_prec]
+
+        df = pd.DataFrame({"proforma": proteo_proforma, file_names[j]: proteo_intens_prec})
+
+        if j == 0:
+            df_all_quant = df
+        else:
+            df_all_quant = df_all_quant.merge(right=df, how="outer", on="proforma")
+
+    df_all_quant = df_all_quant.replace(np.nan, 0)
+    df_all_quant.index = df_all_quant["proforma"]
+    df_all_quant = df_all_quant.drop("proforma", axis=1)
+    print(df_all_quant)
+
+    df_all_quant = df_all_quant.transpose()
+    print(df_all_quant)
+
+    matrix_quant = df_all_quant.to_numpy()
+
+    print(matrix_quant)
+
+    pca = PCA(n_components=2)
+    components = pca.fit_transform(matrix_quant)
+    print(components)
+
+    fig = px.scatter(components, x=0, y=1, text=file_names)
+    fig.update_layout(template="plotly_white")
+    return fig
+
+
+@app.callback(
+    Output("pca", "data"),
+    Input("gen_plot_page2_btn", "n_clicks"),
+)
+def pca_peptidoform_feature(x):
     print(msruns)
     data_table = [
         {

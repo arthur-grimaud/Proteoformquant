@@ -82,6 +82,9 @@ def checkArgs(args):
 
         args.output_dir = os.path.abspath(args.output_dir)
 
+    else:
+        args.output_dir = "."
+
     print("arg output: ", args.output_dir)
 
     return args

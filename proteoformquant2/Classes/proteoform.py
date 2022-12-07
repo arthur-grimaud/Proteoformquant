@@ -248,11 +248,11 @@ class Proteoform:
 
     def get_coverage(self):
 
-        print(self.modificationBrno)
+        # print(self.modificationBrno)
         if self.get_elution_profile() == None or self.get_elution_profile().is_parameters_fitted() == False:
             return 0  # If no fit is found return worst score
 
-        range_rt = self.get_elution_profile().get_bounds_area()
+        range_rt = self.get_elution_profile().get_bounds_area(area_percent=0.8)
         psms_rt = [psm.spectrum.get_rt() for psm in self.get_validated_linked_psm()]
         psms_rt = [rt for rt in psms_rt if range_rt[0] < rt and rt < range_rt[1]]
         psms_rt = sorted(psms_rt)
@@ -264,8 +264,6 @@ class Proteoform:
 
         seg_size = (range_rt[1] - range_rt[0]) / len(psms_rt)
         segments = [(x - (seg_size / 2), x + (seg_size / 2)) for x in psms_rt]
-
-        print(range_rt, segments)
 
         totalInterval = 0
 
@@ -286,16 +284,16 @@ class Proteoform:
 
             totalInterval += currentIntrval - differnceFromPrevious
 
-            print(differnceFromPrevious, end="  ")
+            # print(differnceFromPrevious, end="  ")
 
             if i == len(psms_rt):
                 if range_rt[1] < segments[i][1]:
                     differnceFromPrevious = segments[i][1] - range_rt[1]
                     totalInterval += currentIntrval - differnceFromPrevious
 
-                    print(differnceFromPrevious)
+                    # print(differnceFromPrevious)
 
-        print(totalInterval / (range_rt[1] - range_rt[0]))
+        # print(totalInterval / (range_rt[1] - range_rt[0]))
         return totalInterval / (range_rt[1] - range_rt[0])
 
     def get_gap_in_validated_spectra(self, rts):
@@ -377,16 +375,17 @@ class Proteoform:
 
         return min([left_sum, right_sum]) / (sum([left_sum, right_sum]) / 2)
 
-    def get_boundaries_of_ep(self):
+    def get_boundaries_of_ep(self, area_percent=0.95):
         """Return the max and min retention time that represent 99?% of the elution profile AUC"""
 
         if self.get_elution_profile() != None:
             EP = self.get_elution_profile()
             if EP.is_parameters_fitted():
 
-                boundaries = EP.get_bounds_area()
+                boundaries = EP.get_bounds_area(area_percent=area_percent)
 
-                return boundaries
+                return [round(item, 2) for item in boundaries]
+
         else:
             return [0, 0]
 
