@@ -1464,35 +1464,35 @@ class Msrun:
                     self.rt_boundaries[p][1] = self.all_rts[new_index_rt_max]
                     proteo.max_bound_rt = self.all_rts[new_index_rt_max]
 
-                fig = self.plot_elution_profiles(self.proteoform_subset, rt_values=self.all_rts, count=iter)
-                fig.write_image(
-                    "images/fig_"
-                    + f"{grp:03}"
-                    + "_"
-                    + f"{iter_try:03}"
-                    + "_"
-                    + f"{iter+1:03}"
-                    + "_A"
-                    + ".png"
-                )
+                # fig = self.plot_elution_profiles(self.proteoform_subset, rt_values=self.all_rts, count=iter)
+                # fig.write_image(
+                #     "images/fig_"
+                #     + f"{grp:03}"
+                #     + "_"
+                #     + f"{iter_try:03}"
+                #     + "_"
+                #     + f"{iter+1:03}"
+                #     + "_A"
+                #     + ".png"
+                # )
 
                 self.update_proteoform_subset_validation(self.proteoform_subset, self.rt_boundaries)
                 self.update_psms_ratio_subset(self.spectra_subset)
                 self.update_proteoforms_elution_profile_subset(self.proteoform_subset)
 
-                fig = self.plot_elution_profiles(self.proteoform_subset, rt_values=self.all_rts, count=iter)
+                # fig = self.plot_elution_profiles(self.proteoform_subset, rt_values=self.all_rts, count=iter)
 
-                fig.write_image(
-                    "images/fig_"
-                    + f"{grp:03}"
-                    + "_"
-                    + f"{iter_try:03}"
-                    + "_"
-                    + f"{iter+1:03}"
-                    + "_B"
-                    + ".png"
-                )
-                x += 1
+                # fig.write_image(
+                #     "images/fig_"
+                #     + f"{grp:03}"
+                #     + "_"
+                #     + f"{iter_try:03}"
+                #     + "_"
+                #     + f"{iter+1:03}"
+                #     + "_B"
+                #     + ".png"
+                # )
+                # x += 1
 
                 # store score and corresponding RT ranges
                 cor_score_l.append(proteo.get_fit_score())
