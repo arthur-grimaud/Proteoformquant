@@ -373,6 +373,31 @@ app.layout = html.Div(
                 ),
             ],
         ),
+        # =========================================================================================================================
+        html.Div(
+            id="page_6",
+            style={
+                "width": "29.7cm",
+                "min-height": "21cm",
+                "padding": "1cm",
+                "margin": "1cm auto",
+                "border": "1px",
+                "border-radius": "5px",
+                "background": "white",
+                "box-shadow": "0 0 5px rgba(0, 0, 0, 0.1)",
+            },
+            children=[
+                html.Div(
+                    children=[
+                        html.H6("Quantification", style={"textAlign": "center"}),
+                        dcc.Dropdown(
+                            id="dropdown_sample_page6", multi=False, style={"backgroundColor": "#FFFFFF"}
+                        ),
+                        dcc.Graph(id="barplot_peptide_quant"),
+                    ]
+                ),
+            ],
+        ),
     ],
 )
 
@@ -425,10 +450,40 @@ def sample_table(x):
 
 
 @app.callback(
-    Output("pca_plot", "figure"),
+    Output("table_dataset_metrics", "data"),
     Input("gen_plot_page2_btn", "n_clicks"),
 )
 def dataset_metrics_table(x):
+
+    data_table = [
+        {
+            dt_tbl_col[0]: file_names[j],
+            dt_tbl_col[1]: len(msruns[j].spectra),
+            dt_tbl_col[2]: len([s for s in msruns[j].spectra.values() if s.get_number_validated_psm() > 0]),
+            dt_tbl_col[3]: len([s for s in msruns[j].spectra.values() if s.get_number_validated_psm() > 1]),
+            dt_tbl_col[4]: len(msruns[j].proteoforms),
+            dt_tbl_col[5]: len(
+                [p for p in msruns[j].proteoforms.values() if p.get_number_validated_linked_psm() > 0]
+            ),
+        }
+        for j in range(len(msruns))
+    ]
+
+    print("gen tbl page 2")
+    print(data_table)
+    return data_table
+
+
+@app.callback(
+    Output("pca_plot", "figure"),
+    Input("gen_plot_page2_btn", "n_clicks"),
+)
+def dpca_sample_plot(x):
+
+    if x is None:
+        raise PreventUpdate
+
+    df_all_quant = pd.DataFrame()
 
     for j in range(len(msruns)):
         proteo_proforma = [proteo.get_modification_proforma() for proteo in msruns[j].proteoforms.values()]
@@ -448,14 +503,10 @@ def dataset_metrics_table(x):
     df_all_quant = df_all_quant.replace(np.nan, 0)
     df_all_quant.index = df_all_quant["proforma"]
     df_all_quant = df_all_quant.drop("proforma", axis=1)
-    print(df_all_quant)
 
     df_all_quant = df_all_quant.transpose()
-    print(df_all_quant)
 
     matrix_quant = df_all_quant.to_numpy()
-
-    print(matrix_quant)
 
     pca = PCA(n_components=2)
     components = pca.fit_transform(matrix_quant)
@@ -466,51 +517,28 @@ def dataset_metrics_table(x):
     return fig
 
 
-@app.callback(
-    Output("pca", "data"),
-    Input("gen_plot_page2_btn", "n_clicks"),
-)
-def pca_peptidoform_feature(x):
-    print(msruns)
-    data_table = [
-        {
-            dt_tbl_col[0]: file_names[j],
-            dt_tbl_col[1]: len(msruns[j].spectra),
-            dt_tbl_col[2]: len([s for s in msruns[j].spectra.values() if s.get_number_validated_psm() > 0]),
-            dt_tbl_col[3]: len([s for s in msruns[j].spectra.values() if s.get_number_validated_psm() > 1]),
-            dt_tbl_col[4]: len(msruns[j].proteoforms),
-            dt_tbl_col[5]: len(
-                [p for p in msruns[j].proteoforms.values() if p.get_number_validated_linked_psm() > 0]
-            ),
-        }
-        for j in range(len(msruns))
-    ]
-    for j in range(len(msruns)):
-        print(j)
-        print(len([s for s in msruns[j].spectra.values() if s.get_number_validated_psm() > 0]))
-    print("gen tbl page 2")
-    print(data_table)
-    return data_table
-
-
 @app.callback(Output("placeholder", "style"), Input("dropdown_sample_page3", "value"))
 def update_active_msrun(value):
     global run_i
     run_i = value
 
 
-@app.callback(Output("dropdown_sample_page3", "options"), Input("table_sample", "data"))
+@app.callback(
+    [Output("dropdown_sample_page3", "options"), Output("dropdown_sample_page6", "options")],
+    Input("table_sample", "data"),
+)
 def update_dropdown_page3(x):
-    # if x == 0:
-    #     raise dash.exceptions.PreventUpdate
-    print("Call:update_dropdown_page3")
+
+    if x is None or x == []:
+        raise PreventUpdate
+        "preventing update on update dropdown page3"
 
     opt = []
     for i in range(len(msruns)):
         opt.append({"label": file_names[i], "value": i})
 
     print(opt)
-    return opt
+    return opt, opt
 
 
 @app.callback(Output("plot_network_isobaric", "figure"), Input("dropdown_sample_page3", "value"))
@@ -610,6 +638,10 @@ def plot_network_isobaric_proteoforms(value):
 
 @app.callback(Output("plot_all_enveloppes", "figure"), Input("dropdown_sample_page3", "value"))
 def plotAllEnvelopes(value):
+
+    if value is None:
+        raise PreventUpdate
+
     print("vaaaa")
     print(value)
     if value is None:
@@ -1060,6 +1092,9 @@ def fit_expect_predict(proteoform):
 @app.callback(Output("dropdown_proteoforms", "value"), Input("plot_network_isobaric", "selectedData"))
 def update_proteo_selector(value):
 
+    if value is None:
+        raise PreventUpdate
+
     print("VALUES")
     holder = []
     if value:
@@ -1074,6 +1109,10 @@ def update_proteo_selector(value):
 @app.callback(Output("dropdown_proteoforms", "options"), Input("dropdown_sample_page3", "value"))
 def dropdown_proteoforms(value):
     """Create option list with proteoforms for dropdown"""
+
+    if value is None:
+        raise PreventUpdate
+
     run = msruns[value]
     options = [
         {
@@ -1228,8 +1267,12 @@ def plot_elution_profiles(proteoforms_input):
     return fig
 
 
-@app.callback(Output("plot_elution_map", "figure"), [Input("gen_plot_page2_btn", "n_clicks")])
-def plot_elution_map():
+# @app.callback(Output("plot_elution_map", "figure"), [Input("main_div", "data")])
+def plot_elution_map(x):
+    print("aa")
+    print(x)
+    if x is None or x == [] or x == 0:
+        raise PreventUpdate
     # avoid initial callback
     # print(proteoforms_input)
 
@@ -1248,6 +1291,7 @@ def plot_elution_map():
             )
         )
     )
+
     fig.update_layout(template="plotly_white", height=1000)
 
     number_bins = 200
@@ -1257,6 +1301,46 @@ def plot_elution_map():
     rt_subdiv = range(rt_range[0], rt_range[1], step=rt_step)
 
     elution_map_df = pd.DataFrame(columns=rt_subdiv)
+
+    return fig
+
+
+@app.callback(Output("barplot_peptide_quant", "figure"), Input("dropdown_sample_page6", "value"))
+def plot_relab_peptide(value):
+
+    if value is None:
+        raise PreventUpdate
+
+    run = msruns[value]
+
+    proteoformsBrno = [proteo.get_modification_brno() for proteo in run.proteoforms.values()]
+    proteoformsIntens_prec = [
+        proteo.update_proteoform_total_intens(method="precursor") for proteo in run.proteoforms.values()
+    ]
+
+    proteoformsRatio_prec = [
+        proteoIntens / sum(proteoformsIntens_prec) for proteoIntens in proteoformsIntens_prec
+    ]
+
+    for proteo in run.proteoforms.values():
+        print(proteo.get_protein_ids())
+
+    proteoforms_protein = [";".join(proteo.get_protein_ids()) for proteo in run.proteoforms.values()]
+
+    print(proteoforms_protein)
+
+    print(
+        len([p for p in proteoformsRatio_prec if p > 0.001]),
+        " have relative abundance above 0.001",
+    )
+    print(
+        len([p for p in proteoformsRatio_prec if p > 0.0001]),
+        " have relative abundance above 0.0001",
+    )
+
+    fig = px.bar(x=proteoformsBrno, y=proteoformsRatio_prec, color=proteoforms_protein, barmode="group")
+    fig.update_layout(template="plotly_white", height=800)
+    fig.update_layout(xaxis={"categoryorder": "total descending"})
 
     return fig
 

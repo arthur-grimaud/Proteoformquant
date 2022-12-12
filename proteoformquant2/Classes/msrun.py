@@ -400,10 +400,14 @@ class Msrun:
                     brnoSeq = brno + "-" + seq  # TODO use proforma
 
                     # Create list with associated protein description (try except as variable name could be different depending on the DBSE used)
+
                     try:
-                        protein_ids = [ref["DBSequence_Ref"] for ref in psm.PeptideEvidenceRef]
+                        protein_ids = [ref["accession"] for ref in psm.PeptideEvidenceRef]
                     except KeyError:
-                        protein_ids = [ref["protein description"] for ref in psm.PeptideEvidenceRef]
+                        try:
+                            protein_ids = [ref["protein description"] for ref in psm.PeptideEvidenceRef]
+                        except KeyError:
+                            protein_ids = [ref["DBSequence_Ref"] for ref in psm.PeptideEvidenceRef]
 
                     if (
                         proforma not in self.proteoforms.keys()
@@ -1179,9 +1183,9 @@ class Msrun:
                 self.update_proteoforms_elution_profile_subset(self.proteoform_subset)
 
                 # ---------
-                self.plot_elution_profiles(
-                    self.proteoform_subset, rt_values=self.all_rts, count=grp, plot_all=True
-                ).write_image("images/fig_" + f"{grp:03}" + "_00_0000A" + ".png")
+                # self.plot_elution_profiles(
+                #     self.proteoform_subset, rt_values=self.all_rts, count=grp, plot_all=True
+                # ).write_image("images/fig_" + f"{grp:03}" + "_00_0000A" + ".png")
                 # --------
 
                 # Initialize retention time boundaries from first rank EPs
@@ -1195,9 +1199,9 @@ class Msrun:
                 self.update_proteoforms_elution_profile_subset(self.proteoform_subset)
 
                 # ---------
-                self.plot_elution_profiles(
-                    self.proteoform_subset, rt_values=self.all_rts, count=grp
-                ).write_image("images/fig_" + f"{grp:03}" + "_00_0000B" + ".png")
+                # self.plot_elution_profiles(
+                #     self.proteoform_subset, rt_values=self.all_rts, count=grp
+                # ).write_image("images/fig_" + f"{grp:03}" + "_00_0000B" + ".png")
                 # ---------
 
                 # Update retention time boundaries
@@ -1210,9 +1214,9 @@ class Msrun:
                 self.update_proteoforms_elution_profile_subset(self.proteoform_subset)
 
                 # ---------
-                self.plot_elution_profiles(
-                    self.proteoform_subset, rt_values=self.all_rts, count=grp
-                ).write_image("images/fig_" + f"{grp:03}" + "_00_0000C" + ".png")
+                # self.plot_elution_profiles(
+                #     self.proteoform_subset, rt_values=self.all_rts, count=grp
+                # ).write_image("images/fig_" + f"{grp:03}" + "_00_0000C" + ".png")
                 # ---------
 
                 # for testing:
@@ -1242,9 +1246,9 @@ class Msrun:
                 # self.update_proteoforms_elution_profile_subset(self.proteoform_subset)
 
                 # ---------
-                self.plot_elution_profiles(
-                    self.proteoform_subset, rt_values=self.all_rts, count=grp
-                ).write_image("images/fig_" + f"{grp:03}" + "_00_0000D" + ".png")
+                # self.plot_elution_profiles(
+                #     self.proteoform_subset, rt_values=self.all_rts, count=grp
+                # ).write_image("images/fig_" + f"{grp:03}" + "_00_0000D" + ".png")
                 # ---------
 
                 ##Stops here if not enough Spectra###
@@ -1332,9 +1336,9 @@ class Msrun:
                         self.proteoform_subset[p].envelope = None
 
                 # ---------
-                self.plot_elution_profiles(
-                    self.proteoform_subset, rt_values=self.all_rts, count=grp
-                ).write_image("images/fig_" + f"{grp:03}" + "_99_999" + ".png")
+                # self.plot_elution_profiles(
+                #     self.proteoform_subset, rt_values=self.all_rts, count=grp
+                # ).write_image("images/fig_" + f"{grp:03}" + "_99_999" + ".png")
                 # ---------
                 grp += 1
                 bar()
