@@ -10,7 +10,7 @@
 
 MAX_THREADS=50
 
-myArray=(1 2 3 4 5)
+myArray=(1 2 3 5 10)
 
 for filename in "Data/"*.mzid; do
     for p in ${myArray[@]}; do
