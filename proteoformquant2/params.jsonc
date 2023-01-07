@@ -11,7 +11,7 @@
 "min_n_psm": 2,
 
 // Optimization
-"n_iter" : 10,  // number of iteration for each peptidoform optimization
+"n_iter" : 15,  // number of iteration for each peptidoform optimization
 //"n_iter_valid" : 10,  // number of iteration to be considered for peptidoform validation
 
 // Starting range
@@ -39,7 +39,7 @@
 ],
 
 // Proteform groups:
-"min_connect" : 2, //Minimal number of time two peptidoform must be co identified in order to be in the same proteoform group
+"min_connect" : 1, //Minimal number of time two peptidoform must be co identified in order to be in the same proteoform group
 
 //additional param:
 "only_r1" : "False"
