@@ -19,14 +19,6 @@
 "n_iter" : 10,  // number of iteration for each peptidoform optimization
 "max_rejected_proteo" : 2, // number of peptidoform rejected before stopping optimization
 
-
-
-
-
-
-// Advanced parameters //
-
-
 // Starting range
 "window_size_rt" : 150,
 
@@ -44,7 +36,7 @@
 
 
 // Proteform groups:
-"min_connect" : 2, //Minimal number of time two peptidoform must be co identified in order to be in the same proteoform group
+"min_connect" : 1, //Minimal number of time two peptidoform must be co identified in order to be in the same proteoform group
 
 //additional param:
 "only_r1" : "False"
