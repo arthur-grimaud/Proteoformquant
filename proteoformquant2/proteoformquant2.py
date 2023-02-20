@@ -24,10 +24,13 @@ def main():
     max_rec = 0x100000
     resource.setrlimit(resource.RLIMIT_STACK, [0x100 * max_rec, resource.RLIM_INFINITY])
     sys.setrecursionlimit(max_rec)
+    #
+
+    print("---===Starting " + progName + "===---")
 
     # --------------------------------- Inputs -------------------------------- #
 
-    args, unknwownargs = input.doArgs(sys.argv[1:], progName)  # Parse arguments
+    args, unknownargs = input.doArgs(sys.argv[1:], progName)  # Parse arguments
     args = input.checkArgs(args)  # Verify arguments
 
     verbose = args.verbose
@@ -39,34 +42,36 @@ def main():
     # Read Parameters File:
     params = JsoncParser.parse_file(param_file)
     # read parameter overwited in cmd line arguments:
-    params_over = {unknwownargs[i][1:]: unknwownargs[i + 1] for i in range(0, len(unknwownargs), 2)}
+    params_over = {unknownargs[i][1:]: unknownargs[i + 1] for i in range(0, len(unknownargs), 2)}
     # Name of output prefix from input identification filename
     if output_file != None:
         output_prefix = output_file
-
     else:
         output_prefix = indent_file.split(".")[0].split("/")[1]
+
+    max_rank_validation = args.rankquant
 
     # --------------------------------- Debugging -------------------------------- #
 
     # --------------------------------- Analysis --------------------------------- #
 
-    print("---===Starting " + progName + "===---")
-
     ### Read Data ###
-    run = Msrun(run_id="1", params=params, params_over=params_over)
+    run = Msrun(run_id="1", params=params, params_over=params_over, verbose=verbose)
     ###
     run.read_mzid(indent_file)
-    run.read_mgf(spectra_file)
+    run.read_spectra(spectra_file)
+    # run.read_mzml(spectra_file)
 
     run.add_metrics_to_log(processing_step="initial")
 
     ### Prepare Data ###
     run.add_proteoforms()
+    run.deconvolute_ms2()
     run.update_proteoform_intens()
 
     ### Filtering Data ###
     run.fdr_filtering(decoy_tag="decoy_", score_name="Amanda:AmandaScore")
+    # run.filter_psms_low_score()
     run.filter_proteform_low_count()
 
     ### Prepare Data ###
@@ -76,22 +81,30 @@ def main():
     ### First Rank Quantification ###
     run.update_proteoforms_elution_profile()
     run.update_proteoform_intens()
-    run.add_metrics_to_log(processing_step="First_rank_quantification")
 
-    if run.only_r1 == "False":
+    if max_rank_validation == 0:
         ### Chimeric Spectra Quantification ###
         run.set_proteoform_isobaric_groups()
         run.optimize_proteoform_subsets()
         run.validate_first_rank_no_id()
         run.update_proteoform_intens()
+    else:  # validate n first rank and perform chimeric spectra quantification
+        run.validate_psms_rank_n(rank=max_rank_validation)
+        run.update_psms_ratio_all()
+        run.update_proteoform_intens()
 
     ### OUTPUT ###
+
     with open(f"{output_dir}/save_res_{output_prefix}.pkl", "wb") as outp:
         pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
+
     run.result_dataframe_pfq1_format().to_csv(f"{output_dir}/quant_{output_prefix}.csv")
     pd.DataFrame(run.log).to_csv(f"{output_dir}/log_{output_prefix}.csv", ",")
 
+    run.psm_score_dataframe(
+        file_name=f"{output_dir}/psms_{output_prefix}.csv", score_name="Amanda:AmandaScore"
+    )
+
 
 if __name__ == "__main__":
-    # sys.argv = ["programName.py","--input","test.txt","--output","tmp/test.txt"]
     main()

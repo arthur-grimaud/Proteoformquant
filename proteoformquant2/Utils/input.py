@@ -55,7 +55,21 @@ def doArgs(argList, name):
         required=False,
         default="params.jsonc",
     )
+
+    parser.add_argument(
+        "-r",
+        "--rankquant",
+        action="store",
+        dest="rankquant",
+        type=int,
+        help="Quantification using the top n ranked peptides (skips validation of psm on elution profile)",
+        required=False,
+        default=0,
+    )
+
     args, unknownargs = parser.parse_known_args(argList)
+
+    print_args(args, unknownargs)
 
     return args, unknownargs
 
@@ -64,17 +78,10 @@ def checkArgs(args):
 
     """Verifies if inputs files and output folder exists, wreate output folder if necessary"""
     if not os.path.isfile(args.indent_file):
-        warning("Input file: " + args.indent_file + ", doesn't exist")
-        return
-    if not os.path.isfile(args.spectra_file):
-        warning("Input file: " + args.spectra_file + ", doesn't exist")
-        return
+        raise Exception("Input file: " + args.indent_file + ", doesn't exist")
 
-    # if args.dbse not in ("mascot", "comet"):
-    #     warning("DBSE name: " + args.dbse + ", is not valid")
-    #     return
-    print(args)
-    print("arg output: ", args.output_dir)
+    if not os.path.isfile(args.spectra_file):
+        raise Exception("Input file: " + args.spectra_file + ", doesn't exist")
 
     if args.output_dir != "" and args.output_dir != None:
         if not os.path.exists(args.output_dir):
@@ -85,6 +92,21 @@ def checkArgs(args):
     else:
         args.output_dir = "."
 
-    print("arg output: ", args.output_dir)
-
     return args
+
+
+def print_args(args, unknownargs):
+    print("\n---Running PFQ with the following parameters:---")
+    params = ""
+    for arg, val in vars(args).items():
+        params = params + f"\n{arg} : {val} "
+    print(params, "\n")
+
+    params = ""
+
+    if len(unknownargs) > 0:
+        dict_unknwownargs = {unknownargs[i][1:]: unknownargs[i + 1] for i in range(0, len(unknownargs), 2)}
+        print("Parameters overide:")
+        for arg, val in dict_unknwownargs.items():
+            params = params + f"\n{arg} : {val} "
+        print(params)

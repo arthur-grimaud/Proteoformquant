@@ -8,6 +8,7 @@ from Classes.elution_profile import ElutionProfile
 from pyteomics import mass
 from Utils import constant
 import math
+from numba import jit
 
 
 class Proteoform:
@@ -432,7 +433,7 @@ class Proteoform:
     def link_psm(self, psm):
         self.linkedPsm.append(psm)
 
-    def compute_theoretical_fragments(self, ionTypes):
+    def compute_theoretical_fragments(self, ionTypes, charges=[0]):
         """Returns and set a list of m/z of fragment ions  and informations on the type/position of each fragments for a given peptidoform/proteoform"""
 
         # store the fragment types looked for:
@@ -466,13 +467,12 @@ class Proteoform:
                     for j in range(i + 1, len(sequence))
                 ]
                 # compute internal frag masses
+
                 frag_masses_iontype.update(
                     {
                         ",".join(str(s) for s in seq[1:4]): round(
                             mass.fast_mass(
-                                sequence=seq[0],
-                                ion_type=ion_type,
-                                ion_comp=ion_formulas[ion_type],
+                                sequence=seq[0], ion_type=ion_type, ion_comp=ion_formulas[ion_type]
                             )
                             + sum_mods(modifications, seq[1], seq[2]),
                             4,
@@ -496,13 +496,12 @@ class Proteoform:
                         )
                         for j in range(2, len(sequence))
                     ]
+
                     frag_masses_iontype.update(
                         {
                             ",".join(str(s) for s in seq[1:4]): round(
                                 mass.fast_mass(
-                                    sequence=seq[0],
-                                    ion_type=ion_type,
-                                    ion_comp=ion_formulas[ion_type],
+                                    sequence=seq[0], ion_type=ion_type, ion_comp=ion_formulas[ion_type]
                                 )
                                 + sum_mods(modifications, seq[1], seq[2]),
                                 4,
@@ -529,9 +528,7 @@ class Proteoform:
                         {
                             ",".join(str(s) for s in seq[1:4]): round(
                                 mass.fast_mass(
-                                    sequence=seq[0],
-                                    ion_type=ion_type,
-                                    ion_comp=ion_formulas[ion_type],
+                                    sequence=seq[0], ion_type=ion_type, ion_comp=ion_formulas[ion_type]
                                 )
                                 + sum_mods(modifications, seq[1], seq[2]),
                                 4,

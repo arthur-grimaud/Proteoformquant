@@ -368,7 +368,7 @@ app.layout = html.Div(
                             n_clicks=0,
                             style={},
                         ),
-                        dcc.Graph(id="plot_elution_map"),
+                        dcc.Graph(id="plot_elution_3d"),
                     ]
                 ),
             ],
@@ -1267,40 +1267,113 @@ def plot_elution_profiles(proteoforms_input):
     return fig
 
 
-# @app.callback(Output("plot_elution_map", "figure"), [Input("main_div", "data")])
-def plot_elution_map(x):
-    print("aa")
-    print(x)
-    if x is None or x == [] or x == 0:
+@app.callback(
+    Output("plot_elution_3d", "figure"),
+    Input("3dplot-toggle-switch", "value"),
+)
+def plotAllEnvelopes3d(is_displayed):
+
+    if is_displayed == False:
         raise PreventUpdate
-    # avoid initial callback
-    # print(proteoforms_input)
 
-    exp = msruns[run_i]
-
-    # Instanciate figure
     fig = go.Figure()
-    cols = constant.colors
-    cols_n = 0
 
-    fig.update_layout(
-        title=go.layout.Title(
-            font=dict(
-                family="Courier New, monospace",
-                size=10,
-            )
+    minMz = minMaxMz[0]
+    maxMz = minMaxMz[1]
+
+    print("new mz range for 3dplt: ", minMaxMz)
+
+    # Display unassigned spectra:
+    specFilt = [
+        spectrum
+        for spectrum in exp.spectra.values()
+        if spectrum.get_prec_mz() > minMz and spectrum.get_prec_mz() < maxMz
+    ]
+
+    specFiltMz = [spectrum.get_prec_mz() for spectrum in specFilt]
+    specFiltRt = [spectrum.get_rt() for spectrum in specFilt]
+    specFiltIntens = [spectrum.get_prec_intens() for spectrum in specFilt]
+    specFiltKey = [spectrum.get_id() for spectrum in specFilt]
+
+    fig.add_trace(
+        go.Scatter3d(
+            x=specFiltRt,
+            y=specFiltIntens,
+            z=specFiltMz,
+            mode="markers",
+            marker=dict(size=2, color="grey", opacity=0.6),
+            name="proteoform0",
+            customdata=specFiltKey,
         )
     )
 
-    fig.update_layout(template="plotly_white", height=1000)
-
-    number_bins = 200
+    proteoFilt = {
+        proteoName: proteo
+        for (proteoName, proteo) in exp.proteoforms.items()
+        if proteo.getTheoPrecMz() > minMz and proteo.getTheoPrecMz() < maxMz
+    }
 
     rt_range = exp.get_rt_range()
-    rt_step = (rt_range[1] - rt_range[0]) / number_bins
-    rt_subdiv = range(rt_range[0], rt_range[1], step=rt_step)
 
-    elution_map_df = pd.DataFrame(columns=rt_subdiv)
+    colors = misc.linear_gradient(
+        "#4682B4",
+        "#FFB347",
+        len([x for x in proteoFilt.values() if x.get_elution_profile() != None]),
+    )
+
+    i = 0
+    for proteoform in [x for x in proteoFilt.values() if x.get_elution_profile() != None]:
+
+        env = proteoform.get_elution_profile()  # if envelope has been computed add line to the plot
+
+        data_yEnv = list(range(int(min(rt_range)), int(max(rt_range)), 1))
+        zDataEnv = [proteoform.getMzFirstPsm() for x in data_yEnv]
+
+        yDataEnvFitted, parametersFitted = list(env.get_y_serie(data_yEnv, method="fitted"))
+        if yDataEnvFitted[0] != None:
+            fig.add_trace(
+                go.Scatter3d(
+                    x=data_yEnv,
+                    y=yDataEnvFitted,
+                    z=zDataEnv,
+                    mode="lines",
+                    marker=dict(color=proteoform.get_color()),
+                    name=proteoform.get_modification_brno(),
+                )
+            )
+        else:
+            yDataEnvEstim, parametersEstim = list(env.get_y_serie(data_yEnv, method="estimated"))
+            if yDataEnvEstim[0] != None:
+                fig.add_trace(
+                    go.Scatter3d(
+                        x=data_yEnv,
+                        y=yDataEnvEstim,
+                        z=zDataEnv,
+                        mode="lines",
+                        marker=dict(color=proteoform.get_color()),
+                        name=proteoform.get_modification_brno(),
+                    )
+                )
+
+    for proteoform in [x for x in proteoFilt.values()]:
+        precIntens = [psm.spectrum.get_prec_intens() for psm in proteoform.get_validated_linked_psm()]
+        rt = [psm.spectrum.get_rt() for psm in proteoform.get_validated_linked_psm()]
+        mz = [psm.spectrum.get_prec_mz() for psm in proteoform.get_validated_linked_psm()]
+        spectrum_key = [psm.spectrum.get_id() for psm in proteoform.get_validated_linked_psm()]
+
+        fig.add_trace(
+            go.Scatter3d(
+                x=rt,
+                y=precIntens,
+                z=mz,
+                mode="markers",
+                marker=dict(size=2, color=proteoform.get_color()),
+                name=proteoform.get_modification_brno(),
+                customdata=spectrum_key,
+            )
+        )
+
+    fig.update_layout(template=template, height=1000, scene=dict(zaxis=dict(range=[minMz, maxMz])))
 
     return fig
 

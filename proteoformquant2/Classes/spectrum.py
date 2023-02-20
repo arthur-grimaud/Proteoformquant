@@ -10,53 +10,17 @@ from scipy.optimize import nnls
 from fnnls import fnnls
 import numpy as np
 import pprint
+from numba import jit
 
 
 class Spectrum:
     def __init__(self, spectrumID, identMzid=None, max_rank=10):
 
         self.id = spectrumID  # Unique ID for the spectrum
-
-        # print(identMzid)
-
-        # Add spectrum title (formatted to match mgf) TODO might not work in some cases:
-        spectrumID_raw = identMzid["spectrumID"].split("=")
-
-        if spectrumID_raw[0] == "index":
-            self.spectrum_title = str(int(spectrumID_raw[1]) + 1)
-        elif spectrumID_raw[0] == "scan":
-            self.spectrum_title = spectrumID_raw[1]
-        else:
-            print(spectrumID_raw[0])
-            print("Spectrum index/title not recognized")
-
-        try:
-            self.spectrum_title_name = identMzid["name"]
-        except KeyError:
-            self.spectrum_title_name = None
+        self.spectrum_title = identMzid["spectrum title"]
 
         # Add spectrum experimental mz value from mzident file:
         self.experimentalMassToCharge = identMzid["SpectrumIdentificationItem"][0]["experimentalMassToCharge"]
-
-        # try:
-        #     self.spectrum_title = identMzid["spectrum title"]
-        # except (KeyError):
-        #     self.spectrum_title = None
-
-        # try:
-        #     self.spectrum_title_alt = identMzid["spectrumID"]
-        # except (KeyError):
-        #     self.spectrum_title_alt = None
-
-        # try:
-        #     self.spectrum_title_alt_alt = identMzid["spectrumID"].split("=")[1]
-        # except (KeyError):
-        #     self.spectrum_title_alt_alt = None
-
-        # try:
-        #     self.spectrum_title_alt_alt_alt = str(int(identMzid["spectrumID"].split("=")[1]) + 1)
-        # except (KeyError):
-        #     self.spectrum_title_alt_alt_alt = None
 
         self.psms: list(Psm) = []  # list of PSM for that spectrum
 
@@ -90,7 +54,12 @@ class Spectrum:
         return self.precMz
 
     def get_prec_intens(self):
-        return self.precIntens
+
+        if self.precIntens is not None:
+            return self.precIntens
+        else:
+            print("Precursor intensity missing, using fragment intensity sum")
+            return self.get_sum_intens_frag()
 
     def get_rt(self):
         return self.rt
@@ -147,6 +116,7 @@ class Spectrum:
                 )
 
     def set_spec_data_mgf(self, specMgf):
+
         "add spetrum information from a pyteomics mgf object"
         self.fragIntens: array = specMgf["intensity array"]
         self.fragMz: array = specMgf["m/z array"]
@@ -158,13 +128,14 @@ class Spectrum:
         "add spetrum information from a pyteomics mzml object"
         # print(spec_mzml["scanList"]["scan"][0]["scan start time"])
 
+        print(spec_mzml)
+
         self.fragIntens: array = spec_mzml["intensity array"]
         self.fragMz: array = spec_mzml["m/z array"]
-        self.precIntens: float = spec_mzml["precursorList"]["precursor"][0]["selectedIonList"]["selectedIon"][
-            0
-        ]["selected ion m/z"]
+        self.precIntens: float = spec_mzml["total ion current"]
+
         self.precMz: float = spec_mzml["precursorList"]["precursor"][0]["selectedIonList"]["selectedIon"][0][
-            "peak intensity"
+            "selected ion m/z"
         ]
         self.rt: float = spec_mzml["scanList"]["scan"][0]["scan start time"]
 
@@ -210,7 +181,7 @@ class Spectrum:
         if len(psms) == 1:
             psms[0].ratio = 1
         if len(psms) > 1:
-            self.__ratios_multiple(psms, verbose)
+            self.__ratios_multiple(psms, verbose=True)
         else:
             pass
 
@@ -323,8 +294,6 @@ class Spectrum:
         # get eq system and weights
         equations, variables, W = self.__equation_system(unique_matrix, intensity_matrix)
 
-        # print(type(equations))
-
         if verbose:
             print("Weights: \n", W)
 
@@ -367,6 +336,8 @@ class Spectrum:
                 M[row, col] = grp_index + 1
         return M
 
+    # @staticmethod
+    # @jit()
     def __reduce_intervals(self, unique_matrix, intervals):
         """From a unique/group matrix where columns correspond to intervals in "intervals",
         merge or delete intervals that are uninformative on the ratios of proteoforms"""
@@ -399,6 +370,8 @@ class Spectrum:
 
         return unique_matrix, intervals.tolist()
 
+    # @staticmethod
+    # @jit(nopython=True)
     def __intensity_matrix(self, unique_matrix, intervals, psms, direction):
         intensity_matrix = np.ones((unique_matrix.shape[0], unique_matrix.shape[1]))
         for col in range(unique_matrix.shape[1]):
@@ -410,6 +383,8 @@ class Spectrum:
 
         return intensity_matrix
 
+    # @staticmethod
+    # @jit(nopython=True)
     def __merge_equations(self, A, B):
         """from matrices A and B of the same dimenssion return A_out and B_out
         where identical rows in A_out have been merged and corresponding rows in B_out have been added"""
@@ -433,6 +408,8 @@ class Spectrum:
 
         return A_out, B_out
 
+    # @staticmethod
+    # @jit(nopython=True)
     def __equation_system(self, unique_matrix_t, intensity_matrix_t):
 
         var = 0

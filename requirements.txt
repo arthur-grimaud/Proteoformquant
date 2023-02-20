@@ -18,7 +18,8 @@ lxml
 unimod-mapper 
 progress
 networkx
-
+numba
+ms_deisotope
 
 ###### Requirements with Version Specifiers ######
 numpy==1.21

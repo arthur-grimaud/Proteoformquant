@@ -17,6 +17,7 @@ from scipy.stats import norm
 from scipy.special import owens_t
 from scipy.stats import spearmanr
 import warnings
+from numba import jit
 
 
 class ElutionProfile:
@@ -134,9 +135,6 @@ class ElutionProfile:
 
         # x1 x2 at same height
         fx1_fx2_equal = self.skewnormal(x1, *[m, s, a, k]) - self.skewnormal(x2, *[m, s, a, k])
-
-        # print("returns of bounds area equation")
-        # print((area_95, fx1_fx2_equal))
 
         return (area_95, fx1_fx2_equal)
 
@@ -265,8 +263,11 @@ class ElutionProfile:
                 ]
             )  # convert bounds for "curve_fit"
 
+            # print("data for fitting")
+            # print((data_x, data_y))
+
             param_fitted = least_squares(
-                self.__skewnormal_residuals,
+                self.skewnormal_residuals,
                 param_estimated,
                 bounds=param_bounds_curve_fit,
                 loss="linear",
@@ -284,7 +285,7 @@ class ElutionProfile:
             score_fitted = self.__pearson_test(self.skewnormal, param_fitted, data_x, data_y)
             # print(score_fitted)
 
-        except (RuntimeError):
+        except (RuntimeError, ValueError):
             param_fitted = [None]
             score_fitted = 0
             # print("Curve_fit failed")
@@ -301,7 +302,7 @@ class ElutionProfile:
         u = (x - m) / s
         return a * (norm.cdf(u) - 2 * owens_t(u, k))
 
-    def __skewnormal_residuals(self, par, x, y):
+    def skewnormal_residuals(self, par, x, y):
         m, s, a, k = par
         return self.skewnormal(x, m, s, a, k) - y
 
@@ -355,8 +356,7 @@ class ElutionProfile:
     def __pearson_test(self, model, parameters, data_x, data_y):  # !! NOT KS !! to be renamed
         x = np.array(data_y).reshape((-1, 1))
         y = np.array([model(x, *parameters) for x in data_x])
-        # model = LinearRegression().fit(x, y)
-        # return model.score(x, y)
+
         try:
             cor_results = spearmanr(x, y)
         except warnings:

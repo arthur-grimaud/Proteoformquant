@@ -21,6 +21,8 @@ class Psm:
         for key in identificationItem:
             setattr(self, key, identificationItem[key])
 
+            # print(key, identificationItem[key])
+
         self.rank: int = rank
         self.spectrum = spectrum
         self.proteoform = None
@@ -104,14 +106,13 @@ class Psm:
         """Returns the proteoform modification in the proforma format"""
         with warnings.catch_warnings():  # catch warnings from unimod
             if self.Modification == []:
-                return self.PeptideSequence
+                proforma = self.PeptideSequence
             else:
                 sequence_list = list(self.PeptideSequence.strip(" "))
 
                 for mod in reversed(self.Modification):
 
                     modMass = mod["monoisotopicMassDelta"]
-
 
                     if mod_mass_to_name is None:  # if called without mod to mass dict
                         modName = um.id_to_name(um.mass_to_ids(modMass, decimals=2)[0])[0]
@@ -126,7 +127,9 @@ class Psm:
 
                     sequence_list.insert(int(mod["location"]), "[{0}]".format(modName))
 
-                return "".join(sequence_list)
+                proforma = "".join(sequence_list)
+
+            return proforma + "/" + str(self.chargeState)
 
         # mods = um.mass_to_ids(79.96, decimals=1)
 
@@ -194,7 +197,7 @@ class Psm:
                         fragments.append(frag_code)
                         # print("nterm ion" + frag_code)
 
-        # print(fragments)
+        print(fragments)
         return fragments
 
     def get_intensity_at_pos(self, pos, direction):
@@ -326,11 +329,4 @@ class Psm:
                     ],
                 }
 
-        # print(self.annotFrag)
-
-        # nAnnotMasc = 0
-        # for ionType in self.IonType:
-        #     nAnnotMasc += len(ionType["FragmentArray"][0]["values"])
-
-        # print("Total annotated frag = {0} / {1}".format(nAnnotFrag, len(fragMz)))
-        # pprint.pprint(vars(self))
+        print(nAnnotFrag)
