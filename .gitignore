@@ -1,7 +1,7 @@
-proteoformquant2/Data/
-proteoformquant2/Data_s/
-proteoformquant2/Results/
-proteoformquant2/images/
-proteoformquant2/Output/
+proteoformquant/Data/
+proteoformquant/Data_s/
+proteoformquant/Results/
+proteoformquant/images/
+proteoformquant/Output/
 .vscode
 **/__pycache__/

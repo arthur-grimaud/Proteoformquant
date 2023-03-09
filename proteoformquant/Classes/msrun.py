@@ -2027,16 +2027,16 @@ class Msrun:
                 proteo.get_proteoform_total_intens_r1(),
                 len(proteo.get_linked_psm()),
                 len(proteo.get_validated_linked_psm()),
-                rt_peak,
-                auc,
-                proteo.ambiguous_spectra(),
+                float(rt_peak),
+                float(auc),
+                int(proteo.ambiguous_spectra()),
             ]
 
         # Proforma without charge info
         df["proforma"] = df["proforma_full"].str.split("/").str[0]
 
-        # merge row with identical proforma, and sum the numerical columns
-        df = df.groupby(["proforma"]).sum().reset_index()
+        # merge row with identical proforma, sequence and brno and sum other columns
+        df = df.groupby(["protein", "proforma", "sequence", "brno"]).sum().reset_index()
 
         return df
 
