@@ -1,4 +1,4 @@
-Welcome to Lumache's documentation!
+Welcome to Proteoformquant's documentation!
 ===================================
 
 **Proteoformquant** is a Python 
