@@ -29,3 +29,4 @@ dependencies:
       - sympy==1.9
       - unimod_mapper==0.6.4
       - lxml
+      - ms_deisotope

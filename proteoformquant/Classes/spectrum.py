@@ -108,8 +108,6 @@ class Spectrum:
         """fill PSM list from identification result dict from pyteomics"""
         for identItem in identMzid["SpectrumIdentificationItem"]:
             # Iterate over identification item and create an instance of the object psm for each
-            # print("*************PSM************")
-            # print(identItem)
             if len(self.get_psms()) + 1 <= max_rank:
                 self.psms.append(
                     Psm(rank=len(self.get_psms()) + 1, spectrum=self, identificationItem=identItem)
@@ -126,9 +124,6 @@ class Spectrum:
 
     def set_spec_data_mzml(self, spec_mzml):
         "add spetrum information from a pyteomics mzml object"
-        # print(spec_mzml["scanList"]["scan"][0]["scan start time"])
-
-        print(spec_mzml)
 
         self.fragIntens: array = spec_mzml["intensity array"]
         self.fragMz: array = spec_mzml["m/z array"]
@@ -149,7 +144,6 @@ class Spectrum:
 
                 for type in ann.values():
                     for i in range(len(type["intens"])):
-                        # print(type["index"])
                         if type["index"][i] not in seenPeaks:
                             seenPeaks.append(type["index"][i])
                             self.sumIntensAnnotFrag += type["intens"][i]
@@ -176,12 +170,11 @@ class Spectrum:
             psms = self.get_validated_psm()
         else:
             psms = [psm for idx, psm in self.get_psms() if idx in psms_rank]
-        # print(psms)
 
         if len(psms) == 1:
             psms[0].ratio = 1
         if len(psms) > 1:
-            self.__ratios_multiple(psms, verbose=True)
+            self.__ratios_multiple(psms, verbose=verbose)
         else:
             pass
 
@@ -205,9 +198,7 @@ class Spectrum:
         # Create matrix with modification induced mass shift (row = proteoform, col position)
         mod_mass_matrix = np.zeros((len(psms), len(mod_pos_list)))
         for row, psm in enumerate(psms):
-            # print(psm.get_modification_brno())
             for mod in psm.proteoform.get_modification_dict():
-                # print(mod)
                 col = mod_pos_list.index(mod["location"])
                 mod_mass_matrix[row, col] = mod["monoisotopicMassDelta"]
 

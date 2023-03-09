@@ -424,6 +424,20 @@ class Proteoform:
         else:
             return False
 
+    def ambiguity_score(self):
+        """return the percentage of spectrum assigned to that proteoform contanins missing distinguishing ions"""
+        n_ambig = 0
+        n_tot = 0
+        for psm in self.get_validated_linked_psm():
+            n_tot += 1
+            if psm.spectrum.miss_determining_ions == True:
+                n_ambig += 1
+
+        if n_tot != 0:
+            return n_ambig / n_tot
+        else:
+            return 0
+
     # Setters
 
     def set_color(self, colorInt):

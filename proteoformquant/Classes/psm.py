@@ -3,7 +3,6 @@ import unimod_mapper
 
 um = unimod_mapper.UnimodMapper()
 from Utils.misc import truncate
-import pprint
 import spectrum_utils.spectrum as sus
 from Utils.constant import ion_direction
 import warnings
@@ -197,7 +196,6 @@ class Psm:
                         fragments.append(frag_code)
                         # print("nterm ion" + frag_code)
 
-        print(fragments)
         return fragments
 
     def get_intensity_at_pos(self, pos, direction):
@@ -328,5 +326,3 @@ class Psm:
                         ",".join((pos.split(":")[0], pos.split(":")[1], theoFragType)) for pos in posList
                     ],
                 }
-
-        print(nAnnotFrag)

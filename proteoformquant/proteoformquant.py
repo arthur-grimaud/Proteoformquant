@@ -66,7 +66,7 @@ def main():
 
     ### Prepare Data ###
     run.add_proteoforms()
-    run.deconvolute_ms2()
+    # run.deconvolute_ms2()
     run.update_proteoform_intens()
 
     ### Filtering Data ###
@@ -95,11 +95,16 @@ def main():
 
     ### OUTPUT ###
 
-    with open(f"{output_dir}/save_res_{output_prefix}.pkl", "wb") as outp:
-        pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
+    # with open("save_res_2022_mix2_rep1.pkl", "rb") as f:
+    #     run = pickle.load(f)
 
+    # Quantification Table
     run.result_dataframe_pfq1_format().to_csv(f"{output_dir}/quant_{output_prefix}.csv")
     pd.DataFrame(run.log).to_csv(f"{output_dir}/log_{output_prefix}.csv", ",")
+
+    # Pickle Object for report
+    with open(f"{output_dir}/obj_{output_prefix}.pkl", "wb") as outp:
+        pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
 
     run.psm_score_dataframe(
         file_name=f"{output_dir}/psms_{output_prefix}.csv", score_name="Amanda:AmandaScore"

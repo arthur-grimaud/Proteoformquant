@@ -3,16 +3,16 @@
 "prec_mz_tol" : 1.05,  // in Da
 "frag_mz_tol" : 0.015 , // in Da
 //Fragments to be considered (see available options in "Utils")
-"fragments_types" : ["c","zdot","z+1","z+2", "b", "y"],
+"fragments_types" : ["c","zdot","z+1","z+2"],
 //"fragments_types" : ["b", "y"],
 
 
 // Filtering and thresholds:
-"max_rank" : 5 , // Maximum rank to be considered (1-based)
+"max_rank" : 3 , // Maximum rank to be considered (1-based)
 "fdr_threshold" : 0.1 , // False-Discovery rate
 "intensity_threshold" : 0,
 "elution_profile_score_threshold" : 0,
-"min_n_psm": 0, 
+"min_n_psm": 2, // Minimal number of PSM for a peptidoform to be considered
 
 
 // Optimization

@@ -2031,13 +2031,14 @@ class Msrun:
                 "sequence",
                 "brno",
                 "proforma",
+                "proforma_full",
                 "intensity",
                 "intensity_r1",
-                "intensity_rplus",
                 "linked_psm",
                 "linked_psm_validated",
                 "rt_peak",
                 "auc",
+                "ambiguitiy",
             )
         )
 
@@ -2057,15 +2058,22 @@ class Msrun:
                 proteo.get_protein_ids(),
                 proteo.peptideSequence,
                 proteo.get_modification_brno(),
+                "na",
                 proteo.get_modification_proforma(),
                 proteo.get_proteoform_total_intens(),
                 proteo.get_proteoform_total_intens_r1(),
-                proteo.get_proteoform_total_intens_rplus(),
                 len(proteo.get_linked_psm()),
                 len(proteo.get_validated_linked_psm()),
                 rt_peak,
                 auc,
+                proteo.ambiguity_score(),
             ]
+
+        # Proforma without charge info
+        df["proforma"] = df["proforma_full"].str.split("/").str[0]
+
+        # merge row with identical proforma
+        df = df.groupby(axis=0, level=None, by=["proforma", "sequence", "brno"]).sum().reset_index()
 
         return df
 
