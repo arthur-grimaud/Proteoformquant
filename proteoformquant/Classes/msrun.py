@@ -56,7 +56,6 @@ class Msrun:
     """
 
     def __init__(self, run_id: str = "Default run ID", params={}, params_over={}, verbose=True):
-
         self.run_id = run_id
         self.ident_fn: str = "Not Specified"
         self.spectra_file: str = "Not Specified"
@@ -104,7 +103,6 @@ class Msrun:
                 warning(f"\n The argument {key} is not a valid parameter and will be ignored")
 
     def __getstate__(self):
-
         # this method is called when you are
         # going to pickle the class, to know what to pickle
         state = self.__dict__.copy()
@@ -191,7 +189,6 @@ class Msrun:
         }
 
     def add_metrics_to_log(self, processing_step="Not given"):
-
         """Append the metrics from self.get_dataset_metrics() to self.log.
 
         This function compute a set of metrics from the MS run and add them as a new line in the dataframe self.log  .
@@ -280,7 +277,6 @@ class Msrun:
         pass
 
     def read_spectra(self, spectra_file):
-
         # check the format of the input
         extension = splitext(spectra_file)[1]
         if extension.lower() == ".mgf":
@@ -310,7 +306,6 @@ class Msrun:
         print("\n---Loading spectrum data from: {0}---".format(self.spectra_file))
 
         for spec_id, spec_obj in tqdm(self.spectra.items(), disable=not self.verbose):
-
             # Different ways to retrieve a spectrum from an mgf file:
             spec_found = False
 
@@ -430,7 +425,6 @@ class Msrun:
                 self.indices["scan"][int(params["scans"])] = index
 
     def read_MZML(self, spectra_file):
-
         self.spectra_file = spectra_file  # Store File name that has been read
         self.spectra_source = mzml.MzML(spectra_file)
         self.indices = defaultdict(dict)
@@ -439,7 +433,6 @@ class Msrun:
         print("\n---Loading spectrum data from: {0}---".format(self.spectra_file))
 
         for spec_id, spec_obj in tqdm(self.spectra.items(), disable=not self.verbose):
-
             # Diffrent ways to retrievea spectrum from an mgf file:
             spec_found = False
 
@@ -538,7 +531,6 @@ class Msrun:
         #     self.spectra[spec_id].set_spec_data_mzml(spec)
 
     def _read_by_id_MZML(self, spectra_file):
-
         self.spectra_file = spectra_file  # Store File name that has been read
         self.spectra_source = mzml.MzML(spectra_file)
         self.indices = defaultdict(dict)
@@ -549,13 +541,11 @@ class Msrun:
         for spec_id in tqdm(
             self.spectra, disable=not self.verbose
         ):  # Take into account how DBSEs store spectra ids
-
             spec = self._get_by_id_MZML(spec_id)
             self.spectra[spec_id].set_spec_data_mzml(spec)
 
     def _get_by_id_MZML(self, id_string):
         if type(id_string) is int:
-
             return self.spectra_source.get_by_index(self.indices["scan"][id_string])
         elif type(id_string) is str:
             # in case of whitespaces
@@ -607,7 +597,6 @@ class Msrun:
             i += 1
 
             for psm in self.spectra[specID].get_psms():
-
                 proforma = psm.get_modification_proforma(self.mod_mass_to_name)
                 brno = psm.get_modification_brno()
                 seq = psm.getPeptideSequence()
@@ -651,7 +640,6 @@ class Msrun:
 
         print("\n---Generating theoretical fragments---")
         for proteoID in tqdm(self.proteoforms, disable=not self.verbose):
-
             self.proteoforms[proteoID].compute_theoretical_fragments(self.fragments_types)
 
         print("\n---Matching fragments---")
@@ -822,7 +810,6 @@ class Msrun:
         print("\n---Deconvoluting spectra---")
 
         for spectrum in tqdm(self.spectra.values(), disable=not self.verbose):
-
             peaks = ms_deisotope.deconvolution.utils.prepare_peaklist(
                 zip(spectrum.get_frag_intens(), spectrum.get_frag_mz())
             )
@@ -880,7 +867,6 @@ class Msrun:
         del psm
 
     def remove_spectrum(self, spectrum):
-
         """Removes a given spectrum object and its associated PSMs,
         will also remove the proteoform object associated to a removed PSM
          if this proteoform doesn't have any associated PSM.
@@ -1005,7 +991,6 @@ class Msrun:
                     psm.is_validated = False
 
     def filter_proteform_low_count(self):
-
         """Removes Proteoform object if the number of associated PSM is inferioir to min_n_psm
 
         Parameters
@@ -1049,7 +1034,6 @@ class Msrun:
         all_proteoform_pairs_count = []
 
         for spectrum in tqdm(self.spectra.values(), disable=not self.verbose):
-
             proforma_psms = [psm.proteoform.get_modification_proforma() for psm in spectrum.get_psms()]
             proforma_psms = np.unique(proforma_psms)
             proforma_combinations = [
@@ -1112,7 +1096,6 @@ class Msrun:
         processes = []
 
         for proteoform in proteoform_subset:
-
             if multi:
                 p = mp.Process(
                     target=proteoform.model_elution_profile, args=(self.elution_profile_score_threshold,)
@@ -1153,7 +1136,6 @@ class Msrun:
     # ---------------------- SCORE: Elution profile quality ---------------------- #
 
     def score_elution_profile_quality(self, proteoform_subset, spectra_subset, boundaries, verbose=False):
-
         # Get individual scores for the subset
         u_correlation = self.get_correlation_score(proteoform_subset)
         # u_gap_spectra_valid = self.get_gap_in_validated_spectra(proteoform_subset, spectra_subset, boundaries)
@@ -1188,7 +1170,6 @@ class Msrun:
         ratios_missed = []  # ratio of "missed psm" in the range for each proteoforms
         p = 0
         for b in range(0, len(boundaries), 2):
-
             proteoform = proteoform_subset[p]
             p += 1
             v_proteo, v_subset = 0, 0
@@ -1216,7 +1197,6 @@ class Msrun:
             return 1
 
     def get_balance_evidence_score(self, proteoform_subset):
-
         ratios_l_r = [
             proteoform.get_ratio_left_right()
             for proteoform in proteoform_subset
@@ -1226,7 +1206,6 @@ class Msrun:
         return 1 - mean(ratios_l_r)
 
     def get_area_under_bound_score(self, proteoform_subset):
-
         ratios_area = [
             proteoform.get_boundaries_area_ratio()
             for proteoform in proteoform_subset
@@ -1236,7 +1215,6 @@ class Msrun:
         return 1 - mean(ratios_area)
 
     def get_coverage_score(self, proteoform_subset):
-
         coverage = [proteoform.get_coverage() for proteoform in proteoform_subset]
         coverage = [i for i in coverage if i]  # remove None values
         if len(coverage) == 0:
@@ -1290,7 +1268,6 @@ class Msrun:
         p_tot = 0
 
         for spectrum in spectra_subset:
-
             val_list = [psm.is_validated for psm in spectrum.get_psms()]
             val_index = [i for i, x in enumerate(val_list) if x]
 
@@ -1312,7 +1289,6 @@ class Msrun:
         for spectrum in spectra_subset:
             for psm in spectrum.get_psms():
                 if psm.is_validated == True and psm.ratio == 0:
-
                     p_0 += 1
 
                 p_tot += 1
@@ -1324,7 +1300,6 @@ class Msrun:
     def get_rank_score(self, proteoform_subset):
         rank_scores = []
         for proteoform in proteoform_subset:
-
             if proteoform.get_number_validated_linked_psm() != 0:
                 rank_scores.append(
                     proteoform.get_weighted_number_linked_validated_psm(self.max_rank)
@@ -1339,10 +1314,8 @@ class Msrun:
     # ------------------------------- OPTIMIZATION ------------------------------- #
 
     def update_proteoform_subset_validation(self, proteoform_subset, boundaries):
-
         p = 0
         for b in range(len(boundaries)):
-
             proteoform = proteoform_subset[p]
             p += 1
             v, uv = 0, 0
@@ -1360,12 +1333,10 @@ class Msrun:
                         uv += 1
 
     def optimize_proteoform_subsets(self):
-
         grp = 0
 
         print("\n---Searching for chimeric spectra---")
         for group in tqdm(self.proteoform_isobaric_group, disable=not self.verbose):
-
             # objects lists of subset:
             self.all_rts = []  # list of all Retention time in the spectra subset
             self.proteoform_subset = []  # Proteoform objects in the subset
@@ -1482,13 +1453,11 @@ class Msrun:
 
             ##Stops here if not enough Spectra###
             if len(self.spectra_subset) > self.min_spectra_subset:
-
                 # look for proteoform "hidden in higher ranks"
                 n_proteo_excluded = 0
                 for p in range(len(self.proteoform_subset)):
                     if n_proteo_excluded < self.max_rejected_proteo:
                         if self.rt_boundaries[p][0] == 0:  # Add new proteoform/peptidoform
-
                             rt_window = self.proteoform_subset[p].get_rt_range_centered(self.window_size_rt)
                             rt_window[0] = min(self.all_rts, key=lambda x: abs(x - rt_window[0]))
                             rt_window[1] = min(self.all_rts, key=lambda x: abs(x - rt_window[1]))
@@ -1502,7 +1471,6 @@ class Msrun:
                                 for i in range(len(self.proteoform_subset))
                                 if self.rt_boundaries[i][0] != 0
                             ]:
-
                                 conditions = [
                                     proteo.get_fit_score() > self.min_ep_fit,
                                     proteo.get_coverage() > self.min_ep_cov,
@@ -1633,7 +1601,6 @@ class Msrun:
 
         x = 0
         for p in proteo_indexes:
-
             if self.rt_boundaries[p][0] == 0 or self.rt_boundaries[p][1] == 0:
                 warning("Mutating RT range that is Zero")
 
@@ -1642,7 +1609,6 @@ class Msrun:
             rt_ranges_l = []
 
             for iter in range(self.n_iter):
-
                 proteo = self.proteoform_subset[p]
 
                 # Elution profile model range estimate:
@@ -1860,7 +1826,6 @@ class Msrun:
     def plot_elution_profiles(
         self, proteoforms_input, rt_values, count=0, function_values="NA", plot_all=False
     ):
-
         # Get plot boundaries
         x_min_max = [min(rt_values) - 50, max(rt_values) + 50]
         y_min_max = [-150, 100]
@@ -1873,7 +1838,6 @@ class Msrun:
         # Plot each proteoforms:
         for proteo in proteoforms_input:
             if (proteo.min_bound_rt != 0 and proteo.min_bound_rt is not None) or plot_all:
-
                 data_x_all = [psm.spectrum.get_rt() for psm in proteo.get_linked_psm()]
                 data_y_all = [psm.spectrum.get_prec_intens() for psm in proteo.get_linked_psm()]
                 fig.add_scatter(
@@ -2044,7 +2008,6 @@ class Msrun:
 
         # Iterate through the proteoforms
         for proteo in self.proteoforms.values():
-
             # Get the elution profile
             if proteo.get_elution_profile() != None:
                 rt_peak = proteo.get_elution_profile().get_x_at_max_y()
@@ -2066,14 +2029,14 @@ class Msrun:
                 len(proteo.get_validated_linked_psm()),
                 rt_peak,
                 auc,
-                proteo.ambiguity_score(),
+                proteo.ambiguous_spectra(),
             ]
 
         # Proforma without charge info
         df["proforma"] = df["proforma_full"].str.split("/").str[0]
 
-        # merge row with identical proforma
-        df = df.groupby(axis=0, level=None, by=["proforma", "sequence", "brno"]).sum().reset_index()
+        # merge row with identical proforma, and sum the numerical columns
+        df = df.groupby(["proforma"]).sum().reset_index()
 
         return df
 
@@ -2093,9 +2056,7 @@ class Msrun:
         )
 
         for spectrum in self.spectra.values():
-
             for psm in spectrum.get_psms()[:max_rank]:
-
                 # print(psm.spectrum.get_id())
                 # print(psm.proteoform.get_protein_ids())
                 # add information spectrum and psm
@@ -2134,7 +2095,6 @@ class Msrun:
         return df
 
     def psm_score_dataframe(self, file_name, score_name):
-
         psms_df = {"spec": [], "rank": [], "score": [], "validated": [], "frag_cov": []}
 
         for spectrum in self.spectra.values():

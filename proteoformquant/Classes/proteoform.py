@@ -20,7 +20,6 @@ class Proteoform:
         modificationDict={},
         protein_ids=[],
     ):
-
         # Proteoform Description
         self.peptideSequence: str = peptideSequence
         self.modificationDict: dict = modificationDict
@@ -201,7 +200,6 @@ class Proteoform:
         return self.protein_ids
 
     def get_fit_score(self):
-
         if self.get_number_validated_linked_psm == 0:  # If there is no validated PSM do not return the score
             return 0
 
@@ -248,7 +246,6 @@ class Proteoform:
     #     return len([i for i in intervals_count if i > 0]) / n_quantiles
 
     def get_coverage(self):
-
         # print(self.modificationBrno)
         if self.get_elution_profile() == None or self.get_elution_profile().is_parameters_fitted() == False:
             return 0  # If no fit is found return worst score
@@ -363,7 +360,6 @@ class Proteoform:
                 print("Peak retention time ", EP_peak_rt)
 
                 for psm in self.get_validated_linked_psm():
-
                     if psm.spectrum.get_rt() <= EP_peak_rt:
                         left_sum += psm.get_prec_intens_ratio()
                     if psm.spectrum.get_rt() >= EP_peak_rt:
@@ -382,7 +378,6 @@ class Proteoform:
         if self.get_elution_profile() != None:
             EP = self.get_elution_profile()
             if EP.is_parameters_fitted():
-
                 boundaries = EP.get_bounds_area(area_percent=area_percent)
 
                 return [round(item, 2) for item in boundaries]
@@ -396,7 +391,6 @@ class Proteoform:
         if self.get_elution_profile() != None:
             EP = self.get_elution_profile()
             if EP.is_parameters_fitted():
-
                 auc_inter = EP.get_auc(self.min_bound_rt, self.max_bound_rt)
                 auc_tot = EP.get_auc(
                     self.min_bound_rt - 1000, self.max_bound_rt + 1000
@@ -424,19 +418,14 @@ class Proteoform:
         else:
             return False
 
-    def ambiguity_score(self):
-        """return the percentage of spectrum assigned to that proteoform contanins missing distinguishing ions"""
+    def ambiguous_spectra(self):
+        """return the number of spectra that are ambiguous"""
         n_ambig = 0
-        n_tot = 0
         for psm in self.get_validated_linked_psm():
-            n_tot += 1
             if psm.spectrum.miss_determining_ions == True:
                 n_ambig += 1
 
-        if n_tot != 0:
-            return n_ambig / n_tot
-        else:
-            return 0
+        return n_ambig
 
     # Setters
 
