@@ -1,9 +1,0 @@
-,0,1,2,3,4,5,6,7,8,9
-0,processing_step,self.n_scans_in_mgf,n_spectra,n_spectra_w_id,n_spectra_chimericn_psms,n_psms_valid,n_psms_valid_r1,n_proteoforms,n_proteoforms_w_valid_psm,
-1,initial,0,3841,3841,0,21884,3841,3841,0,0.0
-2,Update_proteoform_intens,0,3841,3841,0,21884,3841,3841,7237,1438.0
-3,fdr_filtering,0,3841,3377,0,20951,3377,3672,7237,1335.0
-4,low_count_filtering,0,3841,3027,0,15678,3027,3027,2052,746.0
-5,Update_proteoform_intens,0,3786,2974,0,15403,2974,2974,2052,742.0
-6,Validation of rank 1,0,3786,3102,84,15403,3186,2974,2052,808.0
-7,Update_proteoform_intens,0,3786,3102,84,15403,3186,2974,2052,808.0

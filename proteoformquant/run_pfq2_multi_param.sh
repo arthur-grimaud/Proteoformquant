@@ -4,7 +4,7 @@
 
 # for filename in "Data/"*.mzid; do
 #     echo $filename
-#     python3 proteoformquant2.py -i "$filename" -s "${filename%.mzid}.mgf"
+#     python3 proteoformquant.py -i "$filename" -s "${filename%.mzid}.mgf"
 # done
 
 
@@ -18,7 +18,7 @@ for filename in "Data/"*.mzid; do
 		file_out=${filename%.mzid}_param_${p//./_}
 		file_out=${file_out##*/}
 		echo $file_out
-	    python3 proteoformquant2.py -i "$filename" -s "${filename%.mzid}.mgf" -o "$file_out" -d ../../output_eding_all_10x_2 -max_rank ${p} &
+	    python3 proteoformquant.py -i "$filename" -s "${filename%.mzid}.mgf" -o "$file_out" -d ../../output_eding_all_10x_2 -max_rank ${p} &
 	    while [ $( jobs | wc -l ) -ge "$MAX_THREADS" ]; do
 		sleep 0.1
 	    done
