@@ -8,7 +8,7 @@
 
 
 // Filtering and thresholds:
-"max_rank" : 3 , // Maximum rank to be considered (1-based)
+"max_rank" : 5 , // Maximum rank to be considered (1-based)
 "fdr_threshold" : 0.1 , // False-Discovery rate
 "intensity_threshold" : 0,
 "elution_profile_score_threshold" : 0,
@@ -20,7 +20,7 @@
 "max_rejected_proteo" : 2, // number of peptidoform rejected before stopping optimization
 
 // Starting range
-"window_size_rt" : 150,
+"window_size_rt" : 200,
 
 // Param of the normal distribution used for random mutation of the rt_validation_ranges
 "rd_loc" : 3 , // deviation of the mean from zero
