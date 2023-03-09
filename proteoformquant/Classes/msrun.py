@@ -2013,8 +2013,8 @@ class Msrun:
                 rt_peak = proteo.get_elution_profile().get_x_at_max_y()
                 auc = proteo.get_elution_profile().get_auc()  # TODO hard coded
             else:
-                rt_peak = "NA"
-                auc = "NA"
+                rt_peak = 0
+                auc = 0
 
             # Add the proteoform information to the dataframe
             df.loc[len(df)] = [
@@ -2031,6 +2031,8 @@ class Msrun:
                 float(auc),
                 int(proteo.ambiguous_spectra()),
             ]
+
+        print(df.head())
 
         # Proforma without charge info
         df["proforma"] = df["proforma_full"].str.split("/").str[0]
