@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Proteoform &mdash; Proteoformquant 0.1 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Psm" href="psm.html" />
+    <link rel="prev" title="Msrun" href="spectrum.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Proteoformquant
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../usage/intro.html">What is Proteoformquant</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage/installation.html">How to install Proteoformquant</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage/quickstart.html">Quickstart</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="msrun.html">Msrun</a></li>
+<li class="toctree-l1"><a class="reference internal" href="spectrum.html">Msrun</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Proteoform</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#proteoform.Proteoform"><code class="docutils literal notranslate"><span class="pre">Proteoform</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#proteoform.Proteoform.ambiguous_spectra"><code class="docutils literal notranslate"><span class="pre">Proteoform.ambiguous_spectra()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#proteoform.Proteoform.compute_theoretical_fragments"><code class="docutils literal notranslate"><span class="pre">Proteoform.compute_theoretical_fragments()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#proteoform.Proteoform.get_all_linked_psm"><code class="docutils literal notranslate"><span class="pre">Proteoform.get_all_linked_psm()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#proteoform.Proteoform.get_boundaries_area_ratio"><code class="docutils literal notranslate"><span class="pre">Proteoform.get_boundaries_area_ratio()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#proteoform.Proteoform.get_boundaries_of_ep"><code class="docutils literal notranslate"><span class="pre">Proteoform.get_boundaries_of_ep()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#proteoform.Proteoform.get_gap_in_validated_spectra"><code class="docutils literal notranslate"><span class="pre">Proteoform.get_gap_in_validated_spectra()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#proteoform.Proteoform.get_linked_psm"><code class="docutils literal notranslate"><span class="pre">Proteoform.get_linked_psm()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#proteoform.Proteoform.get_number_linked_psm_Rx"><code class="docutils literal notranslate"><span class="pre">Proteoform.get_number_linked_psm_Rx()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#proteoform.Proteoform.get_number_validated_linked_psm"><code class="docutils literal notranslate"><span class="pre">Proteoform.get_number_validated_linked_psm()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#proteoform.Proteoform.get_proteoform_total_intens_r1"><code class="docutils literal notranslate"><span class="pre">Proteoform.get_proteoform_total_intens_r1()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#proteoform.Proteoform.get_proteoform_total_intens_rplus"><code class="docutils literal notranslate"><span class="pre">Proteoform.get_proteoform_total_intens_rplus()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#proteoform.Proteoform.get_ratio_left_right"><code class="docutils literal notranslate"><span class="pre">Proteoform.get_ratio_left_right()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#proteoform.Proteoform.get_rt_center"><code class="docutils literal notranslate"><span class="pre">Proteoform.get_rt_center()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#proteoform.Proteoform.get_rt_range"><code class="docutils literal notranslate"><span class="pre">Proteoform.get_rt_range()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#proteoform.Proteoform.get_rt_range_centered"><code class="docutils literal notranslate"><span class="pre">Proteoform.get_rt_range_centered()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#proteoform.Proteoform.get_validated_linked_psm"><code class="docutils literal notranslate"><span class="pre">Proteoform.get_validated_linked_psm()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#proteoform.Proteoform.get_weighted_number_linked_psm"><code class="docutils literal notranslate"><span class="pre">Proteoform.get_weighted_number_linked_psm()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#proteoform.Proteoform.get_weighted_number_linked_validated_psm"><code class="docutils literal notranslate"><span class="pre">Proteoform.get_weighted_number_linked_validated_psm()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#proteoform.Proteoform.is_ambiguous"><code class="docutils literal notranslate"><span class="pre">Proteoform.is_ambiguous()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#proteoform.Proteoform.model_elution_profile"><code class="docutils literal notranslate"><span class="pre">Proteoform.model_elution_profile()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#proteoform.Proteoform.update_proteoform_total_intens"><code class="docutils literal notranslate"><span class="pre">Proteoform.update_proteoform_total_intens()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="psm.html">Psm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="elution_profile.html">ElutionProfile</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Proteoformquant</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Proteoform</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api/proteoform.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="proteoform">
+<h1>Proteoform<a class="headerlink" href="#proteoform" title="Permalink to this heading"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="proteoform.Proteoform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">proteoform.</span></span><span class="sig-name descname"><span class="pre">Proteoform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">peptideSequence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modificationBrno</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modificationProforma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modificationDict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">protein_ids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#proteoform.Proteoform" title="Permalink to this definition"></a></dt>
+<dd><dl class="py method">
+<dt class="sig sig-object py" id="proteoform.Proteoform.ambiguous_spectra">
+<span class="sig-name descname"><span class="pre">ambiguous_spectra</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#proteoform.Proteoform.ambiguous_spectra" title="Permalink to this definition"></a></dt>
+<dd><p>return the number of spectra that are ambiguous</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="proteoform.Proteoform.compute_theoretical_fragments">
+<span class="sig-name descname"><span class="pre">compute_theoretical_fragments</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ionTypes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">charges</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#proteoform.Proteoform.compute_theoretical_fragments" title="Permalink to this definition"></a></dt>
+<dd><p>Returns and set a list of m/z of fragment ions  and informations on the type/position of each fragments for a given peptidoform/proteoform</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="proteoform.Proteoform.get_all_linked_psm">
+<span class="sig-name descname"><span class="pre">get_all_linked_psm</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#proteoform.Proteoform.get_all_linked_psm" title="Permalink to this definition"></a></dt>
+<dd><p>Return a list of linked PSMs even if excluded</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="proteoform.Proteoform.get_boundaries_area_ratio">
+<span class="sig-name descname"><span class="pre">get_boundaries_area_ratio</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#proteoform.Proteoform.get_boundaries_area_ratio" title="Permalink to this definition"></a></dt>
+<dd><p>Area under EP for interval min_boud_rt max_bound rt vs total AUC</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="proteoform.Proteoform.get_boundaries_of_ep">
+<span class="sig-name descname"><span class="pre">get_boundaries_of_ep</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">area_percent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.95</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#proteoform.Proteoform.get_boundaries_of_ep" title="Permalink to this definition"></a></dt>
+<dd><p>Return the max and min retention time that represent 99?% of the elution profile AUC</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="proteoform.Proteoform.get_gap_in_validated_spectra">
+<span class="sig-name descname"><span class="pre">get_gap_in_validated_spectra</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rts</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#proteoform.Proteoform.get_gap_in_validated_spectra" title="Permalink to this definition"></a></dt>
+<dd><p>Returns the “gap score” which indicates the proportion of spectra within the elution range of the proteoform
+that are not assigned to that proteoform when they would be expected to be</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="proteoform.Proteoform.get_linked_psm">
+<span class="sig-name descname"><span class="pre">get_linked_psm</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#proteoform.Proteoform.get_linked_psm" title="Permalink to this definition"></a></dt>
+<dd><p>Return a list of linked PSMs that haven’t been excluded</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="proteoform.Proteoform.get_number_linked_psm_Rx">
+<span class="sig-name descname"><span class="pre">get_number_linked_psm_Rx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rank</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#proteoform.Proteoform.get_number_linked_psm_Rx" title="Permalink to this definition"></a></dt>
+<dd><p>Return a the number of element in curated list of linked psm whose rank is equal to x</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="proteoform.Proteoform.get_number_validated_linked_psm">
+<span class="sig-name descname"><span class="pre">get_number_validated_linked_psm</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#proteoform.Proteoform.get_number_validated_linked_psm" title="Permalink to this definition"></a></dt>
+<dd><p>Return a the number of element in curated list of linked psm whose self.is_validated = true</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="proteoform.Proteoform.get_proteoform_total_intens_r1">
+<span class="sig-name descname"><span class="pre">get_proteoform_total_intens_r1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'precursor'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#proteoform.Proteoform.get_proteoform_total_intens_r1" title="Permalink to this definition"></a></dt>
+<dd><p>Return rank 1 quantification of that proteoform</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="proteoform.Proteoform.get_proteoform_total_intens_rplus">
+<span class="sig-name descname"><span class="pre">get_proteoform_total_intens_rplus</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'precursor'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#proteoform.Proteoform.get_proteoform_total_intens_rplus" title="Permalink to this definition"></a></dt>
+<dd><p>Return rank 1 quantification of that proteoform</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="proteoform.Proteoform.get_ratio_left_right">
+<span class="sig-name descname"><span class="pre">get_ratio_left_right</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#proteoform.Proteoform.get_ratio_left_right" title="Permalink to this definition"></a></dt>
+<dd><p>get the ratio of psm before max elution peak and after max elution peak RT</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="proteoform.Proteoform.get_rt_center">
+<span class="sig-name descname"><span class="pre">get_rt_center</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#proteoform.Proteoform.get_rt_center" title="Permalink to this definition"></a></dt>
+<dd><p>returns rt “center” based on the weigthed average of psm’s precursor mass</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="proteoform.Proteoform.get_rt_range">
+<span class="sig-name descname"><span class="pre">get_rt_range</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#proteoform.Proteoform.get_rt_range" title="Permalink to this definition"></a></dt>
+<dd><p>returns the RT range for linked psm of rank &lt;= rank</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="proteoform.Proteoform.get_rt_range_centered">
+<span class="sig-name descname"><span class="pre">get_rt_range_centered</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">window_size_rt</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#proteoform.Proteoform.get_rt_range_centered" title="Permalink to this definition"></a></dt>
+<dd><p>returns the RT range for linked psm of rank &lt;= rank</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="proteoform.Proteoform.get_validated_linked_psm">
+<span class="sig-name descname"><span class="pre">get_validated_linked_psm</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#proteoform.Proteoform.get_validated_linked_psm" title="Permalink to this definition"></a></dt>
+<dd><p>Return a curated list of linked psm whose self.is_validated = true</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="proteoform.Proteoform.get_weighted_number_linked_psm">
+<span class="sig-name descname"><span class="pre">get_weighted_number_linked_psm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_rank</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#proteoform.Proteoform.get_weighted_number_linked_psm" title="Permalink to this definition"></a></dt>
+<dd><p>Returns the sum of linked PSM weigthed by their rank</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="proteoform.Proteoform.get_weighted_number_linked_validated_psm">
+<span class="sig-name descname"><span class="pre">get_weighted_number_linked_validated_psm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_rank</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#proteoform.Proteoform.get_weighted_number_linked_validated_psm" title="Permalink to this definition"></a></dt>
+<dd><p>Returns the sum of linked PSM weigthed by their rank</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="proteoform.Proteoform.is_ambiguous">
+<span class="sig-name descname"><span class="pre">is_ambiguous</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ratio_miss</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#proteoform.Proteoform.is_ambiguous" title="Permalink to this definition"></a></dt>
+<dd><p>if more than ratio_miss of the spectrum assigned to that proteoform contanins missing distinguishing ions, return true</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="proteoform.Proteoform.model_elution_profile">
+<span class="sig-name descname"><span class="pre">model_elution_profile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">elution_profile_score_threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#proteoform.Proteoform.model_elution_profile" title="Permalink to this definition"></a></dt>
+<dd><p>instanciate an envelope object by providing the list of psm associated to that proteoform</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="proteoform.Proteoform.update_proteoform_total_intens">
+<span class="sig-name descname"><span class="pre">update_proteoform_total_intens</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'precursor'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#proteoform.Proteoform.update_proteoform_total_intens" title="Permalink to this definition"></a></dt>
+<dd><p>Return the sum of intensities of psm of that proteoform method = precursor  or annotated (correspond to the intensity value used)</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="spectrum.html" class="btn btn-neutral float-left" title="Msrun" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="psm.html" class="btn btn-neutral float-right" title="Psm" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Arthur Grimaud.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

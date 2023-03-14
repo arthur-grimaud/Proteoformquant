@@ -15,7 +15,6 @@ from numba import jit
 
 class Spectrum:
     def __init__(self, spectrumID, identMzid=None, max_rank=10):
-
         self.id = spectrumID  # Unique ID for the spectrum
         self.spectrum_title = identMzid["spectrum title"]
 
@@ -54,7 +53,6 @@ class Spectrum:
         return self.precMz
 
     def get_prec_intens(self):
-
         if self.precIntens is not None:
             return self.precIntens
         else:
@@ -114,7 +112,6 @@ class Spectrum:
                 )
 
     def set_spec_data_mgf(self, specMgf):
-
         "add spetrum information from a pyteomics mgf object"
         self.fragIntens: array = specMgf["intensity array"]
         self.fragMz: array = specMgf["m/z array"]
@@ -179,7 +176,6 @@ class Spectrum:
             pass
 
     def __ratios_multiple(self, psms, verbose):
-
         # Position (1 based) of modified residues across multiple psm (e.g K14acK24ac K9me3 -> [9,14,24])
         mod_pos_list = []
         for psm in psms:
@@ -306,7 +302,6 @@ class Spectrum:
         ratios_psms = [ratio / sum(results[0]) for ratio in results[0]]  # normalized ratios
 
         if verbose:
-
             print("ratios_psms: \n", ratios_psms)
 
         self.quant_residuals = results[1]
@@ -349,7 +344,6 @@ class Spectrum:
             pair_found = False
             prev_col = np.zeros(n_row)
             for col in range(unique_matrix.shape[1]):
-
                 if (unique_matrix[:, col] == prev_col).all():
                     pair_found = True
 
@@ -402,7 +396,6 @@ class Spectrum:
     # @staticmethod
     # @jit(nopython=True)
     def __equation_system(self, unique_matrix_t, intensity_matrix_t):
-
         var = 0
         equations = []
         variables = []
@@ -449,25 +442,25 @@ class Spectrum:
         ### APPEND ADDITIONAL EQUATION FOR PROTEOFORM GROUPS WITH MISSING UNIQUE IONS ###
 
         # print("equations")
-
         # print(equations)
+
+        self.miss_determining_ions = False
+
         is_unique = np.full(unique_matrix_t.shape[1], False)
         for row in equations:
-
             row_unique_indexes = []
             for x in row:
                 if list(row).count(x) == 1:
                     row_unique_indexes.append(list(row).index(x))
+                    self.miss_determining_ions = True
 
                 for index in row_unique_indexes:
                     is_unique[index] = True
 
-        # var to check whether ratio had to be added because
-        # self.miss_determining_ions = False
+        # var to check whether ratio had to be added because of missing unique ions
 
         for i in range(len(is_unique)):
             if is_unique[i] == False:
-
                 add_eq = np.zeros(unique_matrix_t.shape[1])
                 add_eq[i] = 1
                 equations.append(add_eq)
@@ -503,7 +496,6 @@ class Spectrum:
                 uniquePairwise.append(uniqueFragments)
 
             for p in range(0, len(validatedPsms) - 1):
-
                 A = self.get_sum_intens_fragment_list(validatedPsms[p], uniquePairwise[p])
                 B = self.get_sum_intens_fragment_list(validatedPsms[p + 1], uniquePairwise[p])
 

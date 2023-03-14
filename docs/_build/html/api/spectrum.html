@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spectrum &mdash; Proteoformquant 0.1 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Proteoform" href="proteoform.html" />
+    <link rel="prev" title="Msrun" href="msrun.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Proteoformquant
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../usage/intro.html">What is Proteoformquant</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage/installation.html">How to install Proteoformquant</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage/quickstart.html">Quickstart</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="msrun.html">Msrun</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Spectrum</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#spectrum.Spectrum"><code class="docutils literal notranslate"><span class="pre">Spectrum</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#spectrum.Spectrum.get_residuals"><code class="docutils literal notranslate"><span class="pre">Spectrum.get_residuals()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#spectrum.Spectrum.set_ident_data_mzid"><code class="docutils literal notranslate"><span class="pre">Spectrum.set_ident_data_mzid()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#spectrum.Spectrum.set_spec_data_mgf"><code class="docutils literal notranslate"><span class="pre">Spectrum.set_spec_data_mgf()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#spectrum.Spectrum.set_spec_data_mzml"><code class="docutils literal notranslate"><span class="pre">Spectrum.set_spec_data_mzml()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#spectrum.Spectrum.set_sum_intens_annot_frag"><code class="docutils literal notranslate"><span class="pre">Spectrum.set_sum_intens_annot_frag()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#spectrum.Spectrum.update_psms_ratio"><code class="docutils literal notranslate"><span class="pre">Spectrum.update_psms_ratio()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="proteoform.html">Proteoform</a></li>
+<li class="toctree-l1"><a class="reference internal" href="psm.html">Psm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="elution_profile.html">ElutionProfile</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Proteoformquant</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Spectrum</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api/spectrum.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="spectrum">
+<h1>Spectrum<a class="headerlink" href="#spectrum" title="Permalink to this heading"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="spectrum.Spectrum">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">spectrum.</span></span><span class="sig-name descname"><span class="pre">Spectrum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spectrumID</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">identMzid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#spectrum.Spectrum" title="Permalink to this definition"></a></dt>
+<dd><dl class="py method">
+<dt class="sig sig-object py" id="spectrum.Spectrum.get_residuals">
+<span class="sig-name descname"><span class="pre">get_residuals</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#spectrum.Spectrum.get_residuals" title="Permalink to this definition"></a></dt>
+<dd><p>returns the residuals, threshold if the minimum value for residuals to be taken into acount</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="spectrum.Spectrum.set_ident_data_mzid">
+<span class="sig-name descname"><span class="pre">set_ident_data_mzid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">identMzid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_rank</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#spectrum.Spectrum.set_ident_data_mzid" title="Permalink to this definition"></a></dt>
+<dd><p>fill PSM list from identification result dict from pyteomics</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="spectrum.Spectrum.set_spec_data_mgf">
+<span class="sig-name descname"><span class="pre">set_spec_data_mgf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">specMgf</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#spectrum.Spectrum.set_spec_data_mgf" title="Permalink to this definition"></a></dt>
+<dd><p>add spetrum information from a pyteomics mgf object</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="spectrum.Spectrum.set_spec_data_mzml">
+<span class="sig-name descname"><span class="pre">set_spec_data_mzml</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spec_mzml</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#spectrum.Spectrum.set_spec_data_mzml" title="Permalink to this definition"></a></dt>
+<dd><p>add spetrum information from a pyteomics mzml object</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="spectrum.Spectrum.set_sum_intens_annot_frag">
+<span class="sig-name descname"><span class="pre">set_sum_intens_annot_frag</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#spectrum.Spectrum.set_sum_intens_annot_frag" title="Permalink to this definition"></a></dt>
+<dd><p>For proteoforms in self.psms where is_validated is true, set self.sumIntensAnnotFrag as the sum of annotated peaks</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="spectrum.Spectrum.update_psms_ratio">
+<span class="sig-name descname"><span class="pre">update_psms_ratio</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">psms_rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#spectrum.Spectrum.update_psms_ratio" title="Permalink to this definition"></a></dt>
+<dd><p>compute the ratios of psms in “psms”
+if psms_rank is empty proteoforms that are validated (is_validated == T) are considered
+else the proteforms of rank in psms_rank are considered</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="msrun.html" class="btn btn-neutral float-left" title="Msrun" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="proteoform.html" class="btn btn-neutral float-right" title="Proteoform" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Arthur Grimaud.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

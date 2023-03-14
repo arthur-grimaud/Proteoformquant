@@ -2002,7 +2002,7 @@ class Msrun:
                 "linked_psm_validated",
                 "rt_peak",
                 "auc",
-                "ambiguitiy",
+                "ambiguity",
             )
         )
 
@@ -2018,7 +2018,8 @@ class Msrun:
 
             # Add the proteoform information to the dataframe
             df.loc[len(df)] = [
-                proteo.get_protein_ids(),
+                # get protein list and join with ;
+                ";".join(proteo.get_protein_ids()),
                 proteo.peptideSequence,
                 proteo.get_modification_brno(),
                 "na",
@@ -2037,8 +2038,18 @@ class Msrun:
         # Proforma without charge info
         df["proforma"] = df["proforma_full"].str.split("/").str[0]
 
-        # merge row with identical proforma, sequence and brno and sum other columns
-        df = df.groupby(["protein", "proforma", "sequence", "brno"]).sum().reset_index()
+        # merge row with identical proforma, sequence, brno and protein.
+        df = df.groupby(["proforma", "sequence", "brno", "protein"]).agg(
+            {
+                "intensity": "sum",
+                "intensity_r1": "sum",
+                "linked_psm": "sum",
+                "linked_psm_validated": "sum",
+                "rt_peak": lambda x: ";".join(x.astype(str)),
+                "auc": lambda x: ";".join(x.astype(str)),
+                "ambiguity": "sum",
+            }
+        )
 
         return df
 
@@ -2097,12 +2108,24 @@ class Msrun:
         return df
 
     def psm_score_dataframe(self, file_name, score_name):
-        psms_df = {"spec": [], "rank": [], "score": [], "validated": [], "frag_cov": []}
+        psms_df = {
+            "spec": [],
+            "rank": [],
+            "sequence": [],
+            "brno": [],
+            "proforma": [],
+            "score": [],
+            "validated": [],
+            "frag_cov": [],
+        }
 
         for spectrum in self.spectra.values():
             for psm in spectrum.get_psms():
                 psms_df["spec"].append(spectrum.get_id())
                 psms_df["rank"].append(psm.get_rank())
+                psms_df["sequence"].append(psm.proteoform.peptideSequence)
+                psms_df["brno"].append(psm.get_modification_brno())
+                psms_df["proforma"].append(psm.proteoform.get_modification_proforma())
                 psms_df["score"].append(psm.__dict__[score_name])
                 psms_df["validated"].append(psm.is_validated)
                 psms_df["frag_cov"].append(psm.get_fragment_coverage())

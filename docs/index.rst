@@ -6,14 +6,32 @@
 Welcome to Proteoformquant's documentation!
 ===========================================
 
+Contents:
+---------
+
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
 
+   usage/intro
+   usage/installation
+   usage/quickstart
+
+
+Proteoformquant's API:
+----------------------
+
+.. toctree::
+   :maxdepth: 2
+
+   api/msrun
+   api/spectrum
+   api/proteoform 
+   api/psm
+   api/elution_profile
 
 
 Indices and tables
-==================
+------------------
 
 * :ref:`genindex`
 * :ref:`modindex`

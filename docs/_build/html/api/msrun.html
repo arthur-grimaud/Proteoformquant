@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Msrun &mdash; Proteoformquant 0.1 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Msrun" href="spectrum.html" />
+    <link rel="prev" title="Quickstart" href="../usage/quickstart.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Proteoformquant
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../usage/intro.html">What is Proteoformquant</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage/installation.html">How to install Proteoformquant</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage/quickstart.html">Quickstart</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Msrun</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#msrun.Msrun"><code class="docutils literal notranslate"><span class="pre">Msrun</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#msrun.Msrun.add_metrics_to_log"><code class="docutils literal notranslate"><span class="pre">Msrun.add_metrics_to_log()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#msrun.Msrun.add_proteoforms"><code class="docutils literal notranslate"><span class="pre">Msrun.add_proteoforms()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#msrun.Msrun.deconvolute_ms2"><code class="docutils literal notranslate"><span class="pre">Msrun.deconvolute_ms2()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#msrun.Msrun.fdr_filtering"><code class="docutils literal notranslate"><span class="pre">Msrun.fdr_filtering()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#msrun.Msrun.filter_proteform_low_count"><code class="docutils literal notranslate"><span class="pre">Msrun.filter_proteform_low_count()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#msrun.Msrun.filter_psms_low_score"><code class="docutils literal notranslate"><span class="pre">Msrun.filter_psms_low_score()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#msrun.Msrun.get_dataframe_fragment_annotation"><code class="docutils literal notranslate"><span class="pre">Msrun.get_dataframe_fragment_annotation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#msrun.Msrun.get_dataset_metrics"><code class="docutils literal notranslate"><span class="pre">Msrun.get_dataset_metrics()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#msrun.Msrun.get_mz_range"><code class="docutils literal notranslate"><span class="pre">Msrun.get_mz_range()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#msrun.Msrun.get_rt_range"><code class="docutils literal notranslate"><span class="pre">Msrun.get_rt_range()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#msrun.Msrun.match_fragments"><code class="docutils literal notranslate"><span class="pre">Msrun.match_fragments()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#msrun.Msrun.mutate_rt_boundaries"><code class="docutils literal notranslate"><span class="pre">Msrun.mutate_rt_boundaries()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#msrun.Msrun.read_mgf"><code class="docutils literal notranslate"><span class="pre">Msrun.read_mgf()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#msrun.Msrun.read_mzid"><code class="docutils literal notranslate"><span class="pre">Msrun.read_mzid()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#msrun.Msrun.remove_proteoform"><code class="docutils literal notranslate"><span class="pre">Msrun.remove_proteoform()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#msrun.Msrun.remove_spectrum"><code class="docutils literal notranslate"><span class="pre">Msrun.remove_spectrum()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#msrun.Msrun.retention_time_window_filtering"><code class="docutils literal notranslate"><span class="pre">Msrun.retention_time_window_filtering()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#msrun.Msrun.set_proteoform_isobaric_groups"><code class="docutils literal notranslate"><span class="pre">Msrun.set_proteoform_isobaric_groups()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#msrun.Msrun.unvalidate_psms"><code class="docutils literal notranslate"><span class="pre">Msrun.unvalidate_psms()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#msrun.Msrun.update_proteoform_intens"><code class="docutils literal notranslate"><span class="pre">Msrun.update_proteoform_intens()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#msrun.Msrun.update_proteoforms_elution_profile"><code class="docutils literal notranslate"><span class="pre">Msrun.update_proteoforms_elution_profile()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#msrun.Msrun.update_proteoforms_elution_profile_subset"><code class="docutils literal notranslate"><span class="pre">Msrun.update_proteoforms_elution_profile_subset()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#msrun.Msrun.update_psm_validation"><code class="docutils literal notranslate"><span class="pre">Msrun.update_psm_validation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#msrun.Msrun.update_psms_validation_subset"><code class="docutils literal notranslate"><span class="pre">Msrun.update_psms_validation_subset()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#msrun.Msrun.validate_all_psms"><code class="docutils literal notranslate"><span class="pre">Msrun.validate_all_psms()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#msrun.Msrun.validate_first_rank_no_id"><code class="docutils literal notranslate"><span class="pre">Msrun.validate_first_rank_no_id()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#msrun.Msrun.validate_psms_rank_1"><code class="docutils literal notranslate"><span class="pre">Msrun.validate_psms_rank_1()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#msrun.Msrun.validate_psms_rank_n"><code class="docutils literal notranslate"><span class="pre">Msrun.validate_psms_rank_n()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="spectrum.html">Msrun</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proteoform.html">Proteoform</a></li>
+<li class="toctree-l1"><a class="reference internal" href="psm.html">Psm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="elution_profile.html">ElutionProfile</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Proteoformquant</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Msrun</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api/msrun.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="msrun">
+<h1>Msrun<a class="headerlink" href="#msrun" title="Permalink to this heading"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="msrun.Msrun">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">msrun.</span></span><span class="sig-name descname"><span class="pre">Msrun</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">run_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Default</span> <span class="pre">run</span> <span class="pre">ID'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_over</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#msrun.Msrun" title="Permalink to this definition"></a></dt>
+<dd><p>A class containing all informations corresponding to an MSrun and the methods for processing.</p>
+<p>The Msrun class stores all data corresponding to an MS run, this includes the spectra and their identification.
+This class contains all the main methods called by the main script “proteoformquant.py”.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="msrun.Msrun.add_metrics_to_log">
+<span class="sig-name descname"><span class="pre">add_metrics_to_log</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">processing_step</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Not</span> <span class="pre">given'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#msrun.Msrun.add_metrics_to_log" title="Permalink to this definition"></a></dt>
+<dd><p>Append the metrics from self.get_dataset_metrics() to self.log.</p>
+<p>This function compute a set of metrics from the MS run and add them as a new line in the dataframe self.log  .</p>
+<section id="parameters">
+<h2>Parameters<a class="headerlink" href="#parameters" title="Permalink to this heading"></a></h2>
+<dl class="simple">
+<dt>processing_step<span class="classifier">str</span></dt><dd><p>The string to be added as the rowname for the set of metrics</p>
+</dd>
+</dl>
+</section>
+<section id="returns">
+<h2>Returns<a class="headerlink" href="#returns" title="Permalink to this heading"></a></h2>
+<dl class="simple">
+<dt>dict of (str, float)</dt><dd><p>A set of metrics on the MSrun</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msrun.Msrun.add_proteoforms">
+<span class="sig-name descname"><span class="pre">add_proteoforms</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#msrun.Msrun.add_proteoforms" title="Permalink to this definition"></a></dt>
+<dd><p>From spectrum objects in self.spectra instanciates proteoform.Proteoform objects and stores them self.proteoforms</p>
+<p>This functions looks through all Psm objects in Spectrum objects in self.spectra and instanciate a Proteoform for each unique
+proteoform in the Psms.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msrun.Msrun.deconvolute_ms2">
+<span class="sig-name descname"><span class="pre">deconvolute_ms2</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#msrun.Msrun.deconvolute_ms2" title="Permalink to this definition"></a></dt>
+<dd><p>Perform deconvolution of msms spectra and replace the peak list with deconvoluted peak list.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msrun.Msrun.fdr_filtering">
+<span class="sig-name descname"><span class="pre">fdr_filtering</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">decoy_tag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">score_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#msrun.Msrun.fdr_filtering" title="Permalink to this definition"></a></dt>
+<dd><p>Compute the FDR and remove psms below score threshold at FDR = self.fdr_threshold</p>
+<section id="id1">
+<h2>Parameters<a class="headerlink" href="#id1" title="Permalink to this heading"></a></h2>
+<dl class="simple">
+<dt>decoy_tag: str</dt><dd><p>String in protein_description indicative of decoy sequence</p>
+</dd>
+<dt>score_name: str</dt><dd><p>Name of the score reported by the database search engine (comet: ‘Comet:xcorr’, msamanda:’Amanda:AmandaScore’)</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msrun.Msrun.filter_proteform_low_count">
+<span class="sig-name descname"><span class="pre">filter_proteform_low_count</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#msrun.Msrun.filter_proteform_low_count" title="Permalink to this definition"></a></dt>
+<dd><p>Removes Proteoform object if the number of associated PSM is inferioir to min_n_psm</p>
+<section id="id2">
+<h2>Parameters<a class="headerlink" href="#id2" title="Permalink to this heading"></a></h2>
+<dl class="simple">
+<dt>min_n_psm: int</dt><dd><p>Min number of PSM for which a proteoform will be removed</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msrun.Msrun.filter_psms_low_score">
+<span class="sig-name descname"><span class="pre">filter_psms_low_score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">deviation</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#msrun.Msrun.filter_psms_low_score" title="Permalink to this definition"></a></dt>
+<dd><p>Filter Psms object based on score</p>
+<section id="id3">
+<h2>Parameters<a class="headerlink" href="#id3" title="Permalink to this heading"></a></h2>
+<dl class="simple">
+<dt>min_rt: int</dt><dd><p>Minimum RT value tolerated</p>
+</dd>
+<dt>max_rt: int</dt><dd><p>Maximum RT value tolerated</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msrun.Msrun.get_dataframe_fragment_annotation">
+<span class="sig-name descname"><span class="pre">get_dataframe_fragment_annotation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#msrun.Msrun.get_dataframe_fragment_annotation" title="Permalink to this definition"></a></dt>
+<dd><p>Create a dataframe where each row is the annotation for one PSM (TAKES FIRST RANK)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msrun.Msrun.get_dataset_metrics">
+<span class="sig-name descname"><span class="pre">get_dataset_metrics</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#msrun.Msrun.get_dataset_metrics" title="Permalink to this definition"></a></dt>
+<dd><p>Returns a set of metrics about the run as a dictionnary</p>
+<p>This function returns multiple metrics about the MS run.</p>
+<section id="id4">
+<h2>Parameters<a class="headerlink" href="#id4" title="Permalink to this heading"></a></h2>
+</section>
+<section id="id5">
+<h2>Returns<a class="headerlink" href="#id5" title="Permalink to this heading"></a></h2>
+<dl class="simple">
+<dt>dict of (str, float)</dt><dd><p>A set of metrics on the MSrun</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msrun.Msrun.get_mz_range">
+<span class="sig-name descname"><span class="pre">get_mz_range</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#msrun.Msrun.get_mz_range" title="Permalink to this definition"></a></dt>
+<dd><p>Returns the mass to charge range of precursors in the MS run.</p>
+<p>This function looks throught the mass to charge of spectra precursors in self.spectra,
+and returns the minimum and maximum mass to charge values</p>
+<section id="id6">
+<h2>Parameters<a class="headerlink" href="#id6" title="Permalink to this heading"></a></h2>
+</section>
+<section id="id7">
+<h2>Returns<a class="headerlink" href="#id7" title="Permalink to this heading"></a></h2>
+<dl class="simple">
+<dt>tuple of (float, float)</dt><dd><p>The minimum and maximum mass to charge</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msrun.Msrun.get_rt_range">
+<span class="sig-name descname"><span class="pre">get_rt_range</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#msrun.Msrun.get_rt_range" title="Permalink to this definition"></a></dt>
+<dd><p>Returns the retention range of the MS run.</p>
+<p>This function looks throught the retention times of spectra in self.spectra,
+and returns the minimum and maximum rentention time values</p>
+<section id="id8">
+<h2>Parameters<a class="headerlink" href="#id8" title="Permalink to this heading"></a></h2>
+</section>
+<section id="id9">
+<h2>Returns<a class="headerlink" href="#id9" title="Permalink to this heading"></a></h2>
+<dl class="simple">
+<dt>tuple of (float, float)</dt><dd><p>The minimum and maximum rentention times</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msrun.Msrun.match_fragments">
+<span class="sig-name descname"><span class="pre">match_fragments</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">internal</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#msrun.Msrun.match_fragments" title="Permalink to this definition"></a></dt>
+<dd><p>Generates theoretical fragments and annotated the spectra.</p>
+<p>For each Proteoform objects, generates the set of theoretical fragments
+If spectrum and identification data are provided in a spectrum object,
+get and store the annotated fragments for each PSM</p>
+<section id="id10">
+<h2>Parameters<a class="headerlink" href="#id10" title="Permalink to this heading"></a></h2>
+<dl class="simple">
+<dt>internal<span class="classifier">bool</span></dt><dd><p>Should internal ions be annotated (default: false, only terminal framgent).</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msrun.Msrun.mutate_rt_boundaries">
+<span class="sig-name descname"><span class="pre">mutate_rt_boundaries</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">proteo_to_mutate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iter_try</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#msrun.Msrun.mutate_rt_boundaries" title="Permalink to this definition"></a></dt>
+<dd><p>modify the boundaries in self.rt_boundaries for the current subset of proteoform in self.proteoform_subset,
+proteo_to_mutate: if “all”, mutate all boundaries for proteoform whose rt_boundaries are not (0,0), else specify the index of the roteoform to mutate</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msrun.Msrun.read_mgf">
+<span class="sig-name descname"><span class="pre">read_mgf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spectra_file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#msrun.Msrun.read_mgf" title="Permalink to this definition"></a></dt>
+<dd><p>Add informations from an mgf file to the spectrum objects.</p>
+<p>This method reads the spectra in an mgf file and adds that information to the Spetrum object in self.spectra</p>
+<section id="id11">
+<h2>Parameters<a class="headerlink" href="#id11" title="Permalink to this heading"></a></h2>
+<dl class="simple">
+<dt>spectra_file<span class="classifier">str</span></dt><dd><p>The path to the .mgf file to be read.</p>
+</dd>
+</dl>
+</section>
+<section id="id12">
+<h2>Returns<a class="headerlink" href="#id12" title="Permalink to this heading"></a></h2>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msrun.Msrun.read_mzid">
+<span class="sig-name descname"><span class="pre">read_mzid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ident_fn</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#msrun.Msrun.read_mzid" title="Permalink to this definition"></a></dt>
+<dd><p>Read a spectra identification file in mzIdenMl and stores the data.</p>
+<p>This function reads the information from a spectra identification file mzIdenMl (.mzid) format and stores the information as several classes.
+Path of the identification is stored in self.inputFn
+Spectrum are stored as spectrum.Spectrum objects in self.spectra.
+Peptide spectrum matches information are stored as psm.Psm withing the Spectrum objects in self.spectra.</p>
+<section id="id13">
+<h2>Parameters<a class="headerlink" href="#id13" title="Permalink to this heading"></a></h2>
+<dl class="simple">
+<dt>ident_fn<span class="classifier">str</span></dt><dd><p>The path to the .mzid file to be read.</p>
+</dd>
+</dl>
+</section>
+<section id="id14">
+<h2>Returns<a class="headerlink" href="#id14" title="Permalink to this heading"></a></h2>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msrun.Msrun.remove_proteoform">
+<span class="sig-name descname"><span class="pre">remove_proteoform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">proteoform</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#msrun.Msrun.remove_proteoform" title="Permalink to this definition"></a></dt>
+<dd><p>Removes a given proteform object and its associated PSMs,
+will also remove spectrum if this spectrum doesn’t have any identification</p>
+<section id="id15">
+<h2>Parameters<a class="headerlink" href="#id15" title="Permalink to this heading"></a></h2>
+<dl class="simple">
+<dt>proteoform: proteoform.Proteoform</dt><dd><p>The instance of Proteoform to be removed</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msrun.Msrun.remove_spectrum">
+<span class="sig-name descname"><span class="pre">remove_spectrum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spectrum</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#msrun.Msrun.remove_spectrum" title="Permalink to this definition"></a></dt>
+<dd><p>Removes a given spectrum object and its associated PSMs,
+will also remove the proteoform object associated to a removed PSM</p>
+<blockquote>
+<div><p>if this proteoform doesn’t have any associated PSM.</p>
+</div></blockquote>
+<section id="id16">
+<h2>Parameters<a class="headerlink" href="#id16" title="Permalink to this heading"></a></h2>
+<dl class="simple">
+<dt>spectrum: spetrum.Spectrum</dt><dd><p>The instance of Spectrum to be removed</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msrun.Msrun.retention_time_window_filtering">
+<span class="sig-name descname"><span class="pre">retention_time_window_filtering</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">min_rt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_rt</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#msrun.Msrun.retention_time_window_filtering" title="Permalink to this definition"></a></dt>
+<dd><p>Removes spectrum objects from self.Spectra based on rentention time threshold.</p>
+<section id="id17">
+<h2>Parameters<a class="headerlink" href="#id17" title="Permalink to this heading"></a></h2>
+<dl class="simple">
+<dt>min_rt: int</dt><dd><p>Minimum RT value tolerated</p>
+</dd>
+<dt>max_rt: int</dt><dd><p>Maximum RT value tolerated</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msrun.Msrun.set_proteoform_isobaric_groups">
+<span class="sig-name descname"><span class="pre">set_proteoform_isobaric_groups</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#msrun.Msrun.set_proteoform_isobaric_groups" title="Permalink to this definition"></a></dt>
+<dd><p>From self.proteoforms define self.proteoform_isobaric_group where isobaric proteoform are grouped</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msrun.Msrun.unvalidate_psms">
+<span class="sig-name descname"><span class="pre">unvalidate_psms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spectra_subset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[None]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#msrun.Msrun.unvalidate_psms" title="Permalink to this definition"></a></dt>
+<dd><p>Updates psm.is_validated to TRUE for PSMs in spectra_subset</p>
+<section id="id18">
+<h2>Parameters<a class="headerlink" href="#id18" title="Permalink to this heading"></a></h2>
+<dl class="simple">
+<dt>spectra_subset: list of spetrum.Spectrum</dt><dd><p>list of Spectrum in which PSM will be unvalidated</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msrun.Msrun.update_proteoform_intens">
+<span class="sig-name descname"><span class="pre">update_proteoform_intens</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#msrun.Msrun.update_proteoform_intens" title="Permalink to this definition"></a></dt>
+<dd><p>If mgf and identification data are provided in a spectrum object, get the annotated fragments for each PSM</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msrun.Msrun.update_proteoforms_elution_profile">
+<span class="sig-name descname"><span class="pre">update_proteoforms_elution_profile</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#msrun.Msrun.update_proteoforms_elution_profile" title="Permalink to this definition"></a></dt>
+<dd><p>For each Proteoform object in self.proteoforms model the elution profile</p>
+<p>This method calls the method model_elution_profile() for each proteoform object in self.proteoform.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msrun.Msrun.update_proteoforms_elution_profile_subset">
+<span class="sig-name descname"><span class="pre">update_proteoforms_elution_profile_subset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">proteoform_subset</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#msrun.Msrun.update_proteoforms_elution_profile_subset" title="Permalink to this definition"></a></dt>
+<dd><p>For each proteoforms in self. proteoforms model the elution profile</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msrun.Msrun.update_psm_validation">
+<span class="sig-name descname"><span class="pre">update_psm_validation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#msrun.Msrun.update_psm_validation" title="Permalink to this definition"></a></dt>
+<dd><p>Updates psm.is_validated in each PSM in self.Proteoform</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msrun.Msrun.update_psms_validation_subset">
+<span class="sig-name descname"><span class="pre">update_psms_validation_subset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">psm_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validation_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#msrun.Msrun.update_psms_validation_subset" title="Permalink to this definition"></a></dt>
+<dd><p>Given a psm object list and a binary list of psm to validate validates the psms:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msrun.Msrun.validate_all_psms">
+<span class="sig-name descname"><span class="pre">validate_all_psms</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#msrun.Msrun.validate_all_psms" title="Permalink to this definition"></a></dt>
+<dd><p>Updates psm.is_validated to TRUE in each PSM in self.Proteoform</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msrun.Msrun.validate_first_rank_no_id">
+<span class="sig-name descname"><span class="pre">validate_first_rank_no_id</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#msrun.Msrun.validate_first_rank_no_id" title="Permalink to this definition"></a></dt>
+<dd><p>validate the first rank psm of all spectra without any id</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msrun.Msrun.validate_psms_rank_1">
+<span class="sig-name descname"><span class="pre">validate_psms_rank_1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spectra_subset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[None]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#msrun.Msrun.validate_psms_rank_1" title="Permalink to this definition"></a></dt>
+<dd><p>Updates psm.is_validated to TRUE for PSMs or rank 1 in spectra_subset</p>
+<section id="id19">
+<h2>Parameters<a class="headerlink" href="#id19" title="Permalink to this heading"></a></h2>
+<dl class="simple">
+<dt>spectra_subset: list of spetrum.Spectrum</dt><dd><p>list of Spectrum in which PSM of rank 1 will be unvalidated</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="msrun.Msrun.validate_psms_rank_n">
+<span class="sig-name descname"><span class="pre">validate_psms_rank_n</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spectra_subset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[None]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#msrun.Msrun.validate_psms_rank_n" title="Permalink to this definition"></a></dt>
+<dd><p>Updates psm.is_validated to TRUE for PSMs with higher rank than “rank”</p>
+<section id="id20">
+<h2>Parameters<a class="headerlink" href="#id20" title="Permalink to this heading"></a></h2>
+<dl class="simple">
+<dt>spectra_subset: list of spetrum.Spectrum</dt><dd><p>list of Spectrum in which PSM should be validated</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../usage/quickstart.html" class="btn btn-neutral float-left" title="Quickstart" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="spectrum.html" class="btn btn-neutral float-right" title="Msrun" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Arthur Grimaud.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Psm &mdash; Proteoformquant 0.1 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="ElutionProfile" href="elution_profile.html" />
+    <link rel="prev" title="Proteoform" href="proteoform.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Proteoformquant
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../usage/intro.html">What is Proteoformquant</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage/installation.html">How to install Proteoformquant</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage/quickstart.html">Quickstart</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="msrun.html">Msrun</a></li>
+<li class="toctree-l1"><a class="reference internal" href="spectrum.html">Msrun</a></li>
+<li class="toctree-l1"><a class="reference internal" href="proteoform.html">Proteoform</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Psm</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#psm.Psm"><code class="docutils literal notranslate"><span class="pre">Psm</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#psm.Psm.exclude"><code class="docutils literal notranslate"><span class="pre">Psm.exclude()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#psm.Psm.getAnnotMsmsIntensRatio"><code class="docutils literal notranslate"><span class="pre">Psm.getAnnotMsmsIntensRatio()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#psm.Psm.getModificationsSu"><code class="docutils literal notranslate"><span class="pre">Psm.getModificationsSu()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#psm.Psm.get_accessions"><code class="docutils literal notranslate"><span class="pre">Psm.get_accessions()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#psm.Psm.get_annotation_pair_format"><code class="docutils literal notranslate"><span class="pre">Psm.get_annotation_pair_format()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#psm.Psm.get_fragments_at_range"><code class="docutils literal notranslate"><span class="pre">Psm.get_fragments_at_range()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#psm.Psm.get_intensity_at_pos"><code class="docutils literal notranslate"><span class="pre">Psm.get_intensity_at_pos()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#psm.Psm.get_modification_brno"><code class="docutils literal notranslate"><span class="pre">Psm.get_modification_brno()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#psm.Psm.get_modification_proforma"><code class="docutils literal notranslate"><span class="pre">Psm.get_modification_proforma()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#psm.Psm.get_prec_intens_ratio"><code class="docutils literal notranslate"><span class="pre">Psm.get_prec_intens_ratio()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="elution_profile.html">ElutionProfile</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Proteoformquant</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Psm</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api/psm.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="psm">
+<h1>Psm<a class="headerlink" href="#psm" title="Permalink to this heading"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="psm.Psm">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">psm.</span></span><span class="sig-name descname"><span class="pre">Psm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rank</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spectrum</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">identificationItem</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#psm.Psm" title="Permalink to this definition"></a></dt>
+<dd><dl class="py method">
+<dt class="sig sig-object py" id="psm.Psm.exclude">
+<span class="sig-name descname"><span class="pre">exclude</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#psm.Psm.exclude" title="Permalink to this definition"></a></dt>
+<dd><p>set psm.is_excluded to false, excluded psm are not returned by spectrum.get_psms()</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="psm.Psm.getAnnotMsmsIntensRatio">
+<span class="sig-name descname"><span class="pre">getAnnotMsmsIntensRatio</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#psm.Psm.getAnnotMsmsIntensRatio" title="Permalink to this definition"></a></dt>
+<dd><p>given self.ratio return the corresponding annotated fragment intensity sum fraction for that psm</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="psm.Psm.getModificationsSu">
+<span class="sig-name descname"><span class="pre">getModificationsSu</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#psm.Psm.getModificationsSu" title="Permalink to this definition"></a></dt>
+<dd><p>Returns a dictionnary of modifications in the spectrum utils format: {‘position(0-based)’: ‘mass shift’}</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="psm.Psm.get_accessions">
+<span class="sig-name descname"><span class="pre">get_accessions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#psm.Psm.get_accessions" title="Permalink to this definition"></a></dt>
+<dd><p>return protein/accesion reference list</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="psm.Psm.get_annotation_pair_format">
+<span class="sig-name descname"><span class="pre">get_annotation_pair_format</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">first_var</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">second_var</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#psm.Psm.get_annotation_pair_format" title="Permalink to this definition"></a></dt>
+<dd><p>return annotated fragments in the following format: [(fragcode,intensity), … ]</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="psm.Psm.get_fragments_at_range">
+<span class="sig-name descname"><span class="pre">get_fragments_at_range</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#psm.Psm.get_fragments_at_range" title="Permalink to this definition"></a></dt>
+<dd><p>Get a list of fragments names given a range of residue position (1-based) to be present in the fragments</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="psm.Psm.get_intensity_at_pos">
+<span class="sig-name descname"><span class="pre">get_intensity_at_pos</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pos</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#psm.Psm.get_intensity_at_pos" title="Permalink to this definition"></a></dt>
+<dd><p>Get the intensity of the annotated fragment at position “pos”,
+where pos define the amino acid index (1 based) to the left (n-term)
+of the fragmentation site (e.g pos=3 get the intens of a c3 ion and
+a z7 ion for an peptide of 10 AA).
+if direction = both the sum of z and c ions is returned</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="psm.Psm.get_modification_brno">
+<span class="sig-name descname"><span class="pre">get_modification_brno</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#psm.Psm.get_modification_brno" title="Permalink to this definition"></a></dt>
+<dd><p>Returns modifications of a peptide in brno nomenclature: K27meK34ac</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="psm.Psm.get_modification_proforma">
+<span class="sig-name descname"><span class="pre">get_modification_proforma</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mod_mass_to_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#psm.Psm.get_modification_proforma" title="Permalink to this definition"></a></dt>
+<dd><p>Returns the proteoform modification in the proforma format</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="psm.Psm.get_prec_intens_ratio">
+<span class="sig-name descname"><span class="pre">get_prec_intens_ratio</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#psm.Psm.get_prec_intens_ratio" title="Permalink to this definition"></a></dt>
+<dd><p>given self.ratio return the corresponding precursor intensity fraction for that psm</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="proteoform.html" class="btn btn-neutral float-left" title="Proteoform" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="elution_profile.html" class="btn btn-neutral float-right" title="ElutionProfile" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Arthur Grimaud.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

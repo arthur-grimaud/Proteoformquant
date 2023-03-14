@@ -12,7 +12,7 @@
 "fdr_threshold" : 0.1 , // False-Discovery rate
 "intensity_threshold" : 0,
 "elution_profile_score_threshold" : 0,
-"min_n_psm": 2, // Minimal number of PSM for a peptidoform to be considered
+"min_n_psm": 3, // Minimal number of PSM for a peptidoform to be considered
 
 
 // Optimization
@@ -31,7 +31,7 @@
 
 // Param for peptidoform validation:
 "min_ep_fit" : 0.6 , // minimal score for validation
-"min_ep_cov" : 0.5 , // minimal score for validation
+"min_ep_cov" : 0.4 , // minimal score for validation
 //"min_ep_gap" : 0.7,  // mini
 
 
