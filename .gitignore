@@ -3,5 +3,13 @@ proteoformquant/Data_s/
 proteoformquant/Results/
 proteoformquant/images/
 proteoformquant/Output/
+
+
+src/Data/
+src/Data_s/
+src/Results/
+src/images/
+src/Output/
+
 .vscode
 **/__pycache__/
