@@ -16,11 +16,11 @@
 
 
 // Optimization
-"n_iter" : 10,  // number of iteration for each peptidoform optimization
-"max_rejected_proteo" : 2, // number of peptidoform rejected before stopping optimization
+"n_iter" : 20,  // number of iteration for each peptidoform optimization
+"max_rejected_proteo" : 3, // number of peptidoform rejected before stopping optimization
 
 // Starting range
-"window_size_rt" : 200,
+"window_size_rt" : 300,
 
 // Param of the normal distribution used for random mutation of the rt_validation_ranges
 "rd_loc" : 3 , // deviation of the mean from zero

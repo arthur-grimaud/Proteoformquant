@@ -75,7 +75,6 @@ def doArgs(argList, name):
 
 
 def checkArgs(args):
-
     """Verifies if inputs files and output folder exists, wreate output folder if necessary"""
     if not os.path.isfile(args.indent_file):
         raise Exception("Input file: " + args.indent_file + ", doesn't exist")
@@ -106,7 +105,7 @@ def print_args(args, unknownargs):
 
     if len(unknownargs) > 0:
         dict_unknwownargs = {unknownargs[i][1:]: unknownargs[i + 1] for i in range(0, len(unknownargs), 2)}
-        print("Parameters overide:")
+        print("Parameters overwrite:")
         for arg, val in dict_unknwownargs.items():
             params = params + f"\n{arg} : {val} "
         print(params)
