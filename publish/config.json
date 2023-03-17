@@ -1,0 +1,12 @@
+{
+  "author": "Arthur Grimaud",
+  "package_name_override": "ProteoformQuant",
+  "email": "",
+  "description": "A python command line tool for the quantification of peptidoform/proteoforms",
+  "url": "",
+  "python_version": "3.8",
+  "version": "0.1",
+  "scripts": [
+    "fragannot = fragannot:main"
+  ]
+}
