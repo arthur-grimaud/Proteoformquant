@@ -33,14 +33,14 @@ from warnings import warn
 from sqlalchemy import all_, false
 
 # Custom classes
-from Classes.spectrum import Spectrum
-from Classes.proteoform import Proteoform
-from Utils import constant
+from proteoformquant.Classes.spectrum import Spectrum
+from proteoformquant.Classes.proteoform import Proteoform
+from proteoformquant.Utils import constant
 
 # Custom Helpers
-from Utils import misc
+from proteoformquant.Utils import misc
 from pprint import pprint
-from Utils import exception
+from proteoformquant.Utils import exception
 
 # Visualization (TEMPORARY)
 import plotly.graph_objects as go
@@ -366,11 +366,11 @@ class Msrun:
                 if round(spec_mz) == round(spec_obj.experimentalMassToCharge):
                     self.spectra[spec_id].set_spec_data_mgf(spec)
                 else:
-                    raise exception.ProteoformQuantError(
+                    raise exception.ProteoformquantError(
                         f"Precursor masses does not match for spectrum_id: {spec_id} ({spec_mz}) {round(spec_mz)} and psm ({spec_obj.experimentalMassToCharge})"
                     )
             else:
-                raise exception.ProteoformQuantError(f"Cannot find scan in mgf from spectrum_id={spec_id}")
+                raise exception.ProteoformquantError(f"Cannot find scan in mgf from spectrum_id={spec_id}")
 
     def _index_MGF(self):
         for index in range(len(self.spectra_source)):
@@ -447,11 +447,11 @@ class Msrun:
             if spec_found == True and spec_mz == spec_obj.experimentalMassToCharge:
                 self.spectra[spec_id].set_spec_data_mgf(spec)
             elif spec_found == True:
-                raise exception.ProteoformQuantError(
+                raise exception.ProteoformquantError(
                     f"Precursor masses does not match for spectrum_id: {spec_id} ({spec_mz}) and psm ({spec_obj.experimentalMassToCharge})"
                 )
             else:
-                raise exception.ProteoformQuantError(f"Cannot find scan in mzML from spectrum_id={spec_id}")
+                raise exception.ProteoformquantError(f"Cannot find scan in mzML from spectrum_id={spec_id}")
 
         #     if type(spec_id) is int:
         #         spec = self.spectra_source.get_by_index(self.indices["scan"][spec_id])

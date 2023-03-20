@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# python3 -m cProfile -o program.prof proteoformquant2.py -i Data/mix1_1pmol_rep2_renamed.mzid -s Data/mix1_1pmol_rep2_renamed.mgf -d mascot
+# python3 -m cProfile -o program.prof proteoformquant.py -i Data/mix1_1pmol_rep2_renamed.mzid -s Data/mix1_1pmol_rep2_renamed.mgf -d mascot
 # snakeviz program.prof
 ### Import ###
 # Modules
@@ -7,10 +7,10 @@ import sys
 import pickle
 
 # Custom Modules
-from Utils import input
+from proteoformquant.Utils import input
 
 # Classes
-from Classes.msrun import Msrun
+from proteoformquant.Classes.msrun import Msrun
 import resource
 import pandas as pd
 import sys
@@ -18,7 +18,7 @@ from jsonc_parser.parser import JsoncParser
 
 
 def main():
-    progName = "ProteoformQuant2"
+    progName = "proteoformquant"
 
     # May segfault without these lines.
     max_rec = 0x100000
@@ -39,11 +39,23 @@ def main():
     param_file = args.param_file
     output_dir = args.output_dir
     output_file = args.output_file
+
     # Read Parameters File:
-    params = JsoncParser.parse_file(param_file)
-    # read parameter overwited in cmd line arguments:
+
+    
+
+    try:
+        params = JsoncParser.parse_file(param_file)
+    except JsoncParser.errors.FileError:
+        print("Default file params.jsonc not found.")
+        print("Please provide a valid parameter file with the -p (option.")
+        print("you can generate a default parameter file with the -cg option.")
+        sys.exit(1)
+
+    # read parameter overwrited in cmd line arguments:
     params_over = {unknownargs[i][1:]: unknownargs[i + 1] for i in range(0, len(unknownargs), 2)}
     # Name of output prefix from input identification filename
+
     if output_file != None:
         output_prefix = output_file
     else:
@@ -93,7 +105,7 @@ def main():
         run.update_psms_ratio_all()
         run.update_proteoform_intens()
 
-    ### OUTPUT ###
+    # --------------------------------- Output --------------------------------- #
 
     # with open("save_res_2022_mix2_rep1.pkl", "rb") as f:
     #     run = pickle.load(f)
@@ -106,6 +118,7 @@ def main():
     with open(f"{output_dir}/obj_{output_prefix}.pkl", "wb") as outp:
         pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
 
+    # PSMs Table
     run.psm_score_dataframe(
         file_name=f"{output_dir}/psms_{output_prefix}.csv", score_name="Amanda:AmandaScore"
     )

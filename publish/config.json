@@ -5,8 +5,8 @@
   "description": "A python command line tool for the quantification of peptidoform/proteoforms",
   "url": "",
   "python_version": "3.8",
-  "version": "0.1",
+  "version": "0.40",
   "scripts": [
-    "fragannot = fragannot:main"
+    "proteoformquant = proteoformquant:main"
   ]
 }

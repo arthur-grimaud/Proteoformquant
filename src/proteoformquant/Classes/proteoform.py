@@ -4,9 +4,9 @@ from statistics import mean
 
 import numpy as np
 import plotly.graph_objs as go
-from Classes.elution_profile import ElutionProfile
+from proteoformquant.Classes.elution_profile import ElutionProfile
 from pyteomics import mass
-from Utils import constant
+from proteoformquant.Utils import constant
 import math
 from numba import jit
 

@@ -1,9 +1,12 @@
 import argparse
 from logging import warning
+from proteoformquant.Utils import parameters_default
 import os
 
 
 def doArgs(argList, name):
+    print("INPUT PY CHANGES")
+
     """Parse argument of the comand line prompt"""
     parser = argparse.ArgumentParser(description=name)
 
@@ -31,7 +34,7 @@ def doArgs(argList, name):
         action="store",
         dest="output_dir",
         type=str,
-        help="Output directory path",
+        help="Path to output directory",
         required=False,
     )
 
@@ -47,13 +50,23 @@ def doArgs(argList, name):
 
     parser.add_argument(
         "-p",
-        "--param",
+        "--param_file",
         action="store",
         dest="param_file",
         type=str,
-        help="Json parameter file",
+        help="Path to json parameter file",
         required=False,
         default="params.jsonc",
+    )
+
+    parser.add_argument(
+        "-cp",
+        "--create_param_file",
+        action="store_true",
+        dest="create_param_file",
+        help="Generate a json parameter file in working directory",
+        required=False,
+        default=False,
     )
 
     parser.add_argument(
@@ -66,6 +79,12 @@ def doArgs(argList, name):
         required=False,
         default=0,
     )
+
+    # check id create_param_file is set to true
+    if "-cp" in argList or "--create_param_file" in argList:
+        print("Creating default parameter file ('params.jsonc') in working directory")
+        parameters_default.generate_default_param_file()
+        exit()
 
     args, unknownargs = parser.parse_known_args(argList)
 

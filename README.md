@@ -1,22 +1,22 @@
-# ProteoformQuant
+# Proteoformquant
 
-ProteoformQuant is a Python tool for quantitative analysis of proteoforms from mass spectrometry data.
+Proteoformquant is a Python tool for quantitative analysis of proteoforms from mass spectrometry data.
 
 ## Setup/Installation
 
-To use ProteoformQuant, you need to create a new Conda environment using Mamba package manager.
+To use Proteoformquant, you need to create a new Conda environment using Mamba package manager.
 
 ### 1. Install Mamba
 
 Mamba is a fast package manager for Conda environments. You can install it using Conda itself by running the following command:
 
-# ProteoformQuant
+# Proteoformquant
 
-ProteoformQuant is a Python tool for quantitative analysis of proteoforms from mass spectrometry data.
+Proteoformquant is a Python tool for quantitative analysis of proteoforms from mass spectrometry data.
 
 ## Setup/Installation
 
-To use ProteoformQuant, you can create a Conda environment using the provided 'environment.yml' file. This can be done using Conda directly, however we recommend using the Mamba package manager.
+To use Proteoformuant, you can create a Conda environment using the provided 'environment.yml' file. This can be done using Conda directly, however we recommend using the Mamba package manager.
 
 ### 1. Install Conda (and Mamba)
 

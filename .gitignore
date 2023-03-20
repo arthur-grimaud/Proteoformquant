@@ -1,15 +1,14 @@
-proteoformquant/Data/
-proteoformquant/Data_s/
-proteoformquant/Results/
-proteoformquant/images/
-proteoformquant/Output/
-
-
 src/Data/
 src/Data_s/
 src/Results/
 src/images/
 src/Output/
+
+src/proteoformquant/Data/
+src/proteoformquant/Data_s/
+src/proteoformquant/Results/
+src/proteoformquant/images/
+src/proteoformquant/Output/
 
 .vscode
 **/__pycache__/

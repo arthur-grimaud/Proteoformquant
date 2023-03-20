@@ -3,7 +3,7 @@ from pickle import FALSE
 
 
 from yaml import warnings
-from Classes.psm import Psm
+from proteoformquant.Classes.psm import Psm
 
 from itertools import compress
 from scipy.optimize import nnls

@@ -1,10 +1,10 @@
-from Utils import constant
+from proteoformquant.Utils import constant
 import unimod_mapper
 
 um = unimod_mapper.UnimodMapper()
-from Utils.misc import truncate
+from proteoformquant.Utils.misc import truncate
 import spectrum_utils.spectrum as sus
-from Utils.constant import ion_direction
+from proteoformquant.Utils.constant import ion_direction
 import warnings
 from importlib.metadata import version
 
