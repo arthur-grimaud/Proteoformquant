@@ -1,8 +1,6 @@
 ### Import ###
 
 # MS file parsers
-from argparse import ArgumentError
-import os
 import re
 from os.path import splitext
 from logging import warning
@@ -18,29 +16,24 @@ import numpy as np
 import pandas as pd
 
 # Parallelization and multiprocessing
-from pymoo.core.problem import starmap_parallelized_eval
 import multiprocessing as mp
 
 # Misc
 from statistics import mean, stdev
-
-from progress.bar import Bar
-from alive_progress import alive_bar
 from tqdm import tqdm
 import networkx as nx
-from warnings import warn
 
-from sqlalchemy import all_, false
+try:  # local modules
+    from proteoformquant.Classes.spectrum import Spectrum
+    from proteoformquant.Classes.proteoform import Proteoform
+    from proteoformquant.Utils import constant
+    from proteoformquant.Utils import exception
+except ImportError:
+    from Classes.spectrum import Spectrum
+    from Classes.proteoform import Proteoform
+    from Utils import constant
+    from Utils import exception
 
-# Custom classes
-from proteoformquant.Classes.spectrum import Spectrum
-from proteoformquant.Classes.proteoform import Proteoform
-from proteoformquant.Utils import constant
-
-# Custom Helpers
-from proteoformquant.Utils import misc
-from pprint import pprint
-from proteoformquant.Utils import exception
 
 # Visualization (TEMPORARY)
 import plotly.graph_objects as go

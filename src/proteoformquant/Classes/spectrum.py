@@ -1,16 +1,17 @@
 from array import array
 from pickle import FALSE
+from itertools import compress
+from scipy.optimize import nnls
+import numpy as np
+from numba import jit
 
 
 from yaml import warnings
-from proteoformquant.Classes.psm import Psm
 
-from itertools import compress
-from scipy.optimize import nnls
-from fnnls import fnnls
-import numpy as np
-import pprint
-from numba import jit
+try:  # local modules
+    from proteoformquant.Classes.psm import Psm
+except ImportError:
+    from Classes.psm import Psm
 
 
 class Spectrum:

@@ -1,12 +1,15 @@
 import argparse
 from logging import warning
-from proteoformquant.Utils import parameters_default
+
 import os
+
+try:
+    from proteoformquant.Utils import parameters_default
+except ImportError:
+    from Utils import parameters_default
 
 
 def doArgs(argList, name):
-    print("INPUT PY CHANGES")
-
     """Parse argument of the comand line prompt"""
     parser = argparse.ArgumentParser(description=name)
 

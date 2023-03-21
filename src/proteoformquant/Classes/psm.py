@@ -1,17 +1,23 @@
-from proteoformquant.Utils import constant
 import unimod_mapper
 
 um = unimod_mapper.UnimodMapper()
-from proteoformquant.Utils.misc import truncate
-import spectrum_utils.spectrum as sus
-from proteoformquant.Utils.constant import ion_direction
 import warnings
 from importlib.metadata import version
+
+try:  # local modules
+    from proteoformquant.Utils.misc import truncate
+    import spectrum_utils.spectrum as sus
+    from proteoformquant.Utils.constant import ion_direction
+    from proteoformquant.Utils import constant
+except ImportError:
+    from Utils.misc import truncate
+    import spectrum_utils.spectrum as sus
+    from Utils.constant import ion_direction
+    from Utils import constant
 
 
 class Psm:
     def __init__(self, rank, spectrum, identificationItem):
-
         version("unimod_mapper")
 
         self.Modification = []
@@ -110,7 +116,6 @@ class Psm:
                 sequence_list = list(self.PeptideSequence.strip(" "))
 
                 for mod in reversed(self.Modification):
-
                     modMass = mod["monoisotopicMassDelta"]
 
                     if mod_mass_to_name is None:  # if called without mod to mass dict
@@ -118,7 +123,6 @@ class Psm:
                     elif (
                         modMass not in mod_mass_to_name
                     ):  # if called with mod to mass dict but mass not added
-
                         modName = um.id_to_name(um.mass_to_ids(modMass, decimals=2)[0])[0]
                         mod_mass_to_name[modMass] = modName  # mass found in mass
                     else:
@@ -136,11 +140,9 @@ class Psm:
         return self.annotation
 
     def get_fragment_coverage(self):
-
         tot_frag_count = 0
         frag_count = 0
         for dir in ["n-term", "c-term"]:
-
             fragments_in_direction = [
                 self.get_intensity_at_pos(pos, dir) for pos in range(1, len(self.proteoform.peptideSequence))
             ]
@@ -211,7 +213,6 @@ class Psm:
             direction_frag_type = ion_direction[frag_type_name]
 
             if direction_frag_type == direction or direction == "both":
-
                 if direction_frag_type == "n-term":
                     try:
                         index = frag_type["pos"].index(str("1:" + str(pos)))
@@ -243,7 +244,6 @@ class Psm:
         self.proteoform = proteoform
 
     def setAnnotatedFragments(self, frag_mz_tol, maxCharge=1):
-
         # get information to create a spectrum utils MsmsSpectrum object
         id = self.spectrum.get_id()
         fragIntens = self.spectrum.get_frag_intens()
@@ -260,7 +260,6 @@ class Psm:
         # annotate each fragment type individualy
 
         for theoFragType in self.proteoform.getTheoFrag():
-
             # create msmsspectrum object
             spectrumSu = sus.MsmsSpectrum(
                 id,
@@ -274,7 +273,6 @@ class Psm:
 
             # annotate fragments in msmsspectrum object
             for frag in self.proteoform.getTheoFrag()[theoFragType].items():  # TODO change this format?
-
                 try:
                     spectrumSu = spectrumSu.annotate_mz_fragment(
                         fragment_mz=float(frag[1]),
@@ -289,7 +287,6 @@ class Psm:
                     pass
 
             if spectrumSu.annotation is not None:
-
                 mzTheoList, intensList, posList, indexList, mzErrorList = (
                     [],
                     [],
@@ -299,7 +296,7 @@ class Psm:
                 )
 
                 indexInPeakList = 0
-                for (mz, intensity, annotation) in zip(
+                for mz, intensity, annotation in zip(
                     spectrumSu.mz, spectrumSu.intensity, spectrumSu._annotation
                 ):
                     if annotation != None:  # if the fragment has been matched/annotated

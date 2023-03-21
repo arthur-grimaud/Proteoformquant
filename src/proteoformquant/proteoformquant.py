@@ -1,20 +1,22 @@
 #!/usr/bin/env python
 # python3 -m cProfile -o program.prof proteoformquant.py -i Data/mix1_1pmol_rep2_renamed.mzid -s Data/mix1_1pmol_rep2_renamed.mgf -d mascot
 # snakeviz program.prof
+
 ### Import ###
 # Modules
 import sys
 import pickle
-
-# Custom Modules
-from proteoformquant.Utils import input
-
-# Classes
-from proteoformquant.Classes.msrun import Msrun
+import os
 import resource
 import pandas as pd
-import sys
 from jsonc_parser.parser import JsoncParser
+
+try:  # local modules
+    from proteoformquant.Utils import input
+    from proteoformquant.Classes.msrun import Msrun
+except ImportError:
+    from Utils import input
+    from Classes.msrun import Msrun
 
 
 def main():
@@ -24,9 +26,8 @@ def main():
     max_rec = 0x100000
     resource.setrlimit(resource.RLIMIT_STACK, [0x100 * max_rec, resource.RLIM_INFINITY])
     sys.setrecursionlimit(max_rec)
-    #
 
-    print("---===Starting " + progName + "===---")
+    print("\n---===Starting " + progName + "===---")
 
     # --------------------------------- Inputs -------------------------------- #
 
@@ -42,8 +43,6 @@ def main():
 
     # Read Parameters File:
 
-    
-
     try:
         params = JsoncParser.parse_file(param_file)
     except JsoncParser.errors.FileError:
@@ -52,14 +51,14 @@ def main():
         print("you can generate a default parameter file with the -cg option.")
         sys.exit(1)
 
-    # read parameter overwrited in cmd line arguments:
+    # read parameter overwriten in cmd line arguments:
     params_over = {unknownargs[i][1:]: unknownargs[i + 1] for i in range(0, len(unknownargs), 2)}
     # Name of output prefix from input identification filename
 
     if output_file != None:
         output_prefix = output_file
     else:
-        output_prefix = indent_file.split(".")[0].split("/")[1]
+        output_prefix = os.path.splitext(indent_file)[0]
 
     max_rank_validation = args.rankquant
 
@@ -107,11 +106,10 @@ def main():
 
     # --------------------------------- Output --------------------------------- #
 
-    # with open("save_res_2022_mix2_rep1.pkl", "rb") as f:
-    #     run = pickle.load(f)
-
     # Quantification Table
     run.result_dataframe_pfq1_format().to_csv(f"{output_dir}/quant_{output_prefix}.csv")
+
+    # Log Table
     pd.DataFrame(run.log).to_csv(f"{output_dir}/log_{output_prefix}.csv", ",")
 
     # Pickle Object for report
@@ -125,4 +123,6 @@ def main():
 
 
 if __name__ == "__main__":
+    print("in __name__ == __main__")
+
     main()

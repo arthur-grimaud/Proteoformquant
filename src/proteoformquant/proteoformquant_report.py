@@ -304,7 +304,6 @@ def get_table(mat, proteos):
         return fig
 
     if mat.any() == True:
-
         fig = go.Figure(
             data=[
                 go.Table(
@@ -326,7 +325,6 @@ def get_table(mat, proteos):
 
 
 def fragments_plot(spectrum):
-
     spectrum.update_psms_ratio(psms_rank=[], verbose=True)
 
     m = 0
@@ -341,11 +339,9 @@ def fragments_plot(spectrum):
         return go.Figure()
 
     for psm in spectrum.get_psms():
-
         # for both directions
 
         for dir in ["n-term", "c-term"]:
-
             proteoform_y.append(m)
             m += 1
 
@@ -400,7 +396,6 @@ def spectrum_plot(spectrum):
         m += 1
 
     for f in range(len(spectrum.fragIntens)):
-
         fig.add_scatter(
             x=[spectrum.fragMz[f], spectrum.fragMz[f]],
             y=[0, spectrum.fragIntens[f]],
@@ -413,7 +408,6 @@ def spectrum_plot(spectrum):
 
 
 def plot_psms_rank_distribution(proteoform, max_rank=exp.max_rank):
-
     ranks = []
     counts = []
 
@@ -427,7 +421,6 @@ def plot_psms_rank_distribution(proteoform, max_rank=exp.max_rank):
 
 
 def ms2_chromatogram_plot(proteoform, top_n_frag=40):
-
     # if no EP:
     if proteoform.get_elution_profile() == None:
         return go.Figure()
@@ -488,7 +481,6 @@ def ms2_chromatogram_plot(proteoform, top_n_frag=40):
 
 
 def fit_expect_predict(proteoform):
-
     # if no EP:
     if proteoform.get_elution_profile() == None:
         return go.Figure()
@@ -576,7 +568,6 @@ def fit_expect_predict(proteoform):
 
 @app.callback(Output("plot_network_isobaric", "figure"), Input("mainDiv", "id"))
 def plot_network_isobaric_proteoforms(input):
-
     G = exp.isobaric_proteform_graph
     G_nodes_pos = nx.spring_layout(G)
 
@@ -670,7 +661,6 @@ def plot_network_isobaric_proteoforms(input):
 
 @app.callback(Output("dropdown_proteoforms", "value"), Input("plot_network_isobaric", "selectedData"))
 def update_proteo_selector(value):
-
     print("VALUES")
     holder = []
     if value:
@@ -689,7 +679,6 @@ def update_proteo_selector(value):
 
 @app.callback(Output("plot_all_enveloppes", "figure"), Input("mainDiv", "id"))
 def plotAllEnvelopes(input):
-
     rt_range = [spectrum.get_rt() for spectrum in exp.spectra.values()]
     fig = go.Figure()
 
@@ -754,6 +743,7 @@ def plotAllEnvelopes(input):
 # ---------------------------------------------------------------------------- #
 #                               Elution Profiles                               #
 # ---------------------------------------------------------------------------- #
+
 
 # --------------------------------- dropdown --------------------------------- #
 @app.callback(Output("dropdown_proteoforms", "options"), Input("mainDiv", "id"))
@@ -923,7 +913,6 @@ def plot_elution_profiles(proteoforms_input):
     [Input("range_mz_2", "value"), Input("3dplot-toggle-switch", "value")],
 )
 def plotAllEnvelopes3d(minMaxMz, is_displayed):
-
     if is_displayed == False:
         raise PreventUpdate
 
@@ -974,7 +963,6 @@ def plotAllEnvelopes3d(minMaxMz, is_displayed):
 
     i = 0
     for proteoform in [x for x in proteoFilt.values() if x.get_elution_profile() != None]:
-
         env = proteoform.get_elution_profile()  # if envelope has been computed add line to the plot
 
         data_yEnv = list(range(int(min(rt_range)), int(max(rt_range)), 1))
@@ -1036,7 +1024,6 @@ def plotAllEnvelopes3d(minMaxMz, is_displayed):
 
 @app.callback(Output("plot_quantification", "figure"), Input("mainDiv", "id"))
 def plotRelativeAbundanceProteo(input):
-
     proteoformsBrno = [proteo.get_modification_brno() for proteo in exp.proteoforms.values()]
     proteoformsIntens_prec = [
         proteo.update_proteoform_total_intens(method="precursor") for proteo in exp.proteoforms.values()
@@ -1086,7 +1073,6 @@ def plotRelativeAbundanceProteo(input):
     # Input('input_max_mz', "value")
 )
 def envelopes_parameters(minMaxMz):
-
     env_s = [
         proteoform.get_elution_profile().get_parameters_fitted()[1]
         for proteoform in exp.proteoforms.values()
@@ -1154,7 +1140,6 @@ def envelopes_parameters(minMaxMz):
     # Input('input_max_mz', "value")
 )
 def plot_count_proteoform(input):
-
     # proteocount
     # proteoform_count = {}
 
