@@ -1008,7 +1008,7 @@ class Msrun:
         self.isobaric_proteform_graph = G
         # # plor graph
         G.remove_edges_from(nx.selfloop_edges(G))
-        nx.draw(G, node_size=10)  # , with_labels=True)
+        # nx.draw(G, node_size=10)  # , with_labels=True)
         # plt.show()
 
         l = list(nx.connected_components(G))
