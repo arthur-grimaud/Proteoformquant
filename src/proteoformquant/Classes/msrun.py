@@ -8,7 +8,8 @@ from pyteomics import mzid
 from pyteomics import mgf
 from pyteomics import mzml
 from collections import defaultdict
-import ms_deisotope
+
+# import ms_deisotope
 
 # Data manipulations
 from pickle import TRUE
