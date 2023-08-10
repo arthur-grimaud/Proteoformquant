@@ -117,6 +117,7 @@ class Spectrum:
         self.fragIntens: array = specMgf["intensity array"]
         self.fragMz: array = specMgf["m/z array"]
         self.precIntens: float = specMgf["params"]["pepmass"][1]
+        print("------------------>", self.precIntens)
         self.precMz: float = specMgf["params"]["pepmass"][0]
         self.rt: float = specMgf["params"]["rtinseconds"]
 

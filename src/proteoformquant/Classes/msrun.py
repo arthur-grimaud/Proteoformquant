@@ -307,10 +307,15 @@ class Msrun:
             # Different ways to retrieve a spectrum from an mgf file:
             spec_found = False
 
+            print("spectrum title: ", spec_obj.spectrum_title)
+            print("spectrum id: ", spec_id)
+
             # 1. By full title
             if spec_found == False:
                 try:
                     spec = self.spectra_source.get_spectrum(spec_obj.spectrum_title)
+
+                    print("spectrum: ", spec, "has been found by title")
                     spec_found = True
                 except KeyError:
                     pass
@@ -333,7 +338,6 @@ class Msrun:
 
             # 4: recover
 
-            # 4:
             if spec_found == False and type(spec_id) is str:
                 try:
                     match_index = re.match(r"index(?:\s+)?=(?:\s+)?(\d+)", spec_id)
@@ -360,11 +364,15 @@ class Msrun:
                 if round(spec_mz) == round(spec_obj.experimentalMassToCharge):
                     self.spectra[spec_id].set_spec_data_mgf(spec)
                 else:
-                    raise exception.ProteoformquantError(
+                    warning(
                         f"Precursor masses does not match for spectrum_id: {spec_id} ({spec_mz}) {round(spec_mz)} and psm ({spec_obj.experimentalMassToCharge})"
                     )
+                    self.spectra[spec_id].set_spec_data_mgf(spec)
+
             else:
                 raise exception.ProteoformquantError(f"Cannot find scan in mgf from spectrum_id={spec_id}")
+
+            print("spectrum has been correctly matched to the spectrum object")
 
     def _index_MGF(self):
         for index in range(len(self.spectra_source)):

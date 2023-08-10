@@ -1,11 +1,11 @@
 {
   "author": "Arthur Grimaud",
-  "package_name_override": "ProteoformQuant",
-  "email": "",
+  "package_name_override": "proteoformquant",
+  "email": "arthur582@hotmail.fr",
   "description": "A python command line tool for the quantification of peptidoform/proteoforms",
   "url": "",
   "python_version": "3.8",
-  "version": "0.50",
+  "version": "0.7",
   "scripts": [
     "proteoformquant = proteoformquant:main"
   ]
