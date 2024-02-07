@@ -2090,4 +2090,4 @@ class Msrun:
                 psms_df["frag_cov"].append(psm.get_fragment_coverage())
 
         psms_df = pd.DataFrame.from_dict(psms_df, orient="index").transpose()
-        psms_df.to_csv(file_name, index=False)
+        return psms_df

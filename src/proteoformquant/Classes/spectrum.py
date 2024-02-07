@@ -17,7 +17,15 @@ except ImportError:
 class Spectrum:
     def __init__(self, spectrumID, identMzid=None, max_rank=10):
         self.id = spectrumID  # Unique ID for the spectrum
-        self.spectrum_title = identMzid["spectrum title"]
+
+        if "spectrum title" in identMzid.keys():
+            self.spectrum_title = identMzid["spectrum title"]
+        elif "spectrumID" in identMzid.keys():
+            self.spectrum_title = identMzid["spectrumID"]
+        else:
+            print("Spectrum title not found in mzid file")
+            raise Exception
+            
 
         # Add spectrum experimental mz value from mzident file:
         self.experimentalMassToCharge = identMzid["SpectrumIdentificationItem"][0]["experimentalMassToCharge"]

@@ -1,15 +1,10 @@
-#!/usr/bin/env python
-# python3 -m cProfile -o program.prof proteoformquant.py -i Data/mix1_1pmol_rep2_renamed.mzid -s Data/mix1_1pmol_rep2_renamed.mgf -d mascot
-# snakeviz program.prof
-
-### Import ###
-# Modules
 import sys
 import pickle
 import os
 import resource
 import pandas as pd
 from jsonc_parser.parser import JsoncParser
+from pathlib import Path
 
 try:  # local modules
     from proteoformquant.Utils import input
@@ -17,6 +12,10 @@ try:  # local modules
 except ImportError:
     from Utils import input
     from Classes.msrun import Msrun
+
+import os
+import pandas as pd
+import pickle
 
 
 def main():
@@ -52,7 +51,9 @@ def main():
         sys.exit(1)
 
     # read parameter overwriten in cmd line arguments:
-    params_over = {unknownargs[i][1:]: unknownargs[i + 1] for i in range(0, len(unknownargs), 2)}
+    params_over = {
+        unknownargs[i][1:]: unknownargs[i + 1] for i in range(0, len(unknownargs), 2)
+    }
     # Name of output prefix from input identification filename
 
     if output_file != None:
@@ -105,21 +106,43 @@ def main():
         run.update_proteoform_intens()
 
     # --------------------------------- Output --------------------------------- #
+    print("Outputting results")
+    try:
+        # Before writing output files, ensure the output directory exists
+        output_dir_path = Path(output_dir)
+        output_dir_path.mkdir(parents=True, exist_ok=True)
 
-    # Quantification Table
-    run.result_dataframe_pfq1_format().to_csv(f"{output_dir}/quant_{output_prefix}.csv")
+        # print the output directory
+        print("Output directory: ", output_dir_path)
 
-    # Log Table
-    pd.DataFrame(run.log).to_csv(f"{output_dir}/log_{output_prefix}.csv", ",")
+        # Quantification Table
+        quant_file_path = output_dir_path / f"quant_{output_prefix}.csv"
+        run.result_dataframe_pfq1_format().to_csv(quant_file_path)
 
-    # Pickle Object for report
-    with open(f"{output_dir}/obj_{output_prefix}.pkl", "wb") as outp:
-        pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
+        # Log Table
+        log_file_path = output_dir_path / f"log_{output_prefix}.csv"
+        pd.DataFrame(run.log).to_csv(log_file_path, ",")
 
-    # PSMs Table
-    run.psm_score_dataframe(
-        file_name=f"{output_dir}/psms_{output_prefix}.csv", score_name="Amanda:AmandaScore"
-    )
+        # Pickle Object for report
+        obj_file_path = output_dir_path / f"obj_{output_prefix}.pkl"
+        with open(obj_file_path, "wb") as outp:
+            pickle.dump(run, outp, pickle.HIGHEST_PROTOCOL)
+
+        # PSMs Table
+        psm_file_path = output_dir_path / f"psms_{output_prefix}.csv"
+        run.psm_score_dataframe(
+            file_name=psm_file_path, score_name="Amanda:AmandaScore"
+        ).to_csv(psm_file_path)
+
+    except FileNotFoundError:
+        print("Output directory does not exist.")
+        # displayan error message or exiting the program
+        sys.exit(1)
+
+    print("Outputting results done")
+
+    # terminate the program
+    sys.exit(0)
 
 
 if __name__ == "__main__":
