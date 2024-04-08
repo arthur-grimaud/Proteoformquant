@@ -101,6 +101,22 @@ similarly you can change the outfile name with the -o parameter
 proteoformquant -i path/to/identification/file.mzid -s path/to/spectra/file.mgf -d path/to/my_output_folder -o output_file_1
 ```
 
+##Output Format
+Below is the description of each column present in the quantification table (denoted "quant_XXX.csv")
+
+*proforma: Peptidoform in Proforma Nomenclature
+*sequence: Peptidoform amino acid sequence.
+*brno: Modification notation indicating the type and location of post-translational modifications on the amino acid sequence.
+*protein: Accession numbers of the proteins the peptidoform is associated with, delimited by a semicolon if multiple.
+*intensity: Absolute intensity value of peptidoforms after quantification in chimeric spectra.
+*intensity_r1: Absolute intensity value of peptidoforms using only Rank 1 PSMs.
+*linked_psm: The total number of PSMs corresponding to a peptidoform.
+*linked_psm_validated: The number of PSMs validated after quantification in chimeric spectra.
+*rt_peak: The retention time value in seconds at the apex of the elution profile.
+*auc: The area under the curve, which can be used for quantification but is not recommended.
+*ambiguity: The number of spectra the peptidoform is identified in where site-determining ions were missing to confidently validate all peptidoforms.
+
+
 ## Contributing
 
 To update
