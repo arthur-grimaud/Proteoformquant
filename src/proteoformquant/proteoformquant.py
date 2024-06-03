@@ -58,8 +58,9 @@ def main():
 
     if output_file != None:
         output_prefix = output_file
-    else:
-        output_prefix = os.path.splitext(indent_file)[0]
+    else: # if output file is not provided, use the input file name as output prefix
+        output_prefix = Path(indent_file).stem
+        
 
     max_rank_validation = args.rankquant
 
@@ -82,7 +83,7 @@ def main():
     run.update_proteoform_intens()
 
     ### Filtering Data ###
-    run.fdr_filtering(decoy_tag="decoy_", score_name="Amanda:AmandaScore")
+    run.fdr_filtering()
     # run.filter_psms_low_score()
     run.filter_proteform_low_count()
 
@@ -104,6 +105,13 @@ def main():
         run.validate_psms_rank_n(rank=max_rank_validation)
         run.update_psms_ratio_all()
         run.update_proteoform_intens()
+        
+    ### Chimeric spectra quantification no elution profile ###
+    # Go through all spectra and perform quantification of the top 2 proteoforms if only the first rank was validated
+    if max_rank_validation >= 2 or max_rank_validation == 0:
+        #print("Quantify chimeric spectra no elution profile")
+        run.quantify_chimeric_spectra_no_elution_profile()
+        run.update_proteoform_intens()
 
     # --------------------------------- Output --------------------------------- #
     print("Outputting results")
@@ -114,9 +122,14 @@ def main():
 
         # print the output directory
         print("Output directory: ", output_dir_path)
+        
+        print("Output prefix: ", output_prefix)
+        
 
         # Quantification Table
         quant_file_path = output_dir_path / f"quant_{output_prefix}.csv"
+        
+        print("Quant file path: ", quant_file_path)
         run.result_dataframe_pfq1_format().to_csv(quant_file_path)
 
         # Log Table

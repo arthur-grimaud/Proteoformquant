@@ -19,6 +19,8 @@ def parameters():
         # Filtering and thresholds:
         "max_rank": 5,  # Maximum rank to be considered (1-based)
         "fdr_threshold": 0.1,  # False-Discovery rate
+        "decoy_tag": "REV_",  # Tag for decoy proteins (e.g. REV_ or DECOY_)
+        "score_name": "Amanda:AmandaScore",  # Score to be used for FDR control
         "intensity_threshold": 0,
         "elution_profile_score_threshold": 0,
         "min_n_psm": 3,  # Minimal number of PSM for a peptidoform to be considered

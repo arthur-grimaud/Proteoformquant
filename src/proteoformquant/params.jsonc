@@ -19,7 +19,7 @@
 "n_iter" : 20,  // number of iteration for each peptidoform optimization
 "max_rejected_proteo" : 3, // number of peptidoform rejected before stopping optimization
 
-// Starting range
+// Starting range (in seconds) for the retention time profiling of the peptidoform
 "window_size_rt" : 300,
 
 // Param of the normal distribution used for random mutation of the rt_validation_ranges
@@ -30,8 +30,8 @@
 "min_spectra_subset" : 5,
 
 // Param for peptidoform validation:
-"min_ep_fit" : 0.6 , // minimal score for validation
-"min_ep_cov" : 0.4 , // minimal score for validation
+"min_ep_fit" : 0.7 , // minimal score for validation
+"min_ep_cov" : 0.5 , // minimal score for validation
 //"min_ep_gap" : 0.7,  // mini
 
 

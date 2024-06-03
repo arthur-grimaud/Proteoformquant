@@ -144,12 +144,15 @@ class ElutionProfile:
 
         # print(m, s, a, k)
 
-        res = fsolve(
-            self.bounds_area_equation,
-            [m, m],
-            args=(m, s, a, k, area_percent),
-            factor=0.2,  # TODO factor probably increase time maybe implement consecutive search with lower factor only if minima isn't reached
-        )
+        # negate warning and count number of warnings
+        with warnings.catch_warnings(record=True) as w:
+            res = fsolve(
+                self.bounds_area_equation,
+                [m, m],
+                args=(m, s, a, k, area_percent),
+                factor=0.2,  # TODO factor probably increase time maybe implement consecutive search with lower factor only if minima isn't reached
+            )
+        
 
         # print("m, s, a, k ", m, s, a, k)
         # print("res ", res)
@@ -353,13 +356,15 @@ class ElutionProfile:
 
     # -------------------------------- Scoring Fit ------------------------------- #
 
-    def __pearson_test(self, model, parameters, data_x, data_y):  # !! NOT KS !! to be renamed
+    def __pearson_test(self, model, parameters, data_x, data_y):  
         x = np.array(data_y).reshape((-1, 1))
         y = np.array([model(x, *parameters) for x in data_x])
 
+        
+        
         try:
             cor_results = spearmanr(x, y)
-        except warnings:
+        except (Warning):
             print("Issue in spearmanR scoring, returning score of 0")
             return 0
 
